@@ -73,11 +73,18 @@ git status
 The quotes are required — `LocalReader Pro.app` contains a space, and without
 quotes the shell reads it as two arguments.
 
-Optional convenience — a shortcut in your home directory:
+A shortcut already exists in your home directory, so the short form works from
+anywhere and needs no quoting:
+
+```sh
+cd ~/localreader
+```
+
+It is a symlink to the path above — the same directory, not a copy. If it is
+ever lost, recreate it with:
 
 ```sh
 ln -s "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro" ~/localreader
-cd ~/localreader
 ```
 
 Inside the repo:
@@ -365,14 +372,43 @@ Commits are authored as `merica199 <24942127+merica199@users.noreply.github.com>
 your account without publishing a real email address. Your global git config is
 unchanged and still uses your work address for other projects.
 
+### Two GitHub accounts on this machine
+
+The `gh` CLI is logged into both a personal (`merica199`) and a work
+(`tmericavizius`) account, but **only one is active at a time**, and the active
+one supplies the credentials for every `git push`.
+
+The work account is normally left active for day-to-day work. Pushing to this
+repo therefore requires switching first:
+
+```sh
+gh auth switch --user merica199    # before pushing here
+git push
+gh auth switch --user tmericavizius   # switch back when done
+```
+
+Check which is active at any time with `gh auth status` — look for
+`Active account: true`.
+
+**Commit authorship is separate from this and is already correct.** The author
+email is pinned in this repository's own config, so commits are attributed to
+`merica199` regardless of which account is active, and your work address never
+appears in this history. Switching accounts only affects push permission, never
+who the commits are attributed to.
+
+If a push fails with a permissions or authentication error, the active account
+is the first thing to check.
+
 ### Saving your own changes
 
 ```sh
-cd "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro"
+cd ~/localreader
 git status                  # see what changed
 git diff                    # see the actual edits
 git add -A                  # stage everything not ignored
 git commit -m "Describe what you changed"
+
+gh auth switch --user merica199   # if the work account is active
 git push                    # send to your fork
 ```
 
