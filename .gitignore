@@ -24,11 +24,17 @@ wheels/
 # *.spec
 
 # User data and generated content
+# Listed with and without a trailing slash: the "dir/" form does not match when
+# the path is a symlink pointing at storage outside the app (macOS setup points
+# these at ~/Library/Application Support).
 dist/userdata/
+dist/userdata
 dist/.cache/
 dist/bin/
 dist/app/models/
+dist/app/models
 dist/webview_data/
+dist/webview_data
 *.onnx
 *.bin
 
