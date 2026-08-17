@@ -2,6 +2,12 @@
 
 **A modern, privacy-focused PDF/EPUB reader with AI-powered text-to-speech, multilingual support, and smart audio caching.**
 
+> **This is a fork** of [revisionhiep-create/LocalReader-Pro](https://github.com/revisionhiep-create/LocalReader-Pro),
+> maintained by [@merica199](https://github.com/merica199). It adds macOS support and a
+> voice preview, and corrects documented values that had drifted from the code.
+> See [Changes in this fork](#-changes-in-this-fork) for the full list and
+> [MACOS-SETUP.md](MACOS-SETUP.md) for the macOS installation layout.
+
 <div align="center">
   <img src="docs/images/image1.png" alt="LocalReader Pro Main Interface" width="85%">
   <br><br>
@@ -16,14 +22,15 @@
 
 - **Multi-Format Support:** PDF and EPUB files
 - **Multilingual UI:** Full interface translation (**English, French, Spanish, Chinese**)
-- **Dual-Engine Architecture:** Choose between Performance (CPU) and Quality (GPU) modes
-- **Fast TTS Engine:** Kokoro-82M v1.0 (~5x real-time synthesis speed)
+- **Dual-Model Architecture:** Choose between the quantized model (88 MB) and the full FP32 model (~309 MB). Note that the UI labels these "CPU" and "GPU", but the label refers to the *model file*, not the hardware — `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed, so both run on the CPU
+- **Fast TTS Engine:** Kokoro-82M v1.0. Synthesis speed is hardware-dependent — measured at ~2.3x real-time with the quantized model on an Apple Silicon Mac
 - **Auto-Save Progress:** Resume exactly where you left off
 - **Sentence-Level Control:** Click any sentence to start reading from there
 
 ### 🔘 Smart TTS Controls
 
 - **Dynamic Voice Library:** Automatically loads voices for **English (US/UK), French, Spanish, Chinese, Japanese, Italian, and Portuguese**.
+- **Voice Preview:** Play a short sample of any voice from the dropdown before committing to it. Samples are rendered on first use and cached, so repeats are instant
 - **Voice Settings Drawer:** Floating button for quick access to voice, speed, and filter controls
 - **Player Text Customization:** New **Text Size Slider** to adjust subtitle/caption size (12px-24px) in real-time.
 - **Decoupled Browsing:** Browse other pages freely without jumping the audio. A "Back to Reading" button lets you snap back instantly.
@@ -46,7 +53,8 @@
 
 - **One-Click Export:** Convert entire document to MP3
 - **Background Processing:** UI stays responsive during export
-- **On-Demand FFMPEG:** Auto-downloads encoder (~100MB) on first export
+- **FFMPEG Handling:** On Windows, auto-downloads the encoder (~100MB) on first export. On macOS and Linux, uses the system-installed `ffmpeg` from `PATH` — the bundled download is a Windows build and is not used there
+- **Export is a batch job, not playback:** reading synthesizes one sentence at a time on demand and starts immediately, but export renders the whole document up front. Budget roughly (audiobook length ÷ synthesis speed) — check the estimate the app shows before confirming
 
 ### 🔘 Sleep Timer
 
@@ -97,6 +105,34 @@ To completely remove the supporting software (Python and Libraries):
 
 - Installer: ~24 MB
 - Full installation: ~2.6 GB (including Python dependencies)
+
+---
+
+### macOS
+
+The Windows installer (`setup.exe`), uninstaller, and `launch.vbs` do not apply
+on macOS. Install manually:
+
+```bash
+brew install python@3.12 ffmpeg
+
+git clone https://github.com/merica199/LocalReader-Pro.git
+cd LocalReader-Pro
+
+python3.12 -m venv venv
+./venv/bin/pip install -r dist/requirements.txt
+
+cd dist && ../venv/bin/python main.py
+```
+
+`ffmpeg` is only needed for MP3 export, and comes from Homebrew rather than the
+in-app download, which fetches a Windows build. Everything else, including the
+voice models, is fetched by the app on first run.
+
+To run it as a normal double-clickable application with your data stored in
+`~/Library/Application Support` rather than inside the project, see
+**[MACOS-SETUP.md](MACOS-SETUP.md)** — it documents the `.app` bundle layout,
+where every file lives, and the macOS-specific launch pitfalls.
 
 ---
 
@@ -246,13 +282,17 @@ After launching the application:
 
 1. Open **"Pause Settings"** section in sidebar
 2. Adjust sliders to set pause duration (0-2000ms):
-   - **Comma (,)** - Default: 250ms
+   - **Comma (,)** - Default: 300ms
    - **Period (.)** - Default: 600ms
    - **Question (?)** - Default: 600ms
    - **Exclamation (!)** - Default: 600ms
-   - **Colon (:)** - Default: 500ms
-   - **Semicolon (;)** - Default: 500ms
-   - **Newline** - Default: 800ms (Hidden, smart auto-adjust)
+   - **Colon (:)** - Default: 400ms
+   - **Semicolon (;)** - Default: 400ms
+   - **Newline** - Default: 0ms (Hidden; soft-newline handling adds ~300ms where appropriate)
+
+   Defaults are defined in `dist/app/ui/js/modules/state.js`. They are only
+   applied when no `pause_settings` block has been saved yet — once a slider is
+   touched, the saved values in `userdata/settings.json` take over.
 3. Settings save automatically
 
 **Smart Behavior:**
@@ -369,9 +409,9 @@ LocalReader-Pro/
 
 ### System Requirements
 
-| Component      | Minimum                     | Recommended                |
-| -------------- | --------------------------- | -------------------------- |
-| **OS**         | Windows 10+ / Ubuntu 20.04+ | Windows 11 / Ubuntu 22.04+ |
+| Component      | Minimum                                     | Recommended                             |
+| -------------- | ------------------------------------------- | --------------------------------------- |
+| **OS**         | Windows 10+ / Ubuntu 20.04+ / macOS 11+     | Windows 11 / Ubuntu 22.04+ / macOS 14+  |
 | **Python**     | 3.10 - 3.13                 | 3.12.10                    |
 | **RAM**        | 4 GB                        | 8 GB+                      |
 | **Disk Space** | 3 GB free                   | 5 GB+ free                 |
@@ -411,12 +451,70 @@ LocalReader-Pro/
 
 ---
 
+## 🔀 Changes in this fork
+
+Everything below is specific to [merica199/LocalReader-Pro](https://github.com/merica199/LocalReader-Pro)
+and is not in upstream.
+
+### Added
+
+- **Voice preview.** A play button beside the voice dropdown renders a short
+  sample of the selected voice via `GET /api/voices/preview/{voice_id}` and
+  caches the WAV under `userdata/voice_previews/`. First request per voice takes
+  roughly 2.5s; later ones are served from disk in about 0.15s. Every voice in a
+  language reads the same sentence so they can be compared directly.
+- **macOS support.** See [MACOS-SETUP.md](MACOS-SETUP.md) for the `.app` bundle
+  layout, where each file lives, and the platform-specific launch pitfalls.
+
+### Fixed
+
+- **Missing dependencies.** `psutil` is imported by `app/server.py` but was never
+  declared, so a clean install failed on first launch. On Python 3.13, `pydub`
+  additionally needs `audioop-lts`, because PEP 594 removed the stdlib `audioop`
+  module and pydub's fallback imports `pyaudioop`, which does not exist on PyPI.
+  `audioop-lts` requires Python 3.13+, so it is gated behind an environment
+  marker rather than breaking installs on 3.10–3.12.
+  *(Also open upstream as [PR #9](https://github.com/revisionhiep-create/LocalReader-Pro/pull/9).)*
+- **Windows-only FFmpeg.** Binary paths were hardcoded to `.exe`, the installer
+  downloaded a Windows build that cannot run elsewhere, and nothing consulted
+  `PATH`. Binaries now resolve per platform and fall back to a system-managed
+  install. *(Also open upstream as [PR #10](https://github.com/revisionhiep-create/LocalReader-Pro/pull/10).)*
+- **FFmpeg reported as missing when present.** `ffmpeg_status["is_installed"]`
+  defaulted to `False` and was only ever set by the installer, so an existing
+  FFmpeg — including a bundled `bin/ffmpeg.exe` on Windows — was reported
+  missing and the UI kept offering an unnecessary download. It is now detected
+  once at startup. This one affected Windows too.
+
+### Corrected in documentation
+
+- Four of the seven documented pause defaults did not match
+  `dist/app/ui/js/modules/state.js`: comma (250 → 300ms), colon (500 → 400ms),
+  semicolon (500 → 400ms), and newline (800 → 0ms).
+- The "~5x real-time synthesis" claim is hardware-dependent. Measured ~2.3x with
+  the quantized model on an Apple Silicon Mac.
+- The "GPU" engine mode selects a *model file*, not an execution device. Both
+  modes run on the CPU unless the Windows/Linux-only `onnxruntime-gpu` package is
+  installed, because `kokoro_onnx` otherwise pins `CPUExecutionProvider`. Forcing
+  `CoreMLExecutionProvider` on Apple Silicon measured within noise of CPU
+  (2.34x vs 2.26x), so there is nothing to gain there.
+
+---
+
 ## 🔳 License
 
 ### LocalReader Pro
 
 - **Code:** Proprietary (review, modify, use personally)
 - **Redistribution:** Contact author for permission
+
+> **Note on this fork.** The upstream repository has no `LICENSE` file; this
+> section is the only license statement, and it reserves redistribution to the
+> original author. This fork exists under GitHub's Terms of Service, which grant
+> the right to fork and view public repositories on GitHub, and the changes here
+> are personal modifications of the kind the statement above permits. It is
+> **not** relicensed, and nothing here grants redistribution rights the upstream
+> author has not given. If you want to use this beyond personal use, ask
+> [@revisionhiep-create](https://github.com/revisionhiep-create).
 
 ### Third-Party Components
 
