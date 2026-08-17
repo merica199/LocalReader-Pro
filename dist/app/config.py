@@ -23,6 +23,10 @@ base_dir = Path(__file__).parent.absolute()
 userdata_dir = get_app_anchored_path("userdata")
 content_dir = userdata_dir / "content"
 cache_db_path = userdata_dir / "audio_cache.db"
+# One rendered sample per voice, generated on first request. Regenerable, so it
+# is safe to delete; kept out of audio_cache.db because that cache evicts by
+# size and previews should survive a heavy reading session.
+preview_cache_dir = userdata_dir / "voice_previews"
 
 # File paths
 settings_file = userdata_dir / "settings.json"
@@ -35,5 +39,6 @@ MAX_CACHE_SIZE_MB = 200
 try:
     userdata_dir.mkdir(exist_ok=True)
     content_dir.mkdir(exist_ok=True)
+    preview_cache_dir.mkdir(exist_ok=True)
 except Exception as e:
     print(f"[CRITICAL] Failed to create storage dirs: {e}")

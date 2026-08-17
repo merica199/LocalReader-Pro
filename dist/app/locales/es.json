@@ -39,6 +39,7 @@
     "title": "Configuración",
     "language": "Idioma",
     "voice_selection": "Selección de Voz",
+    "voice_preview": "Escuchar una muestra de esta voz",
     "speed_control": "Control de Velocidad",
     "header_footer": "Modo de Encabezado y Pie de Página",
     "header_footer_off": "Mostrar Todo",

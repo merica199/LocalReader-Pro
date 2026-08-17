@@ -20,6 +20,7 @@ import {
 } from "./modules/library.js";
 import {
   loadVoices,
+  initVoicePreview,
   togglePlayback,
   stopPlayback,
   playNext,
@@ -372,6 +373,8 @@ document.getElementById("fontSizeSlider").oninput = (e) => {
     textContent.style.lineHeight = parseInt(newSize) * 1.6 + "px";
   }
 };
+initVoicePreview();
+
 document.getElementById("voiceSelect").onchange = async () => {
   stopPlayback();
   state.audioBufferCache.clear();

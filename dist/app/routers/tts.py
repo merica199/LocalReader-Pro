@@ -27,10 +27,25 @@ except ImportError:
 from ..state import audio_cache, kokoro
 from ..models import SynthesisRequest
 from ..utils import get_language_from_voice
-from ..config import base_dir
+from ..config import base_dir, preview_cache_dir
 from kokoro_onnx import SAMPLE_RATE
 
 router = APIRouter()
+
+# One short line per language, used to audition a voice before committing to it.
+# Every voice in a language reads the identical sentence so they can be compared
+# directly, and each line is phrased to exercise a range of vowels and plosives.
+PREVIEW_PHRASES = {
+    "en-us": "Hello. This is what my voice sounds like when reading your books.",
+    "en-gb": "Hello. This is what my voice sounds like when reading your books.",
+    "fr-fr": "Bonjour. Voici ma voix lorsque je lis vos livres.",
+    "es": "Hola. Asi suena mi voz cuando leo tus libros.",
+    "it": "Ciao. Questa e la mia voce mentre leggo i tuoi libri.",
+    "pt-br": "Ola. Esta e a minha voz quando leio os seus livros.",
+    "ja": "こんにちは。これが本を読むときの私の声です。",
+    "cmn": "你好。这是我朗读书籍时的声音。",
+}
+DEFAULT_PREVIEW_PHRASE = PREVIEW_PHRASES["en-us"]
 
 # --- Helpers moved from server.py ---
 
@@ -273,6 +288,70 @@ async def get_voices():
     except Exception as e:
         # print(f"[DEBUG] Error processing voices: {e}")
         return {"categories": {}}
+
+
+@router.get("/api/voices/preview/{voice_id}")
+async def preview_voice(voice_id: str):
+    """
+    Return a short spoken sample of one voice, so a voice can be auditioned
+    without committing to it and starting a document.
+
+    Samples are rendered once and cached on disk. Generating one costs roughly
+    a second, but only the first time a given voice is requested.
+    """
+    import app.state as state_module
+
+    if state_module.kokoro is None:
+        raise HTTPException(status_code=503, detail="TTS engine not initialized.")
+
+    # Reject anything that is not a plain voice id before it reaches the
+    # filesystem -- this value becomes a filename below.
+    if not re.fullmatch(r"[A-Za-z0-9_]+", voice_id or ""):
+        raise HTTPException(status_code=400, detail="Invalid voice id.")
+
+    if voice_id not in state_module.kokoro.get_voices():
+        raise HTTPException(status_code=404, detail=f"Unknown voice: {voice_id}")
+
+    cache_path = preview_cache_dir / f"{voice_id}.wav"
+
+    if cache_path.exists():
+        audio_bytes = cache_path.read_bytes()
+    else:
+        lang = get_language_from_voice(voice_id)
+        phrase = PREVIEW_PHRASES.get(lang, DEFAULT_PREVIEW_PHRASE)
+        try:
+            # Always 1.0x: the preview shows the voice, while the speed slider
+            # is a separate setting the listener is already able to hear.
+            samples, sample_rate = state_module.kokoro.create(
+                phrase, voice=voice_id, speed=1.0, lang=lang
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Could not render preview: {e}"
+            )
+
+        buffer = io.BytesIO()
+        sf.write(
+            buffer,
+            np.asarray(samples, dtype=np.float32).flatten(),
+            sample_rate,
+            format="WAV",
+            subtype="PCM_16",
+        )
+        audio_bytes = buffer.getvalue()
+
+        # A failed write costs a re-render next time, which is not worth
+        # failing the request over.
+        try:
+            cache_path.write_bytes(audio_bytes)
+        except Exception as e:
+            print(f"[WARNING] Could not cache preview for {voice_id}: {e}")
+
+    return StreamingResponse(
+        io.BytesIO(audio_bytes),
+        media_type="audio/wav",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.get("/api/locale/{lang}")

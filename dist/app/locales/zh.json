@@ -39,6 +39,7 @@
     "title": "设置",
     "language": "语言",
     "voice_selection": "语音选择",
+    "voice_preview": "试听该语音",
     "speed_control": "语速控制",
     "header_footer": "页眉和页脚模式",
     "header_footer_off": "显示全部",

@@ -40,6 +40,7 @@
     "title": "Settings",
     "language": "Language",
     "voice_selection": "Voice Selection",
+    "voice_preview": "Hear a sample of this voice",
     "speed_control": "Speed Control",
     "header_footer": "Header & Footer Mode",
     "header_footer_off": "Show All",

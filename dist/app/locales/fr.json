@@ -39,6 +39,7 @@
     "title": "Paramètres",
     "language": "Langue",
     "voice_selection": "Sélection de la Voix",
+    "voice_preview": "Écouter un échantillon de cette voix",
     "speed_control": "Contrôle de la Vitesse",
     "header_footer": "Mode En-tête et Pied de Page",
     "header_footer_off": "Tout Afficher",

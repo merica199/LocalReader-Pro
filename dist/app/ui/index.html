@@ -482,12 +482,24 @@
             <i data-lucide="user" class="w-3.5 h-3.5"></i>
             <span data-i18n="settings.voice_selection">Voice Selection</span>
           </label>
-          <select
-            id="voiceSelect"
-            class="w-full bg-zinc-900 text-sm font-medium border border-zinc-800 rounded-lg px-3 py-2.5 outline-none text-zinc-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-          >
-            <option value="" disabled selected>Loading voices...</option>
-          </select>
+          <div class="flex items-stretch gap-2">
+            <select
+              id="voiceSelect"
+              class="flex-1 min-w-0 bg-zinc-900 text-sm font-medium border border-zinc-800 rounded-lg px-3 py-2.5 outline-none text-zinc-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="" disabled selected>Loading voices...</option>
+            </select>
+            <button
+              id="voicePreviewBtn"
+              type="button"
+              title="Hear a sample of this voice"
+              data-i18n-title="settings.voice_preview"
+              aria-label="Hear a sample of this voice"
+              class="shrink-0 w-11 flex items-center justify-center bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 transition-colors hover:text-blue-400 hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <i data-lucide="play" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Speed Control -->

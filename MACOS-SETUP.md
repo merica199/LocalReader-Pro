@@ -137,11 +137,16 @@ LocalReader-Pro/
 │   ├── library.json      ← your reading list and progress
 │   ├── settings.json     ← voice, speed, pronunciation rules
 │   ├── audio_cache.db    ← cached generated speech (capped at 200 MB)
+│   ├── voice_previews/   ← rendered voice samples, ~170 KB each (regenerable)
 │   └── *.mp3             ← your exported audiobooks
 └── models/
     ├── kokoro.int8.onnx  ← the AI voice model (88 MB)
     └── voices.bin        ← the 54 voice definitions (27 MB)
 ```
+
+`voice_previews/` is the only regenerable item in `userdata/`. Deleting it just
+means the next preview of each voice takes about two seconds instead of being
+instant (§7.1).
 
 `~` means your home folder (`/Users/tmerica`). `~/Library` is hidden by default
 in Finder — press **⌘⇧G** and paste the path, or hold **Option** while clicking
@@ -317,6 +322,44 @@ Your books, settings, and models are untouched by this — they are elsewhere.
 ---
 
 ## 7. Local changes vs upstream
+
+### 7.1 Voice preview
+
+Upstream has no way to hear a voice before selecting it — you pick one of 49
+blind, open a document, and start reading to find out. This fork adds a preview
+button beside the voice dropdown in **Voice & Audio**.
+
+Pressing it plays a short sample of the currently selected voice. Every voice in
+a language reads the identical sentence, so they can be compared directly rather
+than against whatever text happened to be on screen. Pressing it again stops
+playback, and changing the voice cancels whatever is playing.
+
+**How it works.** `GET /api/voices/preview/{voice_id}` renders the sample with
+the loaded engine and caches the WAV to `userdata/voice_previews/`. The first
+request for a voice takes roughly 2.5 seconds; every later one is served from
+disk in about 0.15 seconds.
+
+Samples are generated rather than shipped, which keeps the repository free of
+binary audio and means previews always reflect the engine actually installed —
+switch models and the cache can simply be deleted to re-render.
+
+Previews always play at 1.0× regardless of the speed slider: the preview is
+there to convey the voice, and playback speed is already audible while reading.
+
+| File | Change |
+|---|---|
+| `dist/app/routers/tts.py` | The preview endpoint and per-language sample phrases |
+| `dist/app/config.py` | `preview_cache_dir` definition and creation |
+| `dist/app/ui/index.html` | Preview button beside the voice dropdown |
+| `dist/app/ui/js/modules/tts.js` | `initVoicePreview()` — fetch, play, stop, icon states |
+| `dist/app/ui/js/app.js` | Calls `initVoicePreview()` at startup |
+| `dist/app/locales/*.json` | `settings.voice_preview` tooltip in all four languages |
+
+The endpoint validates `voice_id` against `[A-Za-z0-9_]+` and against the
+engine's own voice list before using it as a filename, so a request cannot reach
+outside the cache directory.
+
+### 7.2 Platform-native FFmpeg
 
 One commit on top of upstream: **"Use platform-native FFmpeg instead of assuming
 a Windows build."**

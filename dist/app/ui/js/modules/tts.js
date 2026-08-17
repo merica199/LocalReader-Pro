@@ -323,6 +323,78 @@ export async function preCacheNextSentences() {
   }
 }
 
+// --- Voice preview ---------------------------------------------------------
+// Plays a short sample of the selected voice so it can be auditioned without
+// starting a document. Deliberately uses a plain Audio element rather than the
+// shared AudioContext: a preview is incidental, and routing it through the
+// reading pipeline would mean tearing down and rebuilding playback state.
+let previewAudio = null;
+let previewVoice = null;
+
+export function initVoicePreview() {
+  const btn = document.getElementById("voicePreviewBtn");
+  const select = document.getElementById("voiceSelect");
+  if (!btn || !select) return;
+
+  const setIcon = (name, extra = "") => {
+    btn.innerHTML = `<i data-lucide="${name}" class="w-4 h-4 ${extra}"></i>`;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  const reset = () => {
+    if (previewAudio) {
+      previewAudio.pause();
+      if (previewAudio.dataset.url) URL.revokeObjectURL(previewAudio.dataset.url);
+      previewAudio = null;
+    }
+    previewVoice = null;
+    btn.disabled = false;
+    setIcon("play");
+  };
+
+  btn.addEventListener("click", async () => {
+    const voice = select.value;
+    if (!voice) return;
+
+    // A second click on the voice that is already playing stops it.
+    if (previewAudio && previewVoice === voice) {
+      reset();
+      return;
+    }
+    reset();
+
+    btn.disabled = true;
+    setIcon("loader-circle", "animate-spin");
+
+    try {
+      const res = await fetch(`/api/voices/preview/${encodeURIComponent(voice)}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `HTTP ${res.status}`);
+      }
+
+      const url = URL.createObjectURL(await res.blob());
+      const audio = new Audio(url);
+      audio.dataset.url = url;
+      previewAudio = audio;
+      previewVoice = voice;
+
+      audio.addEventListener("ended", reset);
+      audio.addEventListener("error", reset);
+
+      btn.disabled = false;
+      setIcon("square");
+      await audio.play();
+    } catch (err) {
+      console.error("[VoicePreview]", err);
+      reset();
+    }
+  });
+
+  // Switching voices invalidates whatever is currently playing.
+  select.addEventListener("change", reset);
+}
+
 export async function loadVoices() {
   const voiceSelect = document.getElementById("voiceSelect");
   try {
