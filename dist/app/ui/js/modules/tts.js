@@ -3,16 +3,82 @@ import { fetchJSON, fetchBlob, API_URL } from "./api.js";
 import { showToast, stripHTML, renderIcons } from "./ui.js";
 import { renderPage, getSentencesForPage } from "./library.js";
 
+// The output device can change out from under a live AudioContext: the machine
+// sleeps and wakes, headphones are unplugged, a Bluetooth device connects. WebKit
+// keeps the context bound to the device it was created against, so it stays
+// "running", keeps firing ended events and advancing the text, and plays to
+// nothing at all. An <audio> element follows the system default instead, which is
+// why voice previews keep working while reading goes silent, and why changing the
+// voice does not help but restarting the app does.
+//
+// A suspended context is a different failure and looks different: its clock stops
+// and the text stops advancing with it. Text advancing without sound means the
+// device went away, not that the context was suspended.
+let audioDeviceStale = false;
+let lastPlaybackStartedAt = 0;
+
+// Rebuild if playback has been idle at least this long. Catches sleep/wake and
+// long pauses, without making a quick pause/resume pay for a rebuild.
+const STALE_IDLE_MS = 60_000;
+
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+  navigator.mediaDevices.addEventListener("devicechange", () => {
+    audioDeviceStale = true;
+    console.log("[WebAudio] Output devices changed; will rebuild context on next start");
+  });
+}
+
+function buildAudioContext() {
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  state.audioContext = new Ctor();
+  audioDeviceStale = false;
+  try {
+    state.audioContext.addEventListener("statechange", () =>
+      console.log(`[WebAudio] context state -> ${state.audioContext.state}`),
+    );
+  } catch (e) {}
+  console.log("[WebAudio] AudioContext initialized");
+}
+
+export function resetAudioContext() {
+  const previous = state.audioContext;
+  // Decoded buffers belong to the context that decoded them; drop them with it.
+  state.audioBufferCache.clear();
+  state.currentAudioSource = null;
+  buildAudioContext();
+  if (previous && previous.state !== "closed") {
+    try { previous.close(); } catch (e) {}
+  }
+  console.log("[WebAudio] AudioContext rebuilt (audio cache cleared)");
+}
+
 export function initAudioContext() {
-  if (!state.audioContext) {
-    state.audioContext = new (
-      window.AudioContext || window.webkitAudioContext
-    )();
-    console.log("[WebAudio] AudioContext initialized");
+  if (!state.audioContext || state.audioContext.state === "closed") {
+    buildAudioContext();
   }
-  if (state.audioContext.state === "suspended") {
-    state.audioContext.resume();
+  // Not `=== "suspended"`: WebKit also reports "interrupted", which that check
+  // silently skips, leaving the context unresumed.
+  if (state.audioContext.state !== "running") {
+    const r = state.audioContext.resume();
+    if (r && r.catch) r.catch(() => {});
   }
+}
+
+// Use this wherever the user explicitly starts playback. Pressing play is what
+// someone does when the sound has stopped, so it is the right place to recover a
+// context whose output device has gone away.
+export function ensureAudioContextForPlayback() {
+  const idleMs = Date.now() - lastPlaybackStartedAt;
+  if (
+    audioDeviceStale ||
+    !state.audioContext ||
+    state.audioContext.state === "closed" ||
+    (lastPlaybackStartedAt > 0 && idleMs > STALE_IDLE_MS)
+  ) {
+    resetAudioContext();
+  }
+  initAudioContext();
+  lastPlaybackStartedAt = Date.now();
 }
 
 export function playAudioBuffer(audioBuffer) {
@@ -146,6 +212,7 @@ export async function playNext() {
       return;
     }
     console.log(`[WebAudio] CACHE HIT - Playing cached buffer instantly`);
+    initAudioContext(); // this path never went through the synthesis branch
     playAudioBuffer(state.audioBufferCache.get(lookupKey));
     return;
   }
@@ -219,7 +286,7 @@ export function togglePlayback() {
   if (state.isPlaying) {
     stopPlayback();
   } else {
-    initAudioContext();
+    ensureAudioContextForPlayback();
     state.isPlaying = true;
     if (playIcon) {
       playIcon.setAttribute("data-lucide", "pause");
@@ -251,7 +318,7 @@ export async function jumpToSentence(i) {
 
   // Ensure state reflects that we are intended to be playing
   if (!state.isPlaying) {
-    initAudioContext();
+    ensureAudioContextForPlayback();
     state.isPlaying = true;
     const playIcon = document.getElementById("playIcon");
     if (playIcon) {
