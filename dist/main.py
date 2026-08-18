@@ -4,8 +4,30 @@ import socket
 import threading
 import time
 import uvicorn
-import webview
 from pathlib import Path
+
+# --- macOS APP IDENTITY ---------------------------------------------------
+# The process runs Homebrew's framework Python, whose binary lives inside its
+# own Python.app bundle, so macOS takes the application's name, menu bar title
+# and Dock icon from THAT bundle: the menu bar reads "Python" and the icon is
+# the generic one. Rewriting the main bundle's info dictionary before AppKit is
+# touched claims the identity back. pywebview mutates this same dictionary for
+# its own settings, and reads CFBundleName when it builds the About/Hide/Quit
+# menu items, so this has to happen before `import webview`.
+_APP_NAME = "LocalReader Pro"
+if sys.platform == "darwin":
+    try:
+        from Foundation import NSBundle
+
+        _bundle = NSBundle.mainBundle()
+        _info = _bundle.localizedInfoDictionary() or _bundle.infoDictionary()
+        _info["CFBundleName"] = _APP_NAME
+        _info["CFBundleDisplayName"] = _APP_NAME
+    except Exception as e:
+        print(f"[WARNING] Could not set macOS application name: {e}")
+
+import webview
+from webview.menu import Menu, MenuAction, MenuSeparator
 
 # --- 1. ARCHITECTURAL SETUP: ABSOLUTE PATH ANCHORING ---
 # Anchor all paths to THIS script file location (immune to CWD changes)
@@ -102,11 +124,58 @@ def main():
         print("=" * 50)
         print()
         
+        # Menus that act on the page. The UI already owns this behaviour; these
+        # drive the same controls so they are reachable from the menu bar and by
+        # keyboard, instead of the window carrying only the stock Python menus.
+        def _click(element_id):
+            def action():
+                try:
+                    window.evaluate_js(
+                        f"document.getElementById('{element_id}')?.click()"
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Menu action failed for {element_id}: {e}")
+
+            return action
+
+        def _reload():
+            try:
+                window.evaluate_js("location.reload()")
+            except Exception as e:
+                print(f"[WARNING] Reload failed: {e}")
+
+        app_menu = [
+            Menu(
+                "Playback",
+                [
+                    MenuAction("Play / Pause", _click("playBtn")),
+                    MenuSeparator(),
+                    MenuAction("Previous Sentence", _click("skipBack")),
+                    MenuAction("Next Sentence", _click("skipForward")),
+                ],
+            ),
+            Menu(
+                "Document",
+                [
+                    MenuAction("Previous Page", _click("prevPage")),
+                    MenuAction("Next Page", _click("nextPage")),
+                    MenuSeparator(),
+                    MenuAction("Reload Interface", _reload),
+                ],
+            ),
+        ]
+
         # 4. Start the UI event loop (blocks until window closes)
         # debug=True enables the WebKit inspector (right-click -> Inspect Element).
-        # Needed because this window has no menu bar, so there is otherwise no way
-        # to see console output or reload the page when diagnosing UI behaviour.
-        webview.start(debug=True, storage_path=str(storage_path))
+        # Needed because this window has no menu bar shortcut for it, so there is
+        # otherwise no way to see console output when diagnosing UI behaviour.
+        icon_path = base_dir.parent / "assets" / "icon.png"
+        webview.start(
+            debug=True,
+            storage_path=str(storage_path),
+            menu=app_menu,
+            icon=str(icon_path) if icon_path.exists() else None,
+        )
         
     except Exception as e:
         print(f"[CRITICAL] Failed to create window: {e}")

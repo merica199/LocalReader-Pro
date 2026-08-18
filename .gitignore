@@ -68,3 +68,6 @@ desktop.ini
 
 # Project Index
 Summary.md
+# Icon build intermediates
+assets/AppIcon.iconset/
+assets/icon-preview-*.png
