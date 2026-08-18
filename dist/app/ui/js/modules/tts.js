@@ -18,6 +18,14 @@ export function initAudioContext() {
 export function playAudioBuffer(audioBuffer) {
   if (state.currentAudioSource) {
     try {
+      // Detaching onended BEFORE stop() is required, not tidiness. stop()
+      // fires the ended event, so leaving the handler attached makes the
+      // outgoing source run the "sentence finished" path on its way out:
+      // currentSentenceIndex++ and another playNext(). The result is a second
+      // playback racing the one being started here -- audible as two sentences
+      // overlapping -- plus a skipped sentence from the extra increment.
+      // stopPlayback() and jumpToSentence() already do this.
+      state.currentAudioSource.onended = null;
       state.currentAudioSource.stop();
       state.currentAudioSource.disconnect();
     } catch (e) {}
@@ -60,7 +68,15 @@ export function stopPlayback() {
   }
 }
 
+// Incremented on every playNext() entry. Each call keeps its own token and must
+// still hold the newest one to be allowed to start audio. The sentence-index
+// check alone is not enough: two calls can share a target index (a natural
+// ended-event landing at the same moment as a jump timer, say) and both pass it,
+// so both start playback and the sentences are heard on top of each other.
+let playToken = 0;
+
 export async function playNext() {
+  const myToken = ++playToken;
   const targetIndex = state.currentSentenceIndex;
   if (!state.isPlaying || !window.isEngineReady) {
     // isEngineReady is global/window for now
@@ -123,6 +139,12 @@ export async function playNext() {
   const lookupKey = `${state.readingPageIndex}_${targetIndex}_${voiceSelect.value}_${speedRange.value}`;
 
   if (state.audioBufferCache.has(lookupKey)) {
+    // The page-advance branch above awaits, so even the cache-hit path can be
+    // reached after a newer call has taken over.
+    if (myToken !== playToken) {
+      console.log(`[TTS] Discarding cache hit - superseded`);
+      return;
+    }
     console.log(`[WebAudio] CACHE HIT - Playing cached buffer instantly`);
     playAudioBuffer(state.audioBufferCache.get(lookupKey));
     return;
@@ -166,6 +188,22 @@ export async function playNext() {
     if (state.audioBufferCache.size > state.MAX_AUDIO_CACHE) {
       const firstKey = state.audioBufferCache.keys().next().value;
       state.audioBufferCache.delete(firstKey);
+    }
+
+    // decodeAudioData is async, so the check above can pass and the state can
+    // still move on before we get here -- a page turn or a click on another
+    // sentence lands in that window. Re-check against the same target rather
+    // than starting audio the reader has already moved past. Caching above is
+    // deliberately kept: the work is done, and it stays useful on the way back.
+    if (
+      !state.isPlaying ||
+      state.currentSentenceIndex !== targetIndex ||
+      myToken !== playToken
+    ) {
+      console.log(
+        `[TTS] Discarding decoded audio - superseded (index ${state.currentSentenceIndex} vs ${targetIndex}, token ${myToken} vs ${playToken})`,
+      );
+      return;
     }
 
     playAudioBuffer(audioBuffer);
