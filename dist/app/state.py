@@ -18,6 +18,21 @@ except ImportError:
 audio_cache = AudioCache(cache_db_path, max_size_mb=MAX_CACHE_SIZE_MB)
 kokoro = None  # The TTS engine instance
 
+# Serializes every call into the TTS engine.
+#
+# Kokoro phonemizes through espeak-ng, which keeps global state behind a single
+# shared library handle (phonemizer holds it in a class attribute) and is not
+# thread-safe. Calling create() from more than one thread interleaves text
+# through that state and returns phonemes that belong to other calls: measured
+# 31 corrupted results out of 32 concurrent phonemize calls, including one
+# chunk's output ending with the first word of another chunk. The audible
+# result is two sentences spliced together word-group by word-group, and the
+# same input producing different audio on every run.
+#
+# ONNX inference itself is thread-safe; phonemization is not. The lock covers
+# the whole call because create() interleaves the two internally.
+engine_lock = threading.Lock()
+
 system_status = {"is_loading": False, "last_error": None, "is_downloading": False}
 
 export_status = {
