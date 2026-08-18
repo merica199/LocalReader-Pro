@@ -15,6 +15,8 @@ from pathlib import Path
 # its own settings, and reads CFBundleName when it builds the About/Hide/Quit
 # menu items, so this has to happen before `import webview`.
 _APP_NAME = "LocalReader Pro"
+_APP_VERSION = "3.6.1"
+_APP_COPYRIGHT = "\u00a9 revisionhiep-create \u00b7 macOS fork by merica199"
 if sys.platform == "darwin":
     try:
         from Foundation import NSBundle
@@ -23,6 +25,19 @@ if sys.platform == "darwin":
         _info = _bundle.localizedInfoDictionary() or _bundle.infoDictionary()
         _info["CFBundleName"] = _APP_NAME
         _info["CFBundleDisplayName"] = _APP_NAME
+        # The standard About panel reads all of these from the same dictionary.
+        # Setting only the name left it reporting "Version 3.12.14" and a Python
+        # Software Foundation copyright, which describes the interpreter rather
+        # than this application.
+        _info["CFBundleShortVersionString"] = _APP_VERSION
+        _info["CFBundleVersion"] = _APP_VERSION
+        _info["NSHumanReadableCopyright"] = _APP_COPYRIGHT
+        # CFBundleIconFile names a resource inside the main bundle -- which is
+        # Python.app, so it resolves to the Python rocket. Clearing it makes the
+        # About panel fall back to the icon set via setApplicationIconImage_,
+        # which is ours. The Dock icon comes from that same image and is
+        # unaffected.
+        _info["CFBundleIconFile"] = ""
     except Exception as e:
         print(f"[WARNING] Could not set macOS application name: {e}")
 
