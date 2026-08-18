@@ -103,7 +103,10 @@ def main():
         print()
         
         # 4. Start the UI event loop (blocks until window closes)
-        webview.start(debug=False, storage_path=str(storage_path))
+        # debug=True enables the WebKit inspector (right-click -> Inspect Element).
+        # Needed because this window has no menu bar, so there is otherwise no way
+        # to see console output or reload the page when diagnosing UI behaviour.
+        webview.start(debug=True, storage_path=str(storage_path))
         
     except Exception as e:
         print(f"[CRITICAL] Failed to create window: {e}")

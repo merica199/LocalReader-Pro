@@ -106,6 +106,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def no_store_ui_assets(request, call_next):
+    """
+    Stop the embedded webview from serving stale UI code.
+
+    StaticFiles sends only ETag and Last-Modified. With no Cache-Control, a
+    webview is free to apply heuristic freshness and reuse a cached copy without
+    revalidating, so an edited .js file can keep running the previous version
+    across full application restarts -- the cache lives in the persistent
+    storage_path, not in the process. Everything here is served from localhost,
+    so there is nothing to gain by caching it.
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith(("/js", "/css", "/locales", "/assets")):
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
 # --- Routers ---
 app.include_router(settings.router)
 app.include_router(library.router)
