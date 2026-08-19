@@ -33,11 +33,28 @@ if sys.platform == "darwin":
         _info["CFBundleVersion"] = _APP_VERSION
         _info["NSHumanReadableCopyright"] = _APP_COPYRIGHT
         # CFBundleIconFile names a resource inside the main bundle -- which is
-        # Python.app, so it resolves to the Python rocket. Clearing it makes the
-        # About panel fall back to the icon set via setApplicationIconImage_,
-        # which is ours. The Dock icon comes from that same image and is
-        # unaffected.
+        # Python.app, so it resolves to PythonInterpreter.icns. Clearing the key
+        # is not enough: the About panel then falls back to looking the icon up
+        # by name, which resolves through the same bundle and finds the rocket
+        # again. Registering our image under NSApplicationIcon puts it where that
+        # lookup lands. setApplicationIconImage_ (which pywebview does from the
+        # icon= argument) only covers the Dock, not this lookup.
         _info["CFBundleIconFile"] = ""
+        try:
+            import AppKit
+
+            _icon_file = Path(__file__).parent.parent / "assets" / "icon.png"
+            if _icon_file.exists():
+                _icon_img = AppKit.NSImage.alloc().initWithContentsOfFile_(
+                    str(_icon_file)
+                )
+                if _icon_img is not None:
+                    _icon_img.setName_("NSApplicationIcon")
+                    AppKit.NSApplication.sharedApplication().setApplicationIconImage_(
+                        _icon_img
+                    )
+        except Exception as e:
+            print(f"[WARNING] Could not set application icon image: {e}")
     except Exception as e:
         print(f"[WARNING] Could not set macOS application name: {e}")
 
