@@ -282,13 +282,21 @@ After launching the application:
 
 1. Open **"Pause Settings"** section in sidebar
 2. Adjust sliders to set pause duration (0-2000ms):
-   - **Comma (,)** - Default: 300ms
+   - **Comma (,)** - Default: 0ms
    - **Period (.)** - Default: 600ms
    - **Question (?)** - Default: 600ms
    - **Exclamation (!)** - Default: 600ms
-   - **Colon (:)** - Default: 400ms
-   - **Semicolon (;)** - Default: 400ms
-   - **Newline** - Default: 0ms (Hidden; soft-newline handling adds ~300ms where appropriate)
+   - **Colon (:)** - Default: 0ms
+   - **Semicolon (;)** - Default: 0ms
+   - **Newline** - Default: 0ms
+
+   **A non-zero pause splits the sentence there.** The text before the mark is
+   sent to the model as one utterance, silence is inserted, and the text after
+   it is sent as another. That is occasionally what you want, but it costs the
+   intonation the model would otherwise carry across the whole sentence, so the
+   marks that fall *inside* a sentence default to 0 and let the model do its own
+   phrasing. Sentence-ending marks default to 600ms, which only ever splits
+   between sentences and so costs nothing.
 
    Defaults are defined in `dist/app/ui/js/modules/state.js`. They are only
    applied when no `pause_settings` block has been saved yet — once a slider is
@@ -467,6 +475,21 @@ and is not in upstream.
   layout, where each file lives, and the platform-specific launch pitfalls.
 
 ### Fixed
+
+- **Sentences were synthesized in fragments.** Pause handling split text at every
+  comma, colon, semicolon and period, rendered each fragment as a separate
+  utterance, and concatenated them with silence. The punctuation was consumed as
+  a split marker and never reached the model, so it saw `Some years ago` rather
+  than `Some years ago,` — it could not produce comma prosody for a comma it was
+  never shown — and each fragment came out with its own falling sentence-final
+  contour. Punctuation now stays in the text and a split happens only where the
+  pause for that mark is above zero.
+- **The chunk size was wrong in both directions.** Text was pre-split at 200
+  characters, justified as 510 phonemes at ~2.5x expansion. Measured against the
+  tokenizer, English expands about 1.09x and Chinese about 4.81x, so 200
+  characters of English used less than half the budget and split sentences that
+  would have fitted, while 200 characters of Chinese overran the limit and was
+  truncated. The budget is now derived from the script.
 
 - **Missing dependencies.** `psutil` is imported by `app/server.py` but was never
   declared, so a clean install failed on first launch. On Python 3.13, `pydub`

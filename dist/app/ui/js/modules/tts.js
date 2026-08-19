@@ -17,10 +17,6 @@ import { renderPage, getSentencesForPage } from "./library.js";
 let audioDeviceStale = false;
 let lastPlaybackStartedAt = 0;
 
-// Rebuild if playback has been idle at least this long. Catches sleep/wake and
-// long pauses, without making a quick pause/resume pay for a rebuild.
-const STALE_IDLE_MS = 60_000;
-
 if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
   navigator.mediaDevices.addEventListener("devicechange", () => {
     audioDeviceStale = true;
@@ -42,14 +38,21 @@ function buildAudioContext() {
 
 export function resetAudioContext() {
   const previous = state.audioContext;
-  // Decoded buffers belong to the context that decoded them; drop them with it.
-  state.audioBufferCache.clear();
+  const previousRate = previous ? previous.sampleRate : null;
   state.currentAudioSource = null;
   buildAudioContext();
+  // An AudioBuffer is not tied to the context that decoded it, so the cache can
+  // survive a rebuild -- which is what makes rebuilding cheap enough to do on
+  // every play. It only has to be dropped if the new context came up at a
+  // different sample rate, where the old buffers would play at the wrong pitch.
+  if (previousRate !== null && previousRate !== state.audioContext.sampleRate) {
+    state.audioBufferCache.clear();
+    console.log("[WebAudio] sample rate changed; audio cache cleared");
+  }
   if (previous && previous.state !== "closed") {
     try { previous.close(); } catch (e) {}
   }
-  console.log("[WebAudio] AudioContext rebuilt (audio cache cleared)");
+  console.log("[WebAudio] AudioContext rebuilt");
 }
 
 export function initAudioContext() {
@@ -68,15 +71,14 @@ export function initAudioContext() {
 // someone does when the sound has stopped, so it is the right place to recover a
 // context whose output device has gone away.
 export function ensureAudioContextForPlayback() {
-  const idleMs = Date.now() - lastPlaybackStartedAt;
-  if (
-    audioDeviceStale ||
-    !state.audioContext ||
-    state.audioContext.state === "closed" ||
-    (lastPlaybackStartedAt > 0 && idleMs > STALE_IDLE_MS)
-  ) {
-    resetAudioContext();
-  }
+  // Rebuild unconditionally. There is no way to ask a context whether its audio
+  // is actually reaching a speaker -- a context bound to a departed output
+  // device still reports "running" and still fires its ended events -- so the
+  // failure cannot be detected, only pre-empted. Pressing play is exactly what
+  // someone does when the sound has stopped, and with the buffer cache
+  // surviving the swap a rebuild costs almost nothing, so it happens every time
+  // rather than waiting on a heuristic.
+  resetAudioContext();
   initAudioContext();
   lastPlaybackStartedAt = Date.now();
 }

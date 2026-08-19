@@ -28,7 +28,7 @@ from ..state import audio_cache, kokoro
 from ..models import SynthesisRequest
 from ..utils import get_language_from_voice
 from ..config import base_dir, preview_cache_dir
-from kokoro_onnx import SAMPLE_RATE
+from kokoro_onnx import SAMPLE_RATE, MAX_PHONEME_LENGTH
 
 router = APIRouter()
 
@@ -64,12 +64,49 @@ def safe_concat(audio_list):
     return np.concatenate(clean_list)
 
 
-def graceful_chunk_for_tts(text, max_chars=200):
+# Characters that phonemize to several phonemes each.
+_CJK_RANGE = (
+    r"[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff"
+    r"\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]"
+)
+
+
+def phoneme_char_budget(text: str) -> int:
     """
-    GemGem-inspired pre-chunking: split long text at natural boundaries
-    before sending to Kokoro. Prevents garbling when sentences exceed
-    MAX_PHONEME_LENGTH (~510 phonemes ≈ 200 chars at ~2.5x expansion).
+    How many characters can be sent to the model in one call.
+
+    A fixed 200 was used here, justified as "510 phonemes at ~2.5x expansion".
+    Measured against the tokenizer, that ratio is wrong in both directions:
+
+        English  102 chars -> 115 phonemes   1.13x
+        English   98 chars -> 106 phonemes   1.08x
+        English  107 chars -> 117 phonemes   1.09x
+        Chinese   36 chars -> 173 phonemes   4.81x
+
+    So 200 characters of English is about 218 phonemes and wastes more than half
+    the budget, splitting sentences that would have fitted whole and costing the
+    prosody across them. The same 200 characters of Chinese is about 960
+    phonemes, which overruns the 510 limit and gets truncated.
+
+    The budget is therefore derived from the script, with headroom.
     """
+    if not text:
+        return 350
+    cjk = len(re.findall(_CJK_RANGE, text))
+    ratio = 4.81 if cjk / len(text) > 0.2 else 1.09
+    return max(60, int(MAX_PHONEME_LENGTH / ratio * 0.75))
+
+
+def graceful_chunk_for_tts(text, max_chars=None):
+    """
+    Split long text at natural boundaries before sending it to Kokoro, so a
+    sentence longer than the model's phoneme limit is not garbled.
+
+    Splitting costs prosody, so this only splits when the text genuinely does
+    not fit -- see phoneme_char_budget.
+    """
+    if max_chars is None:
+        max_chars = phoneme_char_budget(text)
     if len(text) <= max_chars:
         return [text]
 
@@ -108,13 +145,30 @@ def graceful_chunk_for_tts(text, max_chars=200):
 def synthesize_with_pauses(
     text: str, voice: str, speed: float, pause_settings: Dict[str, int]
 ):
+    """
+    Synthesize text, inserting silence only where a pause was actually asked for.
+
+    This used to split at every comma, colon, semicolon and period, synthesize
+    each fragment on its own, and concatenate the results with silence between
+    them. Two things were wrong with that:
+
+    1. The punctuation was consumed as a split marker and never reached the
+       model, so it saw "Some years ago" rather than "Some years ago,". A model
+       cannot produce comma prosody for a comma it was never shown.
+    2. A sentence is the unit prosody lives in. Rendering four fragments
+       separately gives four falling sentence-final contours glued end to end,
+       which is what made long sentences sound chopped up.
+
+    Now the punctuation stays in the text, and a split happens only where the
+    pause for that mark is greater than zero -- an explicit request for silence
+    the model would not produce on its own. With the default settings a normal
+    sentence is therefore synthesized in one call, exactly as the model expects,
+    with the sentence-final pause appended after it.
+    """
     import app.state as state_module
 
     lang = get_language_from_voice(voice)
-    segments = re.split(r"([,\.!\?:;。，！？：；、]+|\n)", text)
     sample_rate = SAMPLE_RATE
-    plan = []
-    last_was_punctuation = False
 
     char_map = {
         ",": "comma",
@@ -131,52 +185,64 @@ def synthesize_with_pauses(
         ";": "semicolon",
         "；": "semicolon",
     }
+    PUNCT = r"[,\.!\?:;。，！？：；、]+"
+    READABLE = (
+        r"[a-zA-Z0-9\u3000-\u303f\u3040-\u309f\u30a0-\u30ff"
+        r"\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]"
+    )
 
-    for i, segment in enumerate(segments):
-        clean_segment = segment.strip()
-        if segment == "\n":
-            if not last_was_punctuation:
-                ms = pause_settings.get("newline", 300) or 300
+    # The capture group keeps the punctuation, so concatenating the segments
+    # reproduces the original text and nothing is silently dropped.
+    segments = re.split(f"({PUNCT}|\n)", text)
+
+    plan = []
+    buf = ""
+    counter = 0
+
+    def flush():
+        nonlocal buf, counter
+        chunk = buf.strip()
+        buf = ""
+        if not chunk or not re.search(READABLE, chunk):
+            return
+        # Only split further if the chunk would exceed the model's phoneme limit.
+        for sub in graceful_chunk_for_tts(chunk):
+            plan.append({"type": "tts", "text": sub, "index": str(counter)})
+            counter += 1
+
+    for seg in segments:
+        if not seg:
+            continue
+
+        if seg == "\n":
+            ms = pause_settings.get("newline", 0) or 0
+            if ms > 0:
+                flush()
                 plan.append({"type": "silence", "ms": ms})
-            last_was_punctuation = False
+            else:
+                buf += " "
             continue
 
-        if not clean_segment:
+        stripped = seg.strip()
+        if stripped and re.fullmatch(PUNCT, stripped):
+            buf += seg  # the model needs to see the mark
+            key = char_map.get(stripped[-1])
+            ms = pause_settings.get(key, 0) if key else 0
+            if ms > 0:
+                flush()
+                plan.append({"type": "silence", "ms": ms})
             continue
 
-        if re.match(r"^[,\.!\?:;。，！？：；、]+$", clean_segment):
-            last_char = clean_segment[-1]
-            pause_ms = 0
+        buf += seg
 
-            vocab_key = char_map.get(last_char)
-            if vocab_key:
-                pause_ms = pause_settings.get(vocab_key, 300)
-
-            plan.append({"type": "silence", "ms": pause_ms})
-            last_was_punctuation = True
-        else:
-            if re.search(
-                r"[a-zA-Z0-9\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]",
-                clean_segment,
-            ):
-                # GemGem-style pre-chunking for long segments
-                sub_chunks = graceful_chunk_for_tts(clean_segment)
-                for sc_idx, sub_chunk in enumerate(sub_chunks):
-                    plan.append(
-                        {"type": "tts", "text": sub_chunk, "index": f"{i}_{sc_idx}"}
-                    )
-                last_was_punctuation = False
+    flush()
 
     tts_tasks = [p for p in plan if p["type"] == "tts"]
     audio_map = {}
 
     if tts_tasks and state_module.kokoro:
-        # Synthesized one at a time on purpose. This previously ran on a
-        # ThreadPoolExecutor(max_workers=4), but espeak-ng phonemization is not
-        # thread-safe (see state.engine_lock), so the chunks came back holding
-        # each other's words and the assembled sentence was scrambled. The
-        # executor also never bought much: onnxruntime already parallelizes a
-        # single inference across cores.
+        # Synthesized one at a time on purpose: espeak-ng phonemization is not
+        # thread-safe (see state.engine_lock).
         for t in tts_tasks:
             idx = t["index"]
             try:

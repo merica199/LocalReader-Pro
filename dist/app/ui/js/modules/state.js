@@ -30,7 +30,11 @@ export const state = {
     currentSearchQuery: '',
     searchDebounceTimer: null,
     jumpTimer: null,
-    pauseSettings: { comma: 300, period: 600, question: 600, exclamation: 600, colon: 400, semicolon: 400, newline: 0 },
+    // Intra-sentence marks default to 0 so the model renders the sentence in one
+    // piece and produces its own comma and colon prosody. A non-zero value here
+    // forces a hard split at that mark and inserts literal silence, which is
+    // occasionally wanted but costs the natural intonation across the sentence.
+    pauseSettings: { comma: 0, period: 600, question: 600, exclamation: 600, colon: 0, semicolon: 0, newline: 0 },
 
     // Voices & Language
     currentLangIndex: 0,
