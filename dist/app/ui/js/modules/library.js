@@ -342,6 +342,51 @@ export async function extractTextFromPage(page) {
     .replace(/-\s*\n\s*/g, "");
 }
 
+export async function processMarkdownFile(file) {
+  // Markdown skips the PDF round-trip the EPUB path takes: the backend returns
+  // pages directly, because a page is only ever a string.
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/convert/markdown", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+
+    const docId = crypto.randomUUID();
+    const newDoc = {
+      id: docId,
+      fileName: data.title ? `${data.title} (${file.name})` : file.name,
+      totalPages: data.pages.length,
+      currentPage: 0,
+      lastSentenceIndex: 0,
+      lastAccessed: Date.now(),
+    };
+
+    await fetchJSON("/api/library", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newDoc),
+    });
+    await fetchJSON("/api/library/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: docId, pages: data.pages }),
+    });
+
+    selectDocument(newDoc);
+    showToast(`Added "${data.title || file.name}"`);
+  } catch (err) {
+    console.error("Markdown processing error:", err);
+    showToast("Failed to read Markdown: " + err.message);
+  }
+}
+
 export async function processPdfBlob(blob, fileName) {
   // Requires pdfjsLib to be available globally (loaded via script tag)
   if (!window.pdfjsLib) {

@@ -16,6 +16,7 @@ import {
   selectDocument,
   renderPage,
   processPdfBlob,
+  processMarkdownFile,
   getSentencesForPage,
 } from "./modules/library.js";
 import {
@@ -286,7 +287,9 @@ if (scrollContainer) {
 document.getElementById("pdfUpload").onchange = async (e) => {
   const file = e.target.files[0];
   if (file) {
-    if (file.name.toLowerCase().endsWith(".epub")) {
+    if (/\.(md|markdown|mdown|mkd)$/i.test(file.name)) {
+      processMarkdownFile(file);
+    } else if (file.name.toLowerCase().endsWith(".epub")) {
       showToast("Converting EPUB...");
       const formData = new FormData();
       formData.append("file", file);
@@ -487,8 +490,12 @@ document.body.addEventListener("drop", async (e) => {
   const file = e.dataTransfer.files[0];
   if (!file) return;
   const name = file.name.toLowerCase();
+  if (/\.(md|markdown|mdown|mkd)$/i.test(name)) {
+    processMarkdownFile(file);
+    return;
+  }
   if (!name.endsWith(".pdf") && !name.endsWith(".epub")) {
-    showToast("Please drop a PDF or EPUB file.");
+    showToast("Please drop a PDF, EPUB or Markdown file.");
     return;
   }
   if (name.endsWith(".epub")) {

@@ -40,6 +40,44 @@ except ImportError:
 router = APIRouter()
 
 
+@router.post("/api/convert/markdown")
+async def convert_markdown(file: UploadFile = File(...)):
+    """
+    Render a Markdown file into readable pages.
+
+    Unlike the EPUB path this does not go via PDF. A page is just a string, so
+    Markdown can produce pages directly instead of being rendered to a PDF only
+    for the front end to extract the text back out of it.
+    """
+    if not file.filename.lower().endswith((".md", ".markdown", ".mdown", ".mkd")):
+        raise HTTPException(status_code=400, detail="Not a Markdown file")
+
+    raw = await file.read()
+    for encoding in ("utf-8", "utf-8-sig", "latin-1"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        text = raw.decode("utf-8", errors="replace")
+
+    try:
+        from logic.markdown_reader import markdown_to_pages
+    except ImportError:
+        from ..logic.markdown_reader import markdown_to_pages
+
+    try:
+        pages, title = markdown_to_pages(text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not read Markdown: {e}")
+
+    if not any(p.strip() for p in pages):
+        raise HTTPException(status_code=400, detail="That file has no readable text")
+
+    return {"pages": pages, "title": title, "totalPages": len(pages)}
+
+
 @router.post("/api/convert/epub")
 async def convert_epub(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".epub"):
