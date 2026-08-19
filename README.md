@@ -484,6 +484,14 @@ and is not in upstream.
   never shown — and each fragment came out with its own falling sentence-final
   contour. Punctuation now stays in the text and a split happens only where the
   pause for that mark is above zero.
+- **Playback went silent while the text kept advancing.** macOS binds an
+  AudioContext to the output device it was created against, so when that device
+  goes away (sleep/wake, headphones, Bluetooth) the context still reports
+  "running" and still fires its ended events — it just plays to nothing. There is
+  no way to ask a context whether its audio is reaching a speaker, so the failure
+  cannot be detected, only pre-empted: the context is rebuilt whenever playback
+  is explicitly started. That is affordable because an AudioBuffer is not tied to
+  the context that decoded it, so the audio cache survives the swap.
 - **The chunk size was wrong in both directions.** Text was pre-split at 200
   characters, justified as 510 phonemes at ~2.5x expansion. Measured against the
   tokenizer, English expands about 1.09x and Chinese about 4.81x, so 200
