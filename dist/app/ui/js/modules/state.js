@@ -20,7 +20,9 @@ export const state = {
     audioContext: null,
     currentAudioSource: null,
     audioBufferCache: new Map(),
-    MAX_AUDIO_CACHE: 10,
+    // Read-ahead keeps up to 12 sentences ready; the rest is room behind the
+    // reader for going back.
+    MAX_AUDIO_CACHE: 30,
 
     // Settings
     rules: [],

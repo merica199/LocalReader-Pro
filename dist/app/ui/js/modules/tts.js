@@ -108,8 +108,8 @@ export function playAudioBuffer(audioBuffer) {
     state.currentAudioSource = null;
     state.currentSentenceIndex++;
     console.log(`Sentence ended, moving to ${state.currentSentenceIndex}`);
-    await playNext();  // Must settle state before pre-caching (page transitions update readingSentences async)
-    preCacheNextSentences();
+    // playNext() restarts read-ahead once the next sentence is playing.
+    await playNext();
   };
 
   state.currentAudioSource = source;
@@ -157,7 +157,10 @@ export async function playNext() {
     if (state.readingPageIndex < state.currentPages.length - 1) {
       state.readingPageIndex++;
       state.currentSentenceIndex = 0;
-      state.audioBufferCache.clear(); // Prevent stale cross-page cache hits
+      // The cache is not cleared here. It used to be, to prevent stale
+      // cross-page hits, which also threw away the next page's audio that
+      // read-ahead had just generated. Keys now include the sentence text and
+      // settings (see audioKey), so a stale hit cannot happen.
       state.readingSentences = await getSentencesForPage(
         state.readingPageIndex,
       );
@@ -201,12 +204,10 @@ export async function playNext() {
     `Synthesizing sentence ${state.currentSentenceIndex}: "${cleanText.substring(0, 30)}..."`,
   );
 
-  const voiceSelect = document.getElementById("voiceSelect");
-  const speedRange = document.getElementById("speedRange");
+  const pageIndex = state.readingPageIndex;
+  const cached = state.audioBufferCache.get(audioKey(pageIndex, targetIndex, text));
 
-  const lookupKey = `${state.readingPageIndex}_${targetIndex}_${voiceSelect.value}_${speedRange.value}`;
-
-  if (state.audioBufferCache.has(lookupKey)) {
+  if (cached) {
     // The page-advance branch above awaits, so even the cache-hit path can be
     // reached after a newer call has taken over.
     if (myToken !== playToken) {
@@ -215,57 +216,23 @@ export async function playNext() {
     }
     console.log(`[WebAudio] CACHE HIT - Playing cached buffer instantly`);
     initAudioContext(); // this path never went through the synthesis branch
-    playAudioBuffer(state.audioBufferCache.get(lookupKey));
+    playAudioBuffer(cached);
+    readAhead();
     return;
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/synthesize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: cleanText,
-        voice: voiceSelect.value,
-        speed: parseFloat(speedRange.value),
-        rules: state.rules,
-        ignore_list: state.ignoreList,
-        pause_settings: state.pauseSettings,
-      }),
-    });
+    // Joins the request if read-ahead is already generating this sentence.
+    const audioBuffer = await requestAudio(pageIndex, targetIndex, text);
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Synthesis failed");
-    }
-
-    const blob = await res.blob();
-    initAudioContext();
-
-    const arrayBuffer = await blob.arrayBuffer();
-
-    // Safety check: Has the user jumped or stopped while we were synthesizing?
-    if (!state.isPlaying || state.currentSentenceIndex !== targetIndex) {
-      console.log(
-        `[TTS] Discarding synthesis result - Index mismatch (${state.currentSentenceIndex} vs ${targetIndex})`,
-      );
-      return;
-    }
-
-    const audioBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
-    state.audioBufferCache.set(lookupKey, audioBuffer);
-
-    if (state.audioBufferCache.size > state.MAX_AUDIO_CACHE) {
-      const firstKey = state.audioBufferCache.keys().next().value;
-      state.audioBufferCache.delete(firstKey);
-    }
-
-    // decodeAudioData is async, so the check above can pass and the state can
-    // still move on before we get here -- a page turn or a click on another
-    // sentence lands in that window. Re-check against the same target rather
-    // than starting audio the reader has already moved past. Caching above is
-    // deliberately kept: the work is done, and it stays useful on the way back.
+    // Generating and decoding are async, so the state can move on before we
+    // get here: a page turn or a click on another sentence lands in that
+    // window. Re-check against the same target rather than starting audio the
+    // reader has already moved past. The audio stays cached either way: the
+    // work is done, and it stays useful on the way back.
     if (
       !state.isPlaying ||
+      state.readingPageIndex !== pageIndex ||
       state.currentSentenceIndex !== targetIndex ||
       myToken !== playToken
     ) {
@@ -276,6 +243,7 @@ export async function playNext() {
     }
 
     playAudioBuffer(audioBuffer);
+    readAhead();
   } catch (e) {
     console.error("Synthesis error:", e);
     showToast(e.message);
@@ -367,66 +335,139 @@ export async function saveProgress() {
   }
 }
 
-export async function preCacheNextSentences() {
-  const sentencesToPreCache = 2;
-  if (!state.audioContext) return;
+// --- Read-ahead -------------------------------------------------------------
+// Generation runs ahead of playback by time, not by sentence count. It used to
+// generate two sentences ahead, which is only a few seconds of audio when they
+// are short, while a long sentence behind them takes about ten seconds to
+// generate (Kokoro runs at roughly 1.4 to 2 times real time). Measured: 7 to 12
+// seconds of silence every time two short sentences came before a long one.
+const READ_AHEAD_SECONDS = 30;
+// Also capped in sentences, so a run of very short ones cannot queue up work
+// that jumping elsewhere would throw away.
+const READ_AHEAD_MAX_SENTENCES = 12;
+let readAheadRunning = false;
 
-  const voiceSelect = document.getElementById("voiceSelect");
-  const speedRange = document.getElementById("speedRange");
+// Sentences being generated right now, by key. Playback that reaches a
+// sentence read-ahead is still generating waits for that request rather than
+// sending a second one.
+const pendingAudio = new Map();
 
-  for (let i = 1; i <= sentencesToPreCache; i++) {
-    let targetPageIndex = state.readingPageIndex;
-    let targetSentenceIndex = state.currentSentenceIndex + i;
-    let targetSentences = state.readingSentences;
+// Everything that changes a sentence's audio, including its text. A key can
+// therefore never return audio for different words or old settings, which is
+// what lets audio survive a page turn instead of being thrown away at each one.
+function audioKey(pageIndex, sentenceIndex, text) {
+  return JSON.stringify([
+    pageIndex,
+    sentenceIndex,
+    document.getElementById("voiceSelect").value,
+    document.getElementById("speedRange").value,
+    state.pauseSettings,
+    state.rules,
+    state.ignoreList,
+    text,
+  ]);
+}
 
-    if (targetSentenceIndex >= state.readingSentences.length) {
-      if (state.readingPageIndex < state.currentPages.length - 1) {
-        targetPageIndex = state.readingPageIndex + 1;
-        targetSentenceIndex = 0;
-        try {
-          targetSentences = await getSentencesForPage(targetPageIndex);
-          if (targetSentences.length === 0) continue;
-        } catch (err) {
-          continue;
-        }
-      } else {
-        break;
-      }
-    }
+function cacheAudio(key, audioBuffer) {
+  state.audioBufferCache.delete(key);
+  state.audioBufferCache.set(key, audioBuffer);
+  // Oldest first, which is behind the reader: read-ahead only adds ahead of it.
+  while (state.audioBufferCache.size > state.MAX_AUDIO_CACHE) {
+    state.audioBufferCache.delete(state.audioBufferCache.keys().next().value);
+  }
+}
 
-    const nextText = targetSentences[targetSentenceIndex];
-    if (!nextText || typeof nextText !== "string") continue;
+function requestAudio(pageIndex, sentenceIndex, text) {
+  const key = audioKey(pageIndex, sentenceIndex, text);
+  const cached = state.audioBufferCache.get(key);
+  if (cached) return Promise.resolve(cached);
+  if (pendingAudio.has(key)) return pendingAudio.get(key);
 
-    const cleanText = stripHTML(nextText);
-    const cacheKey = `${targetPageIndex}_${targetSentenceIndex}_${voiceSelect.value}_${speedRange.value}`;
-
-    if (state.audioBufferCache.has(cacheKey)) continue;
-
-    fetch(`${API_URL}/api/synthesize`, {
+  const request = (async () => {
+    const res = await fetch(`${API_URL}/api/synthesize`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        text: cleanText,
-        voice: voiceSelect.value,
-        speed: parseFloat(speedRange.value),
+        text: stripHTML(text),
+        voice: document.getElementById("voiceSelect").value,
+        speed: parseFloat(document.getElementById("speedRange").value),
         rules: state.rules,
         ignore_list: state.ignoreList,
         pause_settings: state.pauseSettings,
       }),
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          const blob = await res.blob();
-          const arrayBuffer = await blob.arrayBuffer();
-          const audioBuffer =
-            await state.audioContext.decodeAudioData(arrayBuffer);
-          state.audioBufferCache.set(cacheKey, audioBuffer);
-          console.log(
-            `[PreCache] Cached page ${targetPageIndex} seq ${targetSentenceIndex}`,
-          );
-        }
-      })
-      .catch(() => {});
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Synthesis failed");
+    }
+    const arrayBuffer = await (await res.blob()).arrayBuffer();
+    initAudioContext();
+    const audioBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
+    cacheAudio(key, audioBuffer);
+    return audioBuffer;
+  })();
+  pendingAudio.set(key, request);
+  request.catch(() => {}).finally(() => pendingAudio.delete(key));
+  return request;
+}
+
+// The first sentence without audio yet, starting from the current one, or null
+// once READ_AHEAD_SECONDS of audio past the current sentence is ready. Looks at
+// most one page ahead.
+async function nextSentenceToGenerate() {
+  let pageIndex = state.readingPageIndex;
+  let sentences = state.readingSentences || [];
+  let index = state.currentSentenceIndex;
+  let ahead = 0;
+  let count = 0;
+  while (ahead < READ_AHEAD_SECONDS && count < READ_AHEAD_MAX_SENTENCES) {
+    if (index >= sentences.length) {
+      if (pageIndex !== state.readingPageIndex || pageIndex >= state.currentPages.length - 1) {
+        return null;
+      }
+      pageIndex += 1;
+      index = 0;
+      try {
+        sentences = await getSentencesForPage(pageIndex);
+      } catch (e) {
+        return null;
+      }
+      continue;
+    }
+    const text = sentences[index];
+    if (text && typeof text === "string") {
+      const buffer = state.audioBufferCache.get(audioKey(pageIndex, index, text));
+      if (!buffer) return { pageIndex, index, text };
+      if (pageIndex !== state.readingPageIndex || index > state.currentSentenceIndex) {
+        ahead += buffer.duration;
+        count += 1;
+      }
+    }
+    index += 1;
+  }
+  return null;
+}
+
+// Keeps generating until enough audio is ready ahead of the reader. Safe to
+// call any time: only one loop runs, and it re-reads the reading position on
+// every pass, so a jump or a page turn simply redirects it.
+async function readAhead() {
+  if (readAheadRunning) return;
+  readAheadRunning = true;
+  try {
+    while (state.isPlaying) {
+      const next = await nextSentenceToGenerate();
+      if (!next) break;
+      try {
+        await requestAudio(next.pageIndex, next.index, next.text);
+      } catch (e) {
+        // Playback reports it if it reaches that sentence.
+        console.error("[ReadAhead] Generation failed:", e);
+        break;
+      }
+    }
+  } finally {
+    readAheadRunning = false;
   }
 }
 
