@@ -18,7 +18,11 @@ export function initTimer() {
   const countdownDisplay = document.getElementById("timerCountdown");
 
   // Button Display
-  const btnIcon = btn.querySelector("i");
+  // Looked up each time, not once here: the icon library replaces the <i> with
+  // an <svg> when it draws icons, so a reference taken at startup is either
+  // null (drawn first, and every update threw) or a detached <i> (hiding it
+  // left the visible icon on screen beside the countdown).
+  const btnIcon = () => btn.querySelector("svg, i") || { style: {} };
   const btnText = document.getElementById("timerBtnText");
 
   let statusInterval = null;
@@ -117,7 +121,7 @@ export function initTimer() {
       btn.style.borderRadius = "24px";
       btn.style.borderColor = "#3f3f46";
       
-      btnIcon.style.display = "none";
+      btnIcon().style.display = "none";
       btnText.style.display = "block";
       btnText.textContent = formatTime(data.remaining_seconds);
       btnText.className = "text-xs font-bold font-mono text-zinc-300";
@@ -141,7 +145,7 @@ export function initTimer() {
       btn.style.borderRadius = "";
       btn.style.borderColor = "";
 
-      btnIcon.style.display = "block";
+      btnIcon().style.display = "block";
       btnText.style.display = "none";
 
       // Inputs enabled
