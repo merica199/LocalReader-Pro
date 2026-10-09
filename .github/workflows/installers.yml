@@ -1,6 +1,7 @@
 # Runs the one-click installers on clean Windows and Mac machines, then checks
 # the installed app works: it speaks, renders a sleep recording as MP3, refuses
 # other websites, and applies an update (installers/tests/check_install.py).
+# On Windows it also installs from a folder like GitHub's Download ZIP.
 #
 # What this cannot check: the app's window opening. These machines have no
 # screen, so the first double-click on a real computer is still the test of that.
@@ -88,6 +89,58 @@ jobs:
           if (-not (Test-Path -LiteralPath "$data\models\voices.bin")) { $bad += 'the library was deleted' }
           if ($bad) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
           Write-Host 'PASS uninstalled, library kept'
+
+      # Like GitHub's Download ZIP: no .git folder, and every file marked as
+      # downloaded from the internet, the way Explorer's Extract All marks them.
+      - name: Download the ZIP and unzip it
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $env:RUNNER_TEMP 'LocalReader-Pro-main.zip'
+          git archive --format=zip --prefix=LocalReader-Pro-main/ -o $zip HEAD
+          Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'unzipped')
+          Get-ChildItem (Join-Path $env:RUNNER_TEMP 'unzipped') -Recurse -File | ForEach-Object {
+            Set-Content -LiteralPath $_.FullName -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3"
+          }
+
+      - name: Double-click "Install on Windows.bat" in the unzipped folder
+        shell: cmd
+        run: echo.| "%RUNNER_TEMP%\unzipped\LocalReader-Pro-main\Install on Windows.bat"
+
+      - name: Check it came from GitHub, and works
+        shell: powershell
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
+          $url = "https://github.com/$env:GITHUB_REPOSITORY.git"
+          $bad = @()
+          $origin = git -C $app remote get-url origin
+          if ($origin -ne $url) { $bad += "origin is $origin" }
+          $newest = (git ls-remote $url refs/heads/main).Split("`t")[0]
+          if ((git -C $app rev-parse HEAD) -ne $newest) { $bad += 'did not install the newest version on GitHub' }
+          foreach ($p in @("$app\dist\bin\ffmpeg.exe", (Join-Path ([Environment]::GetFolderPath('Desktop')) 'LocalReader Pro.lnk'),
+                           'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalReaderPro')) {
+            if (-not (Test-Path -LiteralPath $p)) { $bad += "missing: $p" }
+          }
+          if ($bad) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
+          Write-Host 'PASS installed from GitHub, at its newest version'
+          & "$app\venv\Scripts\python.exe" "$app\installers\tests\check_install.py" $app
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Run the ZIP's installer again (already up to date)
+        shell: cmd
+        run: echo.| "%RUNNER_TEMP%\unzipped\LocalReader-Pro-main\Install on Windows.bat"
+
+      # Double-clicking the .bat inside the ZIP, without unzipping, makes Windows
+      # run it alone from a temporary folder.
+      - name: Opened inside the ZIP, it stops and says to unzip
+        shell: cmd
+        run: |
+          mkdir "%RUNNER_TEMP%\inside-zip"
+          copy "%RUNNER_TEMP%\unzipped\LocalReader-Pro-main\Install on Windows.bat" "%RUNNER_TEMP%\inside-zip\" >nul
+          echo.| "%RUNNER_TEMP%\inside-zip\Install on Windows.bat" > "%RUNNER_TEMP%\inside-zip\out.txt"
+          if not errorlevel 1 (echo FAIL it went ahead without the installer & exit /b 1)
+          findstr /c:"Extract All" "%RUNNER_TEMP%\inside-zip\out.txt" >nul || (echo FAIL it did not say to unzip & exit /b 1)
+          echo PASS it stops and says to unzip first
 
       - name: Gather the logs
         if: failure()

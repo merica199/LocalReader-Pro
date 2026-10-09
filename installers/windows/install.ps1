@@ -8,7 +8,9 @@
 #      for programs installed for one user. The code there is its own git clone
 #      of this repository, following the same branch on GitHub, which is what
 #      lets the app update itself (Help > Check for Updates, or the Updates
-#      panel). This folder can be deleted afterwards.
+#      panel). This folder can be deleted afterwards. A folder from GitHub's
+#      Download ZIP has no git history to copy, so then the app is cloned
+#      straight from GitHub ($RepoUrl below), at its newest version.
 #   3. Your library and settings in %APPDATA%\LocalReader Pro, outside the app,
 #      so reinstalling or uninstalling never touches them.
 #   4. The Python libraries, in a private environment inside the app.
@@ -17,7 +19,8 @@
 #      uninstall it.
 #
 # Running it again is safe: it repairs what is missing and moves an existing
-# install forward to this folder's version, and it never deletes your library.
+# install forward to this folder's version (from a ZIP, GitHub's newest), and
+# it never deletes your library.
 #
 # For tests: LOCALREADER_APP and LOCALREADER_DATA override the two locations,
 # LOCALREADER_UNATTENDED=1 answers yes to every question and does not open the
@@ -49,6 +52,9 @@ $PythonVersion = '3.12.10'
 $PythonUrl = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe"
 $PythonSha256 = '67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb'
 $UninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalReaderPro'
+# Where a downloaded ZIP installs from, since a ZIP carries no git history.
+$RepoUrl = 'https://github.com/merica199/LocalReader-Pro.git'
+$RepoBranch = 'main'
 
 function Step($message) { Write-Host ''; Write-Host "==> $message" -ForegroundColor Cyan }
 function Note($message) { Write-Host "    $message" }
@@ -124,10 +130,10 @@ if (-not $Git) {
     $Git = Find-Git
     if (-not $Git) { Fail 'Git was installed but could not be found. Restart the computer and run this again.' }
 }
-Run $Git -C $Src rev-parse --git-dir 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Fail 'this folder is not a git clone, so the installed app could not update itself. Download it with: git clone https://github.com/merica199/LocalReader-Pro.git'
-}
+# A clone has .git at its top; a ZIP from GitHub does not. (Asking git instead
+# would also find a repository the ZIP was unpacked inside of.)
+$FromZip = -not (Test-Path -LiteralPath (Join-Path $Src '.git'))
+if ($FromZip) { Note "This folder was downloaded as a ZIP, so the app will come straight from GitHub ($RepoUrl)." }
 
 # --- 1. Python 3.12 --------------------------------------------------------------
 Step 'Checking for Python 3.12'
@@ -180,16 +186,22 @@ if (Test-Path -LiteralPath $AppDir) {
 if ($inPlace) {
     Note 'Already installed here; refreshing this install.'
 } elseif (Test-Path -LiteralPath (Join-Path $AppDir '.git')) {
-    Note "Found an existing install; moving it forward to this folder's version."
     $changed = Run $Git -C $AppDir status --porcelain --untracked-files=no
     if ($changed) { Fail "files in the installed app have been edited ($AppDir). Uninstall it from Settings > Apps (your library is kept) and run this again." }
-    Run $Git -C $AppDir fetch --quiet $Src HEAD; Check 'Reading this folder'
+    if ($FromZip) {
+        Note 'Found an existing install; moving it forward to the newest version on GitHub.'
+        $branch = (Run $Git -C $AppDir rev-parse --abbrev-ref HEAD | Select-Object -First 1).Trim()
+        Run $Git -C $AppDir fetch --quiet origin $branch; Check 'Downloading from GitHub'
+    } else {
+        Note "Found an existing install; moving it forward to this folder's version."
+        Run $Git -C $AppDir fetch --quiet $Src HEAD; Check 'Reading this folder'
+    }
     Run $Git -C $AppDir merge-base --is-ancestor FETCH_HEAD HEAD
     if ($LASTEXITCODE -eq 0) {
         Note 'The installed app is already this version or newer.'
     } else {
         Run $Git -C $AppDir merge --ff-only --quiet FETCH_HEAD
-        if ($LASTEXITCODE -ne 0) { Fail 'the installed app and this folder have different changes. Uninstall it from Settings > Apps (your library is kept) and run this again.' }
+        if ($LASTEXITCODE -ne 0) { Fail 'the installed app has changes this version does not. Uninstall it from Settings > Apps (your library is kept) and run this again.' }
     }
 } else {
     if (Test-Path -LiteralPath $AppDir) {
@@ -202,16 +214,21 @@ if ($inPlace) {
         Remove-Link (Join-Path $AppDir 'dist\app\models')
         Remove-Item -LiteralPath $AppDir -Recurse -Force
     }
-    $branch = (Run $Git -C $Src rev-parse --abbrev-ref HEAD | Select-Object -First 1).Trim()
-    if ($branch -eq 'HEAD') { Fail "this clone is not on a branch. Run: git -C `"$Src`" checkout main" }
-    $origin = (Run $Git -C $Src remote get-url origin 2>$null | Select-Object -First 1)
-    if (-not $origin) { Fail "this clone has no 'origin' remote to update from." }
-    $origin = $origin.Trim()
     New-Item -ItemType Directory -Force -Path (Split-Path $AppDir) | Out-Null
-    Run $Git clone --quiet --branch $branch $Src $AppDir; Check 'Copying the code'
-    # Updates come from where this folder was cloned from, not from this folder.
-    Run $Git -C $AppDir remote set-url origin $origin; Check 'Setting the update source'
-    Note "Copied the code ($branch, following $origin)."
+    if ($FromZip) {
+        Run $Git clone --quiet --branch $RepoBranch $RepoUrl $AppDir; Check 'Downloading the app from GitHub'
+        Note "Downloaded the code ($RepoBranch, following $RepoUrl)."
+    } else {
+        $branch = (Run $Git -C $Src rev-parse --abbrev-ref HEAD | Select-Object -First 1).Trim()
+        if ($branch -eq 'HEAD') { Fail "this clone is not on a branch. Run: git -C `"$Src`" checkout main" }
+        $origin = (Run $Git -C $Src remote get-url origin 2>$null | Select-Object -First 1)
+        if (-not $origin) { Fail "this clone has no 'origin' remote to update from." }
+        $origin = $origin.Trim()
+        Run $Git clone --quiet --branch $branch $Src $AppDir; Check 'Copying the code'
+        # Updates come from where this folder was cloned from, not from this folder.
+        Run $Git -C $AppDir remote set-url origin $origin; Check 'Setting the update source'
+        Note "Copied the code ($branch, following $origin)."
+    }
 }
 
 # --- 3. Library and settings, outside the app ------------------------------------

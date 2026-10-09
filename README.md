@@ -8,8 +8,9 @@
 > recordings, and a voice preview, and corrects documented values that had drifted from
 > the code. See [Changes from the original](#-changes-from-the-original) for the full list.
 >
-> **To install:** clone this repository, then double-click **`Install on Mac.command`**
-> or **`Install on Windows.bat`**. Details in [Installation](#-installation).
+> **To install:** on Windows, **Code > Download ZIP**, extract it, and double-click
+> **`Install on Windows.bat`**. On a Mac, clone this repository and double-click
+> **`Install on Mac.command`**. Details in [Installation](#-installation).
 
 <div align="center">
   <img src="docs/images/image1.png" alt="LocalReader Pro Main Interface" width="85%">
@@ -69,7 +70,7 @@
 
 ## 🔳 Installation
 
-Clone the repository, then double-click the installer for your computer:
+Download the repository, then double-click the installer for your computer:
 
 | Computer | Double-click | The app goes to |
 |---|---|---|
@@ -77,16 +78,29 @@ Clone the repository, then double-click the installer for your computer:
 | **Windows** | `Install on Windows.bat` | `%LOCALAPPDATA%\Programs\LocalReader Pro`, with Start Menu and Desktop shortcuts |
 | **Linux** | not yet: `Install on Linux.sh` is a placeholder | see [Linux (manual)](#linux-manual) |
 
+**On Windows**, the ZIP is enough, with no command line:
+
+1. On the GitHub page, click **Code > Download ZIP**.
+2. Right-click the downloaded ZIP and choose **Extract All**. (Opening the installer
+   from inside the ZIP without extracting it does not work, and it says so.)
+3. In the extracted folder, double-click **Install on Windows**. If Windows says it
+   protected your PC, since the file came from the internet, click **More info**, then
+   **Run anyway**.
+
+The installer then downloads the app itself from GitHub, at its newest version, as a
+git clone, which is what lets it update. A clone works too, and installs the clone's
+own version.
+
+**On a Mac**, clone it (a ZIP is refused there, since the installed app updates itself
+through git):
+
 ```bash
 git clone https://github.com/merica199/LocalReader-Pro.git
 ```
 
-(GitHub Desktop works too. Downloading the ZIP does not: the installed app updates
-itself through git, so it has to start from a clone.)
-
 The installer sets up everything the app needs: Python 3.12, the app's libraries in a
 private environment, FFmpeg for MP3 export, and the voice model (about 115 MB). A first
-install takes several minutes, mostly downloads. Afterwards the cloned folder is no
+install takes several minutes, mostly downloads. Afterwards the downloaded folder is no
 longer needed and can be deleted.
 
 Your library and settings are kept outside the app, so updating, reinstalling or
@@ -100,7 +114,8 @@ uninstalling never touches them:
 In the app: **Help > Check for Updates**, or the **Updates** panel at the bottom of the
 sidebar. It goes online only when you ask, shows what changed, and on your OK closes the
 app, installs the update and opens it again. An update that cannot install its libraries
-leaves the app as it was. Running the installer again from a newer clone also updates.
+leaves the app as it was. Running the installer again from a newer clone, or from any
+downloaded ZIP on Windows, also updates.
 
 ### Uninstalling
 
@@ -115,9 +130,10 @@ leaves the app as it was. Running the installer again from a newer clone also up
 - **Mac:** macOS 11 or later and Homebrew, which the installer offers to install if it is
   missing (Homebrew asks for your Mac password once). Git comes with Apple's command line
   tools, which cloning already required.
-- **Windows:** Windows 10 or 11, 64-bit. No administrator password: Python is installed
-  for your Windows user only, from python.org, and checked against python.org's published
-  fingerprint before it runs. Git is installed through winget if it is missing.
+- **Windows:** Windows 10 or 11, 64-bit. No administrator password for the app: Python
+  is installed for your Windows user only, from python.org, and checked against
+  python.org's published fingerprint before it runs. Git is installed through winget if
+  it is missing, and Windows asks permission for that one.
 
 Each installer describes every step at the top of its script
 ([installers/mac/install.sh](installers/mac/install.sh),
@@ -500,7 +516,8 @@ and is not in the original.
   from [docs/reference/sleepcast.py](docs/reference/sleepcast.py). To try it,
   add [sample-scripts/skin-histology.txt](sample-scripts/skin-histology.txt), a
   nine-minute slow tour of the skin that uses every kind of markup.
-- **One-click install and in-app updates.** Clone the repository and double-click
+- **One-click install and in-app updates.** Download the repository (on Windows the
+  ZIP is enough; the installer then clones the app from GitHub itself) and double-click
   `Install on Mac.command` or `Install on Windows.bat`; see [Installation](#-installation).
   Each installs Python 3.12, the libraries, FFmpeg and the voice model, puts the app
   where the platform expects it (`/Applications`; `%LOCALAPPDATA%\Programs` with
