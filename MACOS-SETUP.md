@@ -1,12 +1,13 @@
-# LocalReader Pro — macOS Setup Reference
+# LocalReader Pro: macOS Setup Reference
 
 Everything about how this app is installed on macOS: where each piece lives, why
 it lives there, what is safe to delete, and how to perform common tasks.
 
-Upstream (`revisionhiep-create/LocalReader-Pro`) is a Windows application. It
-ships `setup.exe`, `uninstall.exe`, and `launch.vbs`, and its `INSTALL.txt`
-describes a Windows-only flow. **None of that is used on macOS.** This document
-describes the macOS installation instead.
+**`Install on Mac.command`** (at the top of the repository) builds everything
+described here: double-click it in a clone and it installs Homebrew's Python and
+FFmpeg if needed, places the app in `/Applications`, moves your library to
+Application Support, and downloads the voice model. Running it again repairs an
+install. This document explains the result.
 
 ---
 
@@ -17,9 +18,9 @@ them separate is the entire point of this layout.
 
 | # | Thing | Lives in | Replaceable? |
 |---|---|---|---|
-| 1 | **The program** — Python source, app logic, config defaults | Inside the app bundle in `/Applications` | Yes — re-clone from GitHub |
-| 2 | **Your stuff** — books, exported MP3s, library, settings | `~/Library/Application Support/LocalReader Pro/` | **No — this is the only copy** |
-| 3 | **Downloaded models** — the AI voice engine | `~/Library/Application Support/LocalReader Pro/models/` | Yes — re-downloadable, ~115 MB |
+| 1 | **The program**: Python source, app logic, config defaults | Inside the app bundle in `/Applications` | Yes, reinstall from GitHub |
+| 2 | **Your stuff**: books, exported MP3s, library, settings | `~/Library/Application Support/LocalReader Pro/` | **No, this is the only copy** |
+| 3 | **Downloaded models**: the AI voice engine | `~/Library/Application Support/LocalReader Pro/models/` | Yes, re-downloadable, ~115 MB |
 
 The critical consequence: **you can delete the entire app and lose nothing of
 yours.** Your books and settings are not inside the app. That was the specific
@@ -38,7 +39,7 @@ and never leave your machine.
 /Applications/LocalReader Pro.app
 ```
 
-A macOS `.app` is not a file — it is a **directory** with a required internal
+A macOS `.app` is not a file; it is a **directory** with a required internal
 layout. Finder displays it as a single icon. To look inside: right-click →
 **Show Package Contents**, or use `cd` in a terminal (quote the path; it has a
 space).
@@ -57,7 +58,7 @@ space).
 identifier (`com.localreaderpro.app`), and which file inside `MacOS/` to run.
 That registration is why the app appears in Launchpad and Spotlight.
 
-### 2.2 The git repository — the answer to "where is the repo?"
+### 2.2 The git repository: the answer to "where is the repo?"
 
 ```
 /Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro
@@ -70,7 +71,7 @@ cd "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro"
 git status
 ```
 
-The quotes are required — `LocalReader Pro.app` contains a space, and without
+The quotes are required: `LocalReader Pro.app` contains a space, and without
 quotes the shell reads it as two arguments.
 
 A shortcut already exists in your home directory, so the short form works from
@@ -80,7 +81,7 @@ anywhere and needs no quoting:
 cd ~/localreader
 ```
 
-It is a symlink to the path above — the same directory, not a copy. If it is
+It is a symlink to the path above: the same directory, not a copy. If it is
 ever lost, recreate it with:
 
 ```sh
@@ -94,17 +95,14 @@ LocalReader-Pro/
 ├── .git/                      ← version history
 ├── .gitignore                 ← rules for what is NEVER committed
 ├── MACOS-SETUP.md             ← this file
-├── README.md, CHANGELOG.md    ← upstream docs (Windows-oriented)
-├── INSTALL.txt                ← upstream Windows instructions (ignore on macOS)
-├── setup.spec, uninstall.spec ← PyInstaller configs for the Windows build
-├── build_installer.py         ← Windows installer builder
-├── venv/                      ← Python environment (NOT in git, ~1 GB)
+├── README.md, CHANGELOG.md    ← project docs
+├── Install on Mac.command     ← the installer (also: ... on Windows.bat)
+├── installers/                ← installer scripts, the launcher and Info.plist
+│                                 templates, and the updater
+├── venv/                      ← Python environment (NOT in git, ~450 MB)
 └── dist/
     ├── main.py                ← entry point: starts server, opens window
-    ├── requirements.txt       ← Python dependency list
-    ├── setup.exe              ← Windows installer (unused on macOS)
-    ├── uninstall.exe          ← Windows uninstaller (unused on macOS)
-    ├── launch.vbs             ← Windows launch script (unused on macOS)
+    ├── requirements.txt       ← Python libraries, pinned
     ├── userdata  →  SYMLINK   ← points to Application Support (see §4)
     └── app/
         ├── server.py          ← FastAPI web server + startup logic
@@ -149,7 +147,7 @@ means the next preview of each voice takes about two seconds instead of being
 instant (§7.1).
 
 `~` means your home folder (`/Users/tmerica`). `~/Library` is hidden by default
-in Finder — press **⌘⇧G** and paste the path, or hold **Option** while clicking
+in Finder: press **⌘⇧G** and paste the path, or hold **Option** while clicking
 the **Go** menu.
 
 `Application Support` is the standard macOS location for exactly this kind of
@@ -191,7 +189,7 @@ Verify at any time:
 ```sh
 cd "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro"
 
-# Should print nothing — no personal media tracked
+# Should print nothing: no personal media tracked
 git ls-files | grep -iE '\.(mp3|epub|pdf|wav|onnx|db)$'
 
 # Shows exactly what would be committed
@@ -216,8 +214,8 @@ dist/app/models   →  ~/Library/Application Support/LocalReader Pro/models
 **Why this approach.** The app computes its own paths relative to its source
 files ([`config.py`](dist/app/config.py) anchors everything to the script
 location) so it always looks for `dist/userdata`. Rather than rewrite that
-logic — which would create a permanent difference from upstream and cause merge
-conflicts on every update — the paths stay where the code expects and the
+logic, which would create a permanent difference from upstream and cause merge
+conflicts on every update, the paths stay where the code expects and the
 symlinks redirect the storage. **Zero code changes, correct macOS behavior.**
 
 Inspect them:
@@ -244,7 +242,7 @@ would otherwise show up as an untracked file.
 5. `main.py` starts a FastAPI web server on `127.0.0.1:8000` in a background
    thread, waits for it to respond, then opens a native window pointed at it.
 
-The app is a **local web app in a native window** — the interface is HTML
+The app is a **local web app in a native window**: the interface is HTML
 rendered by macOS WebKit. Nothing is exposed to your network: it binds to
 `127.0.0.1` (your machine only), never `0.0.0.0`.
 
@@ -255,11 +253,11 @@ is the framework `Python.app` GUI stub. Run from a terminal it behaves normally,
 but launched under `launchd` with no controlling terminal it **blocks during
 startup**. A Python subprocess in the launcher therefore hangs the app before it
 starts, and the Dock icon bounces forever. The single-instance check uses `lsof`
-(a plain binary) for this reason. There is a comment in the launcher saying so —
+(a plain binary) for this reason. There is a comment in the launcher saying so;
 please leave it there.
 
 **Only one instance can run.** `main.py` starts its server thread *before*
-testing the port, so a second launch does not fail — it silently points a new
+testing the port, so a second launch does not fail; it silently points a new
 window at the first instance's backend. The launcher refuses the second launch
 with a dialog instead.
 
@@ -286,10 +284,10 @@ pkill -f "main.py"
 /Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro/venv/
 ```
 
-Python **3.12**, roughly 100 packages, about 1 GB. Not in git — it is rebuilt
-from `requirements.txt`, not version-controlled.
+Python **3.12**, roughly 100 packages, about 450 MB. Not in git: the installer
+builds it from `requirements.txt`.
 
-**`requirements.txt` lists 17 packages but ~100 get installed.** That is
+**`requirements.txt` lists about 20 packages but ~100 get installed.** That is
 correct and expected: it names only what the app imports *directly*. Each of
 those has its own dependencies (`uvicorn` needs `click` and `h11`;
 `huggingface_hub` needs `httpx`, `tqdm`, and others).
@@ -297,27 +295,24 @@ those has its own dependencies (`uvicorn` needs `click` and `h11`;
 **Never install with `--no-deps`.** That flag skips every transitive dependency
 and produces an environment that fails at the first import. On macOS it also
 skips `pyobjc-framework-Cocoa` and `pyobjc-framework-WebKit`, which the app
-window requires — so the app cannot open at all.
+window requires, so the app cannot open at all.
 
-**`psutil` is missing from `requirements.txt`** but is imported by
-`dist/app/server.py`. It must be installed explicitly (see below). This is an
-upstream bug.
-
-**`torch` and `scipy` are listed but never imported** by any app code. `torch`
-alone is ~111 MB and pulls in `sympy`, `networkx`, and `mpmath`. They appear to
-be leftovers from a PyTorch-based version of the voice engine; this build uses
-`onnxruntime`. They are installed for safety but are not known to be used.
+**Versions are pinned** to the ones the app is tested with, so an install made
+today and one made next month match, and an update changes a library only when
+`requirements.txt` does. `torch` was dropped in October 2026: nothing imported
+it. Environments built before then still hold it (about 530 MB), unused; the
+rebuild below removes it.
 
 ### Rebuilding the environment from scratch
 
 ```sh
 cd "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro"
 rm -rf venv
-python3.12 -m venv venv
-./venv/bin/pip install -r dist/requirements.txt psutil
+open "Install on Mac.command"
 ```
 
-Your books, settings, and models are untouched by this — they are elsewhere.
+The installer sees no environment and builds a new one. Your books, settings,
+and models are untouched by this: they are elsewhere.
 
 ---
 
@@ -325,7 +320,7 @@ Your books, settings, and models are untouched by this — they are elsewhere.
 
 ### 7.1 Voice preview
 
-Upstream has no way to hear a voice before selecting it — you pick one of 49
+Upstream has no way to hear a voice before selecting it: you pick one of 49
 blind, open a document, and start reading to find out. This fork adds a preview
 button beside the voice dropdown in **Voice & Audio**.
 
@@ -340,7 +335,7 @@ request for a voice takes roughly 2.5 seconds; every later one is served from
 disk in about 0.15 seconds.
 
 Samples are generated rather than shipped, which keeps the repository free of
-binary audio and means previews always reflect the engine actually installed —
+binary audio and means previews always reflect the engine actually installed:
 switch models and the cache can simply be deleted to re-render.
 
 Previews always play at 1.0× regardless of the speed slider: the preview is
@@ -351,7 +346,7 @@ there to convey the voice, and playback speed is already audible while reading.
 | `dist/app/routers/tts.py` | The preview endpoint and per-language sample phrases |
 | `dist/app/config.py` | `preview_cache_dir` definition and creation |
 | `dist/app/ui/index.html` | Preview button beside the voice dropdown |
-| `dist/app/ui/js/modules/tts.js` | `initVoicePreview()` — fetch, play, stop, icon states |
+| `dist/app/ui/js/modules/tts.js` | `initVoicePreview()`: fetch, play, stop, icon states |
 | `dist/app/ui/js/app.js` | Calls `initVoicePreview()` at startup |
 | `dist/app/locales/*.json` | `settings.voice_preview` tooltip in all four languages |
 
@@ -386,7 +381,7 @@ The `server.py` change fixes a **platform-independent** bug:
 by the installer, so an already-present FFmpeg was reported missing and the UI
 kept offering an unnecessary download. That affected Windows too.
 
-**FFmpeg itself is not bundled** — it comes from Homebrew at
+**FFmpeg itself is not bundled**: it comes from Homebrew at
 `/opt/homebrew/bin/ffmpeg`. If it ever goes missing:
 
 ```sh
@@ -410,8 +405,8 @@ Two remotes, following standard fork convention:
 A **remote** is a nickname for a copy of the repo on a server. A **checkout** is
 the working copy of files on your disk (§2.2).
 
-Commits are authored as `merica199 <24942127+merica199@users.noreply.github.com>`
-— GitHub's private no-reply address, set **for this repo only**. Commits link to
+Commits are authored as `merica199 <24942127+merica199@users.noreply.github.com>`,
+GitHub's private no-reply address, set **for this repo only**. Commits link to
 your account without publishing a real email address. Your global git config is
 unchanged and still uses your work address for other projects.
 
@@ -430,7 +425,7 @@ git push
 gh auth switch --user tmericavizius   # switch back when done
 ```
 
-Check which is active at any time with `gh auth status` — look for
+Check which is active at any time with `gh auth status`, and look for
 `Active account: true`.
 
 **Commit authorship is separate from this and is already correct.** The author
@@ -470,6 +465,15 @@ If a merge conflicts, `git merge --abort` returns you to where you started.
 
 ## 9. Common tasks
 
+### Update the app
+
+**Help > Check for Updates** in the app (or the Updates panel at the bottom of
+the sidebar). It asks GitHub whether `origin/main` has moved, lists what
+changed, and on your OK quits, installs any new libraries, fast-forwards the
+code, and reopens. It refuses when the code inside the app has local edits or
+commits of its own, so it can never overwrite work; the outcome is logged in
+`userdata/update.log`. See [`installers/update.py`](installers/update.py).
+
 ### Switch to the higher-quality voice model
 
 The UI's "GPU" option is a **misnomer on macOS**: it is the FP32 model, ~309 MB,
@@ -479,7 +483,7 @@ hardcodes `providers = ["CPUExecutionProvider"]` unless the Windows/Linux-only
 marginally better audio.
 
 Your Mac does expose `CoreMLExecutionProvider`, and `kokoro-onnx` honors an
-`ONNX_PROVIDER` environment variable — but the upstream changelog records
+`ONNX_PROVIDER` environment variable, but the upstream changelog records
 `v3.6.1: Revert GPU acceleration (static noise)`. Forcing CoreML is likely to
 reintroduce that.
 
@@ -489,7 +493,7 @@ reintroduce that.
 du -sh ~/Library/Application\ Support/LocalReader\ Pro/*
 ```
 
-`models/` (~115 MB) is re-downloadable. `userdata/` is not — that is your books.
+`models/` (~115 MB) is re-downloadable. `userdata/` is not: that is your books.
 The audio cache self-limits to 200 MB.
 
 ### Back up everything that matters
@@ -498,18 +502,19 @@ The audio cache self-limits to 200 MB.
 cp -R ~/Library/Application\ Support/LocalReader\ Pro/userdata ~/Desktop/localreader-backup
 ```
 
-The code needs no backup — it is on GitHub. Only `userdata/` is irreplaceable.
+The code needs no backup; it is on GitHub. Only `userdata/` is irreplaceable.
 
 ### Uninstall completely
 
+Quit the app first (LocalReader Pro > Quit), then:
+
 ```sh
-pkill -f "main.py"
 rm -rf "/Applications/LocalReader Pro.app"           # app + code
 rm -rf ~/Library/Application\ Support/LocalReader\ Pro   # data + models
 rm -f  ~/Library/Logs/LocalReader-Pro.log            # log
 ```
 
-Run only the first two lines to reinstall while keeping your library.
+Run only the first line to reinstall while keeping your library.
 
 ### Move the app elsewhere
 
@@ -524,7 +529,7 @@ is unaffected.
 | Symptom | Cause and fix |
 |---|---|
 | Icon bounces forever, never opens | Something in the launcher blocked before `exec`. Check the log; never call Python from the launcher (§5). |
-| "LocalReader Pro is already running" | A copy is running — check other Spaces/windows, or `pkill -f "main.py"`. |
+| "LocalReader Pro is already running" | A copy is running: check other Spaces/windows, or `pkill -f "main.py"`. |
 | Window opens blank | Server failed to bind port 8000. Check the log and `lsof -nP -iTCP:8000`. |
 | "No voices found" | Models missing. Click **Setup Voice Engine**, or see §9. |
 | MP3 export fails | `brew install ffmpeg`, then restart the app. |

@@ -3,10 +3,13 @@
 **A modern, privacy-focused PDF/EPUB reader with AI-powered text-to-speech, multilingual support, and smart audio caching.**
 
 > **This is a fork** of [revisionhiep-create/LocalReader-Pro](https://github.com/revisionhiep-create/LocalReader-Pro),
-> maintained by [@merica199](https://github.com/merica199). It adds macOS support and a
-> voice preview, and corrects documented values that had drifted from the code.
-> See [Changes in this fork](#-changes-in-this-fork) for the full list and
-> [MACOS-SETUP.md](MACOS-SETUP.md) for the macOS installation layout.
+> maintained by [@merica199](https://github.com/merica199). It adds one-click installers
+> for Mac and Windows with in-app updates, sleep recordings, and a voice preview, and
+> corrects documented values that had drifted from the code.
+> See [Changes in this fork](#-changes-in-this-fork) for the full list.
+>
+> **To install:** clone this repository, then double-click **`Install on Mac.command`**
+> or **`Install on Windows.bat`**. Details in [Installation](#-installation).
 
 <div align="center">
   <img src="docs/images/image1.png" alt="LocalReader Pro Main Interface" width="85%">
@@ -66,127 +69,80 @@
 
 ## 🔳 Installation
 
-### Windows (Recommended)
+Clone the repository, then double-click the installer for your computer:
 
-**One-Click Installer - No Manual Setup Required**
-
-1. **Extract the ZIP** to your desired location
-2. **Navigate to the `dist` folder**
-3. **Double-click:** `setup.exe`
-4. **Approve UAC Prompt** when Windows requests administrator access
-5. **Wait for Installation:**
-   - Checks for Python 3.12+ (downloads and installs if missing)
-   - Deploys application files
-   - Installs all dependencies automatically
-   - Creates Desktop and Start Menu shortcuts
-6. **Launch:** Double-click "LocalReader Pro" on your Desktop
-
-**What the installer does:**
-
-- ✅ Installs Python 3.12 if not present
-- ✅ Installs all required packages (FastAPI, PyTorch, Kokoro-TTS, etc.)
-- ✅ Creates shortcuts on Desktop and Start Menu
-- ✅ Sets up the application in the selected directory
-
-**Uninstalling:**
-
-- Run `uninstall.exe` in the installation directory
-- Removes all shortcuts (application files remain for manual deletion)
-
-To completely remove the supporting software (Python and Libraries):
-
-**Uninstall Python**: Go to Windows Settings > Apps > Installed Apps, search for "Python 3.12", and select Uninstall.
-
-**Remove Libraries**: If you haven't deleted the folder yet, open a terminal in the "dist" folder and run: `pip uninstall -r requirements.txt`
-
-**Clear Model Cache**: Many voices and AI models are stored in your user profile. You can delete the `.cache` folder in your user directory (usually `C:\Users\<YourName>\.cache\kokoro`) to free up additional space.
-
-**Installation Size:**
-
-- Installer: ~24 MB
-- Full installation: ~2.6 GB (including Python dependencies)
-
----
-
-### macOS
-
-The Windows installer (`setup.exe`), uninstaller, and `launch.vbs` do not apply
-on macOS. Install manually:
+| Computer | Double-click | The app goes to |
+|---|---|---|
+| **Mac** | `Install on Mac.command` | `/Applications/LocalReader Pro.app` |
+| **Windows** | `Install on Windows.bat` | `%LOCALAPPDATA%\Programs\LocalReader Pro`, with Start Menu and Desktop shortcuts |
+| **Linux** | not yet: `Install on Linux.sh` is a placeholder | see [Linux (manual)](#linux-manual) |
 
 ```bash
-brew install python@3.12 ffmpeg
+git clone https://github.com/merica199/LocalReader-Pro.git
+```
+
+(GitHub Desktop works too. Downloading the ZIP does not: the installed app updates
+itself through git, so it has to start from a clone.)
+
+The installer sets up everything the app needs: Python 3.12, the app's libraries in a
+private environment, FFmpeg for MP3 export, and the voice model (about 115 MB). A first
+install takes several minutes, mostly downloads. Afterwards the cloned folder is no
+longer needed and can be deleted.
+
+Your library and settings are kept outside the app, so updating, reinstalling or
+uninstalling never touches them:
+
+- **Mac:** `~/Library/Application Support/LocalReader Pro`
+- **Windows:** `%APPDATA%\LocalReader Pro`
+
+### Updating
+
+In the app: **Help > Check for Updates**, or the **Updates** panel at the bottom of the
+sidebar. It goes online only when you ask, shows what changed, and on your OK closes the
+app, installs the update and opens it again. An update that cannot install its libraries
+leaves the app as it was. Running the installer again from a newer clone also updates.
+
+### Uninstalling
+
+- **Mac:** drag LocalReader Pro from Applications to the Trash. To remove your library
+  too, delete `~/Library/Application Support/LocalReader Pro`.
+- **Windows:** Settings > Apps > LocalReader Pro > Uninstall. It asks before deleting
+  your library (the default is to keep it). Python stays as its own entry in Settings >
+  Apps, to remove separately if nothing else uses it.
+
+### What the installers need
+
+- **Mac:** macOS 11 or later and Homebrew, which the installer offers to install if it is
+  missing (Homebrew asks for your Mac password once). Git comes with Apple's command line
+  tools, which cloning already required.
+- **Windows:** Windows 10 or 11, 64-bit. No administrator password: Python is installed
+  for your Windows user only, from python.org, and checked against python.org's published
+  fingerprint before it runs. Git is installed through winget if it is missing.
+
+Each installer describes every step at the top of its script
+([installers/mac/install.sh](installers/mac/install.sh),
+[installers/windows/install.ps1](installers/windows/install.ps1)), and running one again
+is safe: it repairs what is missing and never deletes your library.
+[MACOS-SETUP.md](MACOS-SETUP.md) explains the Mac layout in depth.
+
+### Linux (manual)
+
+There is no one-click installer for Linux yet
+([installers/linux/README.md](installers/linux/README.md) lists what one needs). By hand:
+
+```bash
+# Debian/Ubuntu: Python 3.12, FFmpeg, and the GTK WebKit pywebview draws with
+sudo apt install python3.12 python3.12-venv ffmpeg python3-gi gir1.2-webkit2-4.1
 
 git clone https://github.com/merica199/LocalReader-Pro.git
 cd LocalReader-Pro
-
-python3.12 -m venv venv
+python3.12 -m venv --system-site-packages venv
 ./venv/bin/pip install -r dist/requirements.txt
 
 cd dist && ../venv/bin/python main.py
 ```
 
-`ffmpeg` is only needed for MP3 export, and comes from Homebrew rather than the
-in-app download, which fetches a Windows build. Everything else, including the
-voice models, is fetched by the app on first run.
-
-To run it as a normal double-clickable application with your data stored in
-`~/Library/Application Support` rather than inside the project, see
-**[MACOS-SETUP.md](MACOS-SETUP.md)**: it documents the `.app` bundle layout,
-where every file lives, and the macOS-specific launch pitfalls.
-
----
-
-### Linux / Manual Installation
-
-**Prerequisites:** Python 3.10 - 3.13 (Recommended: Python 3.12)
-
-> ⚠️ **Important:** Python 3.14+ is not yet supported due to `onnxruntime` compatibility.
-
-**Step 1: Install Python**
-
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install python3.12 python3.12-pip python3.12-venv
-
-# Verify installation
-python3.12 --version
-```
-
-**Step 2: Extract and Navigate**
-
-```bash
-unzip LocalReader_Pro_v2.5.zip
-cd LocalReader_Pro_v2.5/dist
-```
-
-**Step 3: Install Dependencies**
-
-```bash
-# Option A: Using pip
-pip install -r requirements.txt
-
-# Option B: Using python -m pip (if pip not in PATH)
-python3.12 -m pip install -r requirements.txt
-```
-
-This will install:
-
-- FastAPI (web framework)
-- uvicorn (web server)
-- torch (PyTorch for ML)
-- kokoro-onnx (TTS engine)
-- pydub (audio processing)
-- pywebview (desktop wrapper)
-- And other dependencies
-
-**Installation time:** 5-10 minutes (downloading PyTorch ~2GB)
-
-**Step 4: Launch the App**
-
-```bash
-python3.12 main.py
-```
+The app downloads the voice model on first run (**Setup Voice Engine** in the sidebar).
 
 ---
 
@@ -202,7 +158,8 @@ After launching the application:
      - **High Performance (CPU):** Faster, lower RAM (~87MB model)
      - **High Quality (GPU):** Best audio quality (~309MB model)
 
-2. **Download Voice Engine:**
+2. **Download Voice Engine** (the installers already did this; only needed after a
+   manual install, or to add the other model):
 
    - Click **"Setup Voice Engine"** button in sidebar
    - Downloads the model matching your selected mode
@@ -220,7 +177,7 @@ After launching the application:
    - Click the blue **Play** button
    - Or press `Space` to play/pause
 
-5. **First MP3 Export (Optional):**
+5. **First MP3 Export (Optional; the installers already set up FFmpeg):**
    - Click **"Export Audio (MP3)"** in sidebar
    - Prompt appears: "Download FFMPEG encoder (~100MB)"
    - Click **"Download FFMPEG"** and wait ~2-3 minutes
@@ -366,43 +323,48 @@ After launching the application:
 
 ```
 LocalReader-Pro/
-├── build_installer.py           # Master build script
-├── installer_logic.py           # setup.exe core logic
+├── Install on Mac.command       # Double-click to install on a Mac
+├── Install on Windows.bat       # Double-click to install on Windows
+├── Install on Linux.sh          # Placeholder
+├── installers/
+│   ├── mac/                     # install.sh, the app's launcher and Info.plist
+│   ├── windows/                 # install.ps1, uninstall.ps1
+│   ├── linux/                   # What a Linux installer needs to do
+│   ├── update.py                # Applies an update once the app has closed
+│   └── tests/check_install.py   # End-to-end check of an installed copy
+├── sample-scripts/              # A sleep script to try
 ├── README.md
-├── CHANGELOG.md
 │
 └── dist/
-    ├── setup.exe                # One-click installer (~22 MB)
     ├── main.py                  # App entry point (FastAPI + WebView)
-    ├── launch.vbs               # Silent runner
+    ├── requirements.txt         # Python libraries, pinned
     │
     ├── app/
     │   ├── server.py            # FastAPI initialization
     │   ├── state.py             # Global engine/status singleton
-    │   ├── routers/             # API Controllers (TTS, Library, Export, etc.)
-    │   ├── logic/               # Core logic (Normalize, Detector, Cache)
+    │   ├── routers/             # API Controllers (TTS, Library, Export, Update, etc.)
+    │   ├── logic/               # Core logic (Normalize, Detector, Cache, Sleep)
     │   ├── locales/             # UI Translations (EN, ES, FR, ZH, JA)
     │   └── ui/
     │       ├── index.html       # Main SPA
     │       ├── css/style.css    # Premium styling
     │       └── js/modules/      # ES6 Logic modules
     │
-    └── userdata/                # User settings and book database
+    └── userdata/                # Your library and settings (a link, when installed)
 ```
 
 **Additional folders created during use:**
 
-- `bin/` - FFMPEG binaries (auto-downloaded on first export)
-- `models/` - TTS engine models (auto-downloaded based on your choice)
+- `bin/` - FFmpeg on Windows (downloaded by the installer)
+- `app/models/` - the voice models (a link to your data folder, when installed)
 - `userdata/audio_cache.db` - SQLite Audio Cache
 
 ### Storage Requirements
 
 | Component                 | Size                       |
 | ------------------------- | -------------------------- |
-| **Installer**             | ~22 MB                     |
 | **App Files**             | ~10 MB                     |
-| **Python Dependencies**   | ~2 GB (PyTorch, etc.)      |
+| **Python Libraries**      | ~450 MB                    |
 | **TTS Engine (GPU Mode)** | ~309 MB                    |
 | **TTS Engine (CPU Mode)** | ~87 MB                     |
 | **Voice Pack (shared)**   | ~30 MB                     |
@@ -439,10 +401,12 @@ LocalReader-Pro/
 ### Network Usage
 
 - **Setup Only:** Internet required for:
-  1. Downloading Python (Windows installer only, ~100 MB)
-  2. Installing dependencies (~2 GB)
-  3. Downloading Kokoro-82M model (~309 MB)
-  4. Downloading FFMPEG (~100 MB, optional)
+  1. Python 3.12 (Windows: from python.org, ~27 MB; Mac: from Homebrew)
+  2. The Python libraries (~450 MB installed)
+  3. The voice model (~115 MB)
+  4. FFmpeg (Windows: ~100 MB; Mac: from Homebrew)
+- **Updates:** only when you choose Check for Updates, which asks GitHub whether a
+  newer version exists
 - **Fully Offline:** After setup, works without internet indefinitely
 
 ### Analytics & Telemetry
@@ -536,6 +500,19 @@ and is not in upstream.
   from [docs/reference/sleepcast.py](docs/reference/sleepcast.py). To try it,
   add [sample-scripts/skin-histology.txt](sample-scripts/skin-histology.txt), a
   nine-minute slow tour of the skin that uses every kind of markup.
+- **One-click install and in-app updates.** Clone the repository and double-click
+  `Install on Mac.command` or `Install on Windows.bat`; see [Installation](#-installation).
+  Each installs Python 3.12, the libraries, FFmpeg and the voice model, puts the app
+  where the platform expects it (`/Applications`; `%LOCALAPPDATA%\Programs` with
+  shortcuts and a Settings > Apps entry), and keeps the library in the platform's
+  data folder, outside the app. The installed code is a git clone following GitHub,
+  so **Help > Check for Updates** can fast-forward it: libraries for the new version
+  install first, while the app is closed, so a failed install leaves the old version
+  working. The installers replace the original author's `setup.exe`, which installed
+  into the system-wide Python, could not update, and could not be rebuilt outside
+  Windows. Tested end to end on macOS (install, re-install, install from inside the
+  app, a good update and a refused one); Windows is tested by
+  `.github/workflows/installers.yml` on GitHub's Windows machines.
 - **Paragraph pause in live reading.** A Paragraph slider (1200 ms by default)
   sets the silence after the last sentence of a paragraph, which used to get the
   same 0.7 s as any sentence end. A paragraph ends where a blank line separates
@@ -613,6 +590,17 @@ and is not in upstream.
   when it draws, so hiding it did nothing (and when the icons were drawn first,
   every timer update threw an error). The icon is now looked up when needed.
 
+- **An interrupted voice model download looked finished.** The downloader wrote
+  straight to the final file name, and the app treats an existing file as a complete
+  model, so a cut-off download stayed broken. It now downloads to a temporary name,
+  checks the size, and renames.
+- **A fresh install asked for a model it did not have.** New settings defaulted to the
+  309 MB FP32 model while setup fetched the 88 MB quantized one, so the app fell back
+  with a warning. New installs now default to the quantized model, which is what the
+  installers download; existing settings are unchanged.
+- **A 530 MB library nothing used.** `torch` was in the requirements but never
+  imported. It is gone, and every version is now pinned to the one the app is tested
+  with.
 - **Missing dependencies.** `psutil` is imported by `app/server.py` but was never
   declared, so a clean install failed on first launch. On Python 3.13, `pydub`
   additionally needs `audioop-lts`, because PEP 594 removed the stdlib `audioop`
@@ -667,7 +655,8 @@ and is not in upstream.
 | ---------------- | ------------ |
 | **Kokoro-82M**   | Apache 2.0   |
 | **FastAPI**      | MIT          |
-| **PyTorch**      | BSD-3-Clause |
+| **ONNX Runtime** | MIT          |
+| **espeak-ng**    | GPL 3.0      |
 | **PDF.js**       | Apache 2.0   |
 | **Tailwind CSS** | MIT          |
 | **Lucide Icons** | ISC          |
@@ -687,7 +676,7 @@ and is not in upstream.
 
 ### Python Libraries
 
-- FastAPI, uvicorn, torch, onnxruntime, pydub, soundfile, pywebview, ebooklib, beautifulsoup4, and more (see `requirements.txt`)
+- FastAPI, uvicorn, onnxruntime, kokoro-onnx, pydub, soundfile, pywebview, ebooklib, beautifulsoup4, and more (see `requirements.txt`)
 
 ---
 
