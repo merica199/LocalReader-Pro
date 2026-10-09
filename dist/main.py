@@ -176,6 +176,18 @@ def main():
             except Exception as e:
                 print(f"[WARNING] Reload failed: {e}")
 
+        # Applying an update closes the app first (routers/update.py), so the
+        # updater can replace its files and start it again.
+        from app.routers import update as update_router
+
+        update_router.quit_app = window.destroy
+
+        def _check_updates():
+            try:
+                window.evaluate_js("window.openUpdates && window.openUpdates()")
+            except Exception as e:
+                print(f"[WARNING] Opening updates failed: {e}")
+
         app_menu = [
             Menu(
                 "Playback",
@@ -194,6 +206,10 @@ def main():
                     MenuSeparator(),
                     MenuAction("Reload Interface", _reload),
                 ],
+            ),
+            Menu(
+                "Help",
+                [MenuAction("Check for Updates...", _check_updates)],
             ),
         ]
 

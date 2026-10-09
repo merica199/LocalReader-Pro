@@ -39,6 +39,7 @@ import {
   initExportDialog,
 } from "./modules/export.js";
 import { initTimer } from "./modules/timer.js";
+import { initUpdates } from "./modules/updates.js";
 
 // Global access for debugging
 window.state = state;
@@ -151,6 +152,7 @@ async function init() {
   renderIgnoreList();
   startStatusPolling();
   initTimer();
+  initUpdates();
 }
 
 document.addEventListener("DOMContentLoaded", init);

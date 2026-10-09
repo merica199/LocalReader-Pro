@@ -17,7 +17,7 @@ from .config import (
 )
 from .utils import safe_save_json, safe_init_json
 import app.state as state_module
-from .routers import settings, library, tts, system, export, timer
+from .routers import settings, library, tts, system, export, timer, update
 from .utils import safe_init_json
 
 
@@ -176,6 +176,7 @@ app.include_router(tts.router)
 app.include_router(system.router)
 app.include_router(export.router)
 app.include_router(timer.router)
+app.include_router(update.router)
 
 # --- Static Files ---
 # Mount static assets
