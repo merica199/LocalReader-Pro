@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from urllib.parse import urlsplit
 import time
 import json
 import psutil
@@ -98,13 +99,53 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # --- Middleware ---
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# No CORS middleware. The window loads the UI from this same server, so every
+# request the app makes is same-origin and none of them needs CORS. It used to
+# allow every origin, every method, with credentials: an answer that told any
+# browser any website could call this server and read the replies, which is
+# enough to list the library, delete documents and change settings.
+
+# Names this server may be reached by. It listens on 127.0.0.1 only.
+LOCAL_HOSTS = {"127.0.0.1", "localhost"}
+
+
+def _hostname(netloc: str) -> str:
+    try:
+        return urlsplit("//" + netloc).hostname or ""
+    except ValueError:
+        return ""
+
+
+@app.middleware("http")
+async def only_this_app(request: Request, call_next):
+    """
+    Refuse requests that a web page from another site sends through a browser.
+
+    Listening on 127.0.0.1 keeps other machines out, not other websites: a page
+    open in any browser on this Mac runs on this Mac and can send requests to
+    127.0.0.1:8000. Without CORS such a page cannot read the replies, but
+    browsers still deliver "simple" requests (a form post, a no-cors fetch)
+    without asking the server first, and some routes here act on a bare POST.
+    So the request itself is checked:
+
+    - Host must name this machine. A site that points its own domain at
+      127.0.0.1 (DNS rebinding) looks same-origin to the browser, but its
+      requests still carry that domain in Host.
+    - Origin, when the browser sends one, must be this server.
+    - Sec-Fetch-Site, sent by current browsers, must not say another site.
+
+    Requests carrying none of these (curl, scripts) did not come from a web
+    page, and pass.
+    """
+    host = request.headers.get("host", "")
+    if _hostname(host) not in LOCAL_HOSTS:
+        return JSONResponse({"detail": "Unknown host"}, status_code=403)
+    origin = request.headers.get("origin")
+    if origin is not None and origin != f"http://{host}":
+        return JSONResponse({"detail": "Requests from other sites are refused"}, status_code=403)
+    if request.headers.get("sec-fetch-site") in ("cross-site", "same-site"):
+        return JSONResponse({"detail": "Requests from other sites are refused"}, status_code=403)
+    return await call_next(request)
 
 
 @app.middleware("http")
