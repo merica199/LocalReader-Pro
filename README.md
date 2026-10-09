@@ -139,7 +139,6 @@ Each installer describes every step at the top of its script
 ([installers/mac/install.sh](installers/mac/install.sh),
 [installers/windows/install.ps1](installers/windows/install.ps1)), and running one again
 is safe: it repairs what is missing and never deletes your library.
-[MACOS-SETUP.md](MACOS-SETUP.md) explains the Mac layout in depth.
 
 ### Linux (manual)
 
@@ -451,8 +450,9 @@ and is not in the original.
   caches the WAV under `userdata/voice_previews/`. First request per voice takes
   roughly 2.5s; later ones are served from disk in about 0.15s. Every voice in a
   language reads the same sentence so they can be compared directly.
-- **macOS support.** See [MACOS-SETUP.md](MACOS-SETUP.md) for the `.app` bundle
-  layout, where each file lives, and the platform-specific launch pitfalls.
+- **macOS support.** The `.app` bundle is built by
+  [installers/mac/install.sh](installers/mac/install.sh), which describes each step
+  at its top.
 - **Plain text files.** `.txt` and `.text` files open from the upload button or
   by dropping them on the window. They do not go through the Markdown reader:
   rendering ordinary prose as Markdown dropped indented passages as code blocks,
