@@ -20,7 +20,7 @@
 
 ### 🔳 Core Reading
 
-- **Multi-Format Support:** PDF and EPUB files
+- **Multi-Format Support:** PDF, EPUB, Markdown and plain text files
 - **Multilingual UI:** Full interface translation (**English, French, Spanish, Chinese**)
 - **Dual-Model Architecture:** Choose between the quantized model (88 MB) and the full FP32 model (~309 MB). Note that the UI labels these "CPU" and "GPU", but the label refers to the *model file*, not the hardware — `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed, so both run on the CPU
 - **Fast TTS Engine:** Kokoro-82M v1.0. Synthesis speed is hardware-dependent — measured at ~2.3x real-time with the quantized model on an Apple Silicon Mac
@@ -473,6 +473,15 @@ and is not in upstream.
   language reads the same sentence so they can be compared directly.
 - **macOS support.** See [MACOS-SETUP.md](MACOS-SETUP.md) for the `.app` bundle
   layout, where each file lives, and the platform-specific launch pitfalls.
+- **Plain text files.** `.txt` and `.text` files open from the upload button or
+  by dropping them on the window. They do not go through the Markdown reader:
+  rendering ordinary prose as Markdown dropped indented passages as code blocks,
+  turned a line starting `#1` into a heading, and swallowed anything shaped like
+  `<tag>`. The file is decoded by byte order mark, then UTF-8, then
+  Windows-1252, so an older Windows file keeps its curly quotes and dashes. Pages
+  are cut near 2500 characters, between paragraphs where possible and
+  mid-paragraph only when one paragraph is longer than a page. A binary file
+  renamed to `.txt` is refused rather than read aloud.
 
 ### Fixed
 

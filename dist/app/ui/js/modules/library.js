@@ -342,13 +342,21 @@ export async function extractTextFromPage(page) {
     .replace(/-\s*\n\s*/g, "");
 }
 
-export async function processMarkdownFile(file) {
-  // Markdown skips the PDF round-trip the EPUB path takes: the backend returns
-  // pages directly, because a page is only ever a string.
+export function processMarkdownFile(file) {
+  return processPagedFile(file, "/api/convert/markdown", "Markdown");
+}
+
+export function processTextFile(file) {
+  return processPagedFile(file, "/api/convert/text", "text file");
+}
+
+async function processPagedFile(file, endpoint, formatName) {
+  // Markdown and plain text skip the PDF round-trip the EPUB path takes: the
+  // backend returns pages directly, because a page is only ever a string.
   try {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("/api/convert/markdown", {
+    const res = await fetch(endpoint, {
       method: "POST",
       body: formData,
     });
@@ -382,8 +390,8 @@ export async function processMarkdownFile(file) {
     selectDocument(newDoc);
     showToast(`Added "${data.title || file.name}"`);
   } catch (err) {
-    console.error("Markdown processing error:", err);
-    showToast("Failed to read Markdown: " + err.message);
+    console.error(`${formatName} processing error:`, err);
+    showToast(`Failed to read ${formatName}: ` + err.message);
   }
 }
 

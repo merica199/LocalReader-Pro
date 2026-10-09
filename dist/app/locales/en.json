@@ -5,7 +5,7 @@
   },
   "sidebar": {
     "library": "Library",
-    "upload": "Upload Book (PDF/EPUB)",
+    "upload": "Upload Book (PDF/EPUB/MD/TXT)",
     "export": "Export Audio (MP3)",
     "settings": "Settings",
     "setup_engine": "Setup Voice Engine",

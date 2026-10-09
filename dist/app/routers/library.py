@@ -78,6 +78,35 @@ async def convert_markdown(file: UploadFile = File(...)):
     return {"pages": pages, "title": title, "totalPages": len(pages)}
 
 
+@router.post("/api/convert/text")
+async def convert_text(file: UploadFile = File(...)):
+    """
+    Split a plain text file into readable pages.
+
+    Kept apart from the Markdown path on purpose: rendering prose as Markdown
+    drops indented passages as code blocks and eats anything shaped like a tag.
+    """
+    if not file.filename.lower().endswith((".txt", ".text")):
+        raise HTTPException(status_code=400, detail="Not a text file")
+
+    try:
+        from logic.text_reader import decode_text, text_to_pages
+    except ImportError:
+        from ..logic.text_reader import decode_text, text_to_pages
+
+    text = decode_text(await file.read())
+    # Real text never contains NUL; a binary file renamed to .txt does, and
+    # would otherwise be read aloud as noise.
+    if "\x00" in text:
+        raise HTTPException(status_code=400, detail="That file is not plain text")
+
+    pages = text_to_pages(text)
+    if not any(p.strip() for p in pages):
+        raise HTTPException(status_code=400, detail="That file has no readable text")
+
+    return {"pages": pages, "title": "", "totalPages": len(pages)}
+
+
 @router.post("/api/convert/epub")
 async def convert_epub(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".epub"):

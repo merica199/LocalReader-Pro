@@ -5,7 +5,7 @@
   },
   "sidebar": {
     "library": "Bibliothèque",
-    "upload": "Télécharger Livre (PDF/EPUB)",
+    "upload": "Télécharger Livre (PDF/EPUB/MD/TXT)",
     "export": "Exporter Audio (MP3)",
     "settings": "Paramètres",
     "setup_engine": "Configurer le Moteur Vocal",

@@ -17,6 +17,7 @@ import {
   renderPage,
   processPdfBlob,
   processMarkdownFile,
+  processTextFile,
   getSentencesForPage,
 } from "./modules/library.js";
 import {
@@ -289,6 +290,8 @@ document.getElementById("pdfUpload").onchange = async (e) => {
   if (file) {
     if (/\.(md|markdown|mdown|mkd)$/i.test(file.name)) {
       processMarkdownFile(file);
+    } else if (/\.(txt|text)$/i.test(file.name)) {
+      processTextFile(file);
     } else if (file.name.toLowerCase().endsWith(".epub")) {
       showToast("Converting EPUB...");
       const formData = new FormData();
@@ -466,7 +469,7 @@ if (sidebarCollapseBtn && sidebarExpandBtn && sidebar) {
   };
 }
 
-// Drag-and-Drop PDF/EPUB Upload
+// Drag-and-Drop PDF/EPUB/Markdown/Text Upload
 let dragCounter = 0;
 const dropOverlay = document.getElementById("dropOverlay");
 document.body.addEventListener("dragenter", (e) => {
@@ -494,8 +497,12 @@ document.body.addEventListener("drop", async (e) => {
     processMarkdownFile(file);
     return;
   }
+  if (/\.(txt|text)$/i.test(name)) {
+    processTextFile(file);
+    return;
+  }
   if (!name.endsWith(".pdf") && !name.endsWith(".epub")) {
-    showToast("Please drop a PDF, EPUB or Markdown file.");
+    showToast("Please drop a PDF, EPUB, Markdown or text file.");
     return;
   }
   if (name.endsWith(".epub")) {
