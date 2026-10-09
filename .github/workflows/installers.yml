@@ -1,0 +1,159 @@
+# Runs the one-click installers on clean Windows and Mac machines, then checks
+# the installed app works: it speaks, renders a sleep recording as MP3, refuses
+# other websites, and applies an update (installers/tests/check_install.py).
+#
+# What this cannot check: the app's window opening. These machines have no
+# screen, so the first double-click on a real computer is still the test of that.
+
+name: Installers
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Install on *"
+      - "installers/**"
+      - "dist/requirements.txt"
+      - "dist/main.py"
+      - "dist/app/routers/update.py"
+      - "dist/app/logic/downloader.py"
+      - ".github/workflows/installers.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      LOCALREADER_UNATTENDED: "1"
+      # The machine already has Python; download it the way a fresh PC would.
+      LOCALREADER_FORCE_PYTHON_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Double-click "Install on Windows.bat"
+        shell: cmd
+        run: echo.| "Install on Windows.bat"
+
+      - name: Check what was installed
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
+          $data = Join-Path $env:APPDATA 'LocalReader Pro'
+          $bad = @()
+          foreach ($p in @("$app\venv\Scripts\pythonw.exe", "$app\dist\main.py", "$app\dist\bin\ffmpeg.exe",
+                           "$data\models\kokoro.int8.onnx", "$data\models\voices.bin",
+                           (Join-Path ([Environment]::GetFolderPath('Programs')) 'LocalReader Pro.lnk'),
+                           (Join-Path ([Environment]::GetFolderPath('Desktop')) 'LocalReader Pro.lnk'),
+                           'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalReaderPro')) {
+            if (-not (Test-Path -LiteralPath $p)) { $bad += "missing: $p" }
+          }
+          foreach ($link in @("$app\dist\userdata", "$app\dist\app\models")) {
+            if (-not ((Get-Item -LiteralPath $link -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { $bad += "not a link: $link" }
+          }
+          $python = (Get-Content "$app\venv\pyvenv.cfg" | Select-String '^home').ToString()
+          if ($python -notmatch 'AppData\\Local\\Programs\\Python\\Python312') { $bad += "venv not on the downloaded Python: $python" }
+          $origin = (git -C $app remote get-url origin) -replace '\.git$', ''
+          if ($origin -ne "https://github.com/$env:GITHUB_REPOSITORY") { $bad += "origin is $origin" }
+          if ((git -C $app rev-parse HEAD) -ne $env:GITHUB_SHA) { $bad += 'installed a different commit' }
+          if ($bad) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
+          Write-Host 'PASS everything is where it should be'
+
+      - name: Check the installed app works, and updates
+        shell: powershell
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
+          & "$app\venv\Scripts\python.exe" "$app\installers\tests\check_install.py" $app --update
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Install again (repairs, changes nothing)
+        shell: cmd
+        run: echo.| "Install on Windows.bat"
+
+      - name: Uninstall, keeping the library
+        shell: powershell
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
+          $data = Join-Path $env:APPDATA 'LocalReader Pro'
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$app\installers\windows\uninstall.ps1"
+          $bad = @()
+          if (Test-Path -LiteralPath $app) { $bad += 'app folder still there' }
+          if (Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalReaderPro') { $bad += 'Settings > Apps entry still there' }
+          if (-not (Test-Path -LiteralPath "$data\models\voices.bin")) { $bad += 'the library was deleted' }
+          if ($bad) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
+          Write-Host 'PASS uninstalled, library kept'
+
+      - name: Gather the logs
+        if: failure()
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force logs | Out-Null
+          Copy-Item "$env:APPDATA\LocalReader Pro\userdata\*.log" logs -ErrorAction SilentlyContinue
+
+      - name: Keep the logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-logs
+          path: logs/
+
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      LOCALREADER_UNATTENDED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Double-click "Install on Mac.command"
+        run: ./"Install on Mac.command"
+
+      - name: Check what was installed
+        run: |
+          app="/Applications/LocalReader Pro.app"
+          code="$app/Contents/Resources/LocalReader-Pro"
+          data="$HOME/Library/Application Support/LocalReader Pro"
+          bad=0
+          for p in "$app/Contents/Info.plist" "$app/Contents/MacOS/LocalReaderPro" "$app/Contents/Resources/AppIcon.icns" \
+                   "$code/venv/bin/python" "$data/models/kokoro.int8.onnx" "$data/models/voices.bin"; do
+            [ -e "$p" ] || { echo "FAIL missing: $p"; bad=1; }
+          done
+          [ -x "$app/Contents/MacOS/LocalReaderPro" ] || { echo "FAIL launcher not executable"; bad=1; }
+          [ "$(readlink "$code/dist/userdata")" = "$data/userdata" ] || { echo "FAIL library not linked"; bad=1; }
+          plutil -lint "$app/Contents/Info.plist" || bad=1
+          origin="$(git -C "$code" remote get-url origin)"
+          [ "${origin%.git}" = "https://github.com/$GITHUB_REPOSITORY" ] || { echo "FAIL origin is $origin"; bad=1; }
+          [ "$(git -C "$code" rev-parse HEAD)" = "$GITHUB_SHA" ] || { echo "FAIL installed a different commit"; bad=1; }
+          [ "$bad" = 0 ] && echo "PASS everything is where it should be"
+          exit $bad
+
+      - name: Check the installed app works, and updates
+        run: |
+          code="/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro"
+          "$code/venv/bin/python" "$code/installers/tests/check_install.py" "$code" --update
+
+      - name: Install again, and from inside the installed app
+        run: |
+          ./"Install on Mac.command"
+          "/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro/Install on Mac.command"
+
+      - name: Gather the logs
+        if: failure()
+        run: |
+          mkdir -p logs
+          cp "$HOME/Library/Application Support/LocalReader Pro/userdata/"*.log logs/ 2>/dev/null || true
+
+      - name: Keep the logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-logs
+          path: logs/
