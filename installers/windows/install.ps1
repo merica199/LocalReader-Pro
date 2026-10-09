@@ -318,7 +318,7 @@ if (-not $NoShortcuts) {
     $values = @{
         DisplayName     = $AppName
         DisplayVersion  = $version
-        Publisher       = 'LocalReader Pro (merica199 fork)'
+        Publisher       = 'merica199'
         InstallLocation = $AppDir
         DisplayIcon     = $icon
         UninstallString = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$uninstaller`""

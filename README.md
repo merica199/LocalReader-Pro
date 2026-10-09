@@ -2,11 +2,11 @@
 
 **A modern, privacy-focused PDF/EPUB reader with AI-powered text-to-speech, multilingual support, and smart audio caching.**
 
-> **This is a fork** of [revisionhiep-create/LocalReader-Pro](https://github.com/revisionhiep-create/LocalReader-Pro),
-> maintained by [@merica199](https://github.com/merica199). It adds one-click installers
-> for Mac and Windows with in-app updates, sleep recordings, and a voice preview, and
-> corrects documented values that had drifted from the code.
-> See [Changes in this fork](#-changes-in-this-fork) for the full list.
+> **Based on** [LocalReader Pro](https://github.com/revisionhiep-create/LocalReader-Pro) by
+> revisionhiep-create, and maintained separately by [@merica199](https://github.com/merica199).
+> This version adds one-click installers for Mac and Windows with in-app updates, sleep
+> recordings, and a voice preview, and corrects documented values that had drifted from
+> the code. See [Changes from the original](#-changes-from-the-original) for the full list.
 >
 > **To install:** clone this repository, then double-click **`Install on Mac.command`**
 > or **`Install on Windows.bat`**. Details in [Installation](#-installation).
@@ -423,10 +423,10 @@ LocalReader-Pro/
 
 ---
 
-## 🔀 Changes in this fork
+## 🔀 Changes from the original
 
 Everything below is specific to [merica199/LocalReader-Pro](https://github.com/merica199/LocalReader-Pro)
-and is not in upstream.
+and is not in the original.
 
 ### Added
 
@@ -555,7 +555,6 @@ and is not in upstream.
   document names and search snippets were inserted with `innerHTML`, so markup
   in a document or its file name ran inside the app, with access to its local
   API. They are now inserted as text.
-  *(Also open upstream as [PR #14](https://github.com/revisionhiep-create/LocalReader-Pro/pull/14).)*
 - **Markdown with a byte order mark lost its first heading.** Decoding tried
   plain UTF-8 first, which kept the mark in front of `# Title`, and UTF-16 files
   came out as noise. Markdown now uses the text reader's decoder.
@@ -607,11 +606,10 @@ and is not in upstream.
   module and pydub's fallback imports `pyaudioop`, which does not exist on PyPI.
   `audioop-lts` requires Python 3.13+, so it is gated behind an environment
   marker rather than breaking installs on 3.10 to 3.12.
-  *(Also open upstream as [PR #9](https://github.com/revisionhiep-create/LocalReader-Pro/pull/9).)*
 - **Windows-only FFmpeg.** Binary paths were hardcoded to `.exe`, the installer
   downloaded a Windows build that cannot run elsewhere, and nothing consulted
   `PATH`. Binaries now resolve per platform and fall back to a system-managed
-  install. *(Also open upstream as [PR #10](https://github.com/revisionhiep-create/LocalReader-Pro/pull/10).)*
+  install.
 - **FFmpeg reported as missing when present.** `ffmpeg_status["is_installed"]`
   defaulted to `False` and was only ever set by the installer, so an existing
   FFmpeg (including a bundled `bin/ffmpeg.exe` on Windows) was reported
@@ -640,13 +638,13 @@ and is not in upstream.
 - **Code:** Proprietary (review, modify, use personally)
 - **Redistribution:** Contact author for permission
 
-> **Note on this fork.** The upstream repository has no `LICENSE` file; this
-> section is the only license statement, and it reserves redistribution to the
-> original author. This fork exists under GitHub's Terms of Service, which grant
-> the right to fork and view public repositories on GitHub, and the changes here
-> are personal modifications of the kind the statement above permits. It is
-> **not** relicensed, and nothing here grants redistribution rights the upstream
-> author has not given. If you want to use this beyond personal use, ask
+> **Note on this repository.** It began as a fork of
+> [revisionhiep-create/LocalReader-Pro](https://github.com/revisionhiep-create/LocalReader-Pro),
+> and most of its code is still that project's. The original has no `LICENSE`
+> file; the statement above is its only license statement, and it reserves
+> redistribution to the original author. Nothing here is relicensed, and nothing
+> here grants redistribution rights the original author has not given. If you
+> want to use this beyond personal use, ask
 > [@revisionhiep-create](https://github.com/revisionhiep-create).
 
 ### Third-Party Components

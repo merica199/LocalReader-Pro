@@ -16,7 +16,7 @@ from pathlib import Path
 # menu items, so this has to happen before `import webview`.
 _APP_NAME = "LocalReader Pro"
 _APP_VERSION = "3.6.1"
-_APP_COPYRIGHT = "\u00a9 revisionhiep-create \u00b7 macOS fork by merica199"
+_APP_COPYRIGHT = "\u00a9 revisionhiep-create \u00b7 extended by merica199"
 if sys.platform == "darwin":
     try:
         from Foundation import NSBundle

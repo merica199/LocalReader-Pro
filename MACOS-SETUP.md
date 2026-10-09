@@ -171,7 +171,7 @@ tail -f ~/Library/Logs/LocalReader-Pro.log
 ## 3. What is in git and what is not
 
 **In the repo (55 files):** Python source, the web frontend, translations,
-config defaults, dependency lists, upstream docs, and the Windows build files.
+config defaults, dependency lists, docs, and the installers.
 Program logic and configuration only.
 
 **Never in the repo:** every one of your personal files. Three independent
@@ -214,9 +214,8 @@ dist/app/models   →  ~/Library/Application Support/LocalReader Pro/models
 **Why this approach.** The app computes its own paths relative to its source
 files ([`config.py`](dist/app/config.py) anchors everything to the script
 location) so it always looks for `dist/userdata`. Rather than rewrite that
-logic, which would create a permanent difference from upstream and cause merge
-conflicts on every update, the paths stay where the code expects and the
-symlinks redirect the storage. **Zero code changes, correct macOS behavior.**
+logic, the paths stay where the code expects and the symlinks redirect the
+storage. **Zero code changes, correct macOS behavior.**
 
 Inspect them:
 
@@ -316,12 +315,12 @@ and models are untouched by this: they are elsewhere.
 
 ---
 
-## 7. Local changes vs upstream
+## 7. Changes from the original
 
 ### 7.1 Voice preview
 
-Upstream has no way to hear a voice before selecting it: you pick one of 49
-blind, open a document, and start reading to find out. This fork adds a preview
+The original has no way to hear a voice before selecting it: you pick one of 49
+blind, open a document, and start reading to find out. This version adds a preview
 button beside the voice dropdown in **Voice & Audio**.
 
 Pressing it plays a short sample of the currently selected voice. Every voice in
@@ -356,10 +355,10 @@ outside the cache directory.
 
 ### 7.2 Platform-native FFmpeg
 
-One commit on top of upstream: **"Use platform-native FFmpeg instead of assuming
+One commit: **"Use platform-native FFmpeg instead of assuming
 a Windows build."**
 
-Upstream assumed Windows throughout its FFmpeg handling, which made MP3 export
+The original assumed Windows throughout its FFmpeg handling, which made MP3 export
 impossible on macOS:
 
 - Binary paths were hardcoded to `ffmpeg.exe` / `ffprobe.exe`.
@@ -395,12 +394,14 @@ tells you to use Homebrew; without it, it downloads unusable Windows binaries.
 
 ## 8. Git remotes
 
-Two remotes, following standard fork convention:
+One remote:
 
 | Remote | Points at | Purpose |
 |---|---|---|
-| `origin` | `github.com/merica199/LocalReader-Pro` | **Your fork.** You push here. |
-| `upstream` | `github.com/revisionhiep-create/LocalReader-Pro` | Original author. Read-only; you cannot push here. |
+| `origin` | `github.com/merica199/LocalReader-Pro` | **Your repository.** You push here, and installed copies update from it. |
+
+It began as a fork of `revisionhiep-create/LocalReader-Pro` and left GitHub's
+fork network in October 2026; the original is no longer a remote.
 
 A **remote** is a nickname for a copy of the repo on a server. A **checkout** is
 the working copy of files on your disk (§2.2).
@@ -447,19 +448,8 @@ git add -A                  # stage everything not ignored
 git commit -m "Describe what you changed"
 
 gh auth switch --user merica199   # if the work account is active
-git push                    # send to your fork
+git push                    # send to GitHub
 ```
-
-### Pulling the original author's updates
-
-```sh
-git fetch upstream
-git log --oneline HEAD..upstream/main    # preview what is new
-git merge upstream/main                  # apply it
-git push                                 # update your fork
-```
-
-If a merge conflicts, `git merge --abort` returns you to where you started.
 
 ---
 
@@ -483,7 +473,7 @@ hardcodes `providers = ["CPUExecutionProvider"]` unless the Windows/Linux-only
 marginally better audio.
 
 Your Mac does expose `CoreMLExecutionProvider`, and `kokoro-onnx` honors an
-`ONNX_PROVIDER` environment variable, but the upstream changelog records
+`ONNX_PROVIDER` environment variable, but the original's changelog records
 `v3.6.1: Revert GPU acceleration (static noise)`. Forcing CoreML is likely to
 reintroduce that.
 
@@ -560,7 +550,7 @@ curl -s http://127.0.0.1:8000/api/ffmpeg/status   # export readiness
 | Log file | `~/Library/Logs/LocalReader-Pro.log` |
 | Server address | `http://127.0.0.1:8000` (local only) |
 | Bundle identifier | `com.localreaderpro.app` |
-| Your fork | `https://github.com/merica199/LocalReader-Pro` |
-| Upstream | `https://github.com/revisionhiep-create/LocalReader-Pro` |
+| Repository | `https://github.com/merica199/LocalReader-Pro` |
+| Based on | `https://github.com/revisionhiep-create/LocalReader-Pro` |
 | Voice engine | Kokoro ONNX, int8 quantized, 54 voices |
 | FFmpeg | `/opt/homebrew/bin/ffmpeg` (Homebrew, not bundled) |

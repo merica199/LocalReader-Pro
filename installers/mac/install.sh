@@ -53,7 +53,7 @@ printf 'Installing from: %s\n' "$SRC"
 
 # --- Where the app goes --------------------------------------------------------
 # A repository that already sits inside an app bundle is that install (the
-# layout this fork has always used), so it is refreshed where it is.
+# layout this app has always used), so it is refreshed where it is.
 case "$SRC" in
 *.app/Contents/Resources/*)
 	APP="${SRC%%.app/Contents/Resources/*}.app"
