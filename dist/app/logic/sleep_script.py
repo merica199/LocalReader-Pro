@@ -209,3 +209,17 @@ def estimate_seconds(events: List[Event], pacing: Pacing, chars_per_second: floa
     speech = sum(len(v) for k, v in events if k == "say") / chars_per_second
     silence = sum(v for k, v in events if k == "pause")
     return pacing.lead_in + speech + silence + pacing.tail
+
+
+def take_seconds(events: List[Event], seconds: float, chars_per_second: float) -> List[Event]:
+    """The opening of a plan, about `seconds` long: what a preview renders."""
+    taken: List[Event] = []
+    elapsed = 0.0
+    for kind, value in events:
+        if elapsed >= seconds:
+            break
+        taken.append((kind, value))
+        elapsed += value if kind == "pause" else len(value) / chars_per_second
+    while taken and taken[-1][0] == "pause":
+        taken.pop()
+    return taken

@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import List, Literal, Optional, Dict, Any
 
 
 class LibraryItem(BaseModel):
@@ -58,10 +58,45 @@ class ExportRequest(BaseModel):
     ignore_list: List[str] = []
 
 
-class SleepExportRequest(ExportRequest):
+# Defaults here repeat Pacing in logic/sleep_script.py and Sound in
+# logic/sleep_finish.py; a test checks they agree.
+class SleepPacing(BaseModel):
+    """Pause lengths, in seconds."""
+
+    sentence: float = Field(1.0, ge=0, le=60)
+    paragraph: float = Field(2.6, ge=0, le=60)
+    ellipsis: float = Field(1.1, ge=0, le=60)
+    clause: float = Field(0.3, ge=0, le=10)
+    lead_in: float = Field(3.0, ge=0, le=600)
+    # Up to an hour, for background sound that carries on after the voice.
+    tail: float = Field(8.0, ge=0, le=3600)
+
+
+class SleepSound(BaseModel):
+    soften: Literal["off", "light", "medium", "strong"] = "light"
+    room: Literal["off", "subtle", "roomy"] = "subtle"
+    # LUFS; None leaves the voice at the level it was rendered at.
+    loudness: Optional[float] = Field(-22.0, ge=-40, le=-10)
+    # "none", "brown", "pink", "white", or "file:<name>" for an added sound.
+    background: str = "brown"
+    background_level: float = Field(-18.0, ge=-50, le=0)
+    fade_in: float = Field(3.0, ge=0, le=600)
+    fade_out: float = Field(45.0, ge=0, le=1800)
+    format: Literal["mp3", "m4a", "wav"] = "mp3"
+    bitrate: Literal[64, 96, 128, 192] = 96
+
+
+class SleepSettings(BaseModel):
     # Slower than reading pace by default: the speed a sleep recording wants is
     # not the speed someone reads a book at.
-    speed: float = 0.9
+    speed: float = Field(0.9, ge=0.5, le=1.5)
+    pacing: SleepPacing = SleepPacing()
+    sound: SleepSound = SleepSound()
+
+
+class SleepExportRequest(SleepSettings, ExportRequest):
+    # SleepSettings first, so its speed (0.9, bounded) wins over the reading speed.
+    pass
 
 
 class SynthesisRequest(BaseModel):

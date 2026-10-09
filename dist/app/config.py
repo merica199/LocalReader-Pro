@@ -31,6 +31,13 @@ preview_cache_dir = userdata_dir / "voice_previews"
 # apart from audio_cache.db: that cache holds 200 MB and is cleared whenever the
 # voice changes, either of which would throw away an unfinished render.
 sleep_cache_dir = userdata_dir / "sleep_cache"
+# The voice track and other files of the sleep recording being rendered, and
+# the latest preview. Emptied at the start of each render.
+sleep_work_dir = userdata_dir / "sleep_work"
+# Background sounds added for sleep recordings (rain, waves...).
+sleep_sounds_dir = userdata_dir / "sleep_sounds"
+# The sleep-recording options last used, so they survive a restart.
+sleep_settings_file = userdata_dir / "sleep_settings.json"
 
 # File paths
 settings_file = userdata_dir / "settings.json"
