@@ -49,9 +49,9 @@ def load_engine_logic(requested_mode=None):
         try:
             with open(settings_file, "r") as f:
                 settings = json.load(f)
-            requested_mode = settings.get("engine_mode", "gpu")
+            requested_mode = settings.get("engine_mode", "cpu")
         except Exception:
-            requested_mode = "gpu"
+            requested_mode = "cpu"
 
     models_dir = base_dir / "models"
     voices_path = models_dir / "voices.bin"
@@ -138,9 +138,9 @@ async def get_status():
     try:
         with open(settings_file, "r") as f:
             settings = json.load(f)
-        current_engine_mode = settings.get("engine_mode", "gpu")
+        current_engine_mode = settings.get("engine_mode", "cpu")
     except Exception:
-        current_engine_mode = "gpu"
+        current_engine_mode = "cpu"
 
     models_dir = base_dir / "models"
     available_models = {
@@ -176,12 +176,12 @@ async def run_setup(background_tasks: BackgroundTasks, model_type: str = None):
                 try:
                     with open(settings_file, "r") as f:
                         settings = json.load(f)
-                    target_model = settings.get("engine_mode", "gpu")
+                    target_model = settings.get("engine_mode", "cpu")
                 except:
-                    target_model = "gpu"
+                    target_model = "cpu"
 
             if target_model not in ["gpu", "cpu"]:
-                target_model = "gpu"
+                target_model = "cpu"
 
             print(f"[SETUP] Starting download for {target_model} model...")
             download_kokoro_model(target_model)

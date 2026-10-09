@@ -39,7 +39,9 @@ async def lifespan(app: FastAPI):
             "ignoreList": [],
             "voice_id": "af_bella",
             "speed": 1.0,
-            "engine_mode": "gpu",
+            # The quantized model: what the installers download, about a
+            # quarter of the size, and no slower on a CPU (README).
+            "engine_mode": "cpu",
             "ui_language": "en",
         },
     )

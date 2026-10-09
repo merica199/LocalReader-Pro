@@ -28,7 +28,7 @@ export const state = {
     rules: [],
     ignoreList: [],
     headerFooterMode: 'off',
-    engineMode: 'gpu',
+    engineMode: 'cpu',
     currentSearchQuery: '',
     searchDebounceTimer: null,
     jumpTimer: null,

@@ -58,7 +58,7 @@ async function init() {
     state.rules = settings.pronunciationRules || [];
     state.ignoreList = settings.ignoreList || [];
     state.headerFooterMode = settings.header_footer_mode || "off";
-    state.engineMode = settings.engine_mode || "gpu";
+    state.engineMode = settings.engine_mode || "cpu";
     state.pauseSettings = settings.pause_settings || state.pauseSettings;
     state.uiLanguage = settings.ui_language || "en";
 

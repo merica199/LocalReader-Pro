@@ -32,7 +32,7 @@ class AppSettings(BaseModel):
     speed: Optional[float] = 1.0
     font_size: Optional[int] = 16
     header_footer_mode: Optional[str] = "off"
-    engine_mode: Optional[str] = "gpu"
+    engine_mode: Optional[str] = "cpu"
     ui_language: Optional[str] = "en"
     pause_settings: Optional[Dict[str, int]] = {
         "comma": 300,
