@@ -508,6 +508,12 @@ and is not in upstream.
   in the stored text, which text and Markdown files keep and PDF and EPUB
   extraction does not. The approach comes from
   [docs/reference/sleepcast.py](docs/reference/sleepcast.py).
+- **Paragraph pause in live reading.** A Paragraph slider (1200 ms by default)
+  sets the silence after the last sentence of a paragraph, which used to get the
+  same 0.7 s as any sentence end. A paragraph ends where a blank line separates
+  two sentences; for text and Markdown the last sentence on a page counts too.
+  The pause is added to the clip itself rather than timed, which keeps it inside
+  the playback chain's race guards.
 
 ### Fixed
 
@@ -533,6 +539,21 @@ and is not in upstream.
   characters of English used less than half the budget and split sentences that
   would have fitted, while 200 characters of Chinese overran the limit and was
   truncated. The budget is now derived from the script.
+- **Live reading went silent before long sentences.** Read-aloud generated two
+  sentences ahead, so two short sentences (a few seconds of audio) ran out
+  before a long one behind them (about ten seconds to generate) was ready:
+  measured at 7.5 to 12 s of silence each time. Generation now runs ahead by
+  time, about 30 s of audio, and audio already generated for the next page is
+  no longer thrown away at the page turn. Cache keys include the sentence text
+  and settings, so the cache no longer has to be cleared to stay correct.
+- **Document text could run as code.** Sentences with `[DIM]` markers,
+  document names and search snippets were inserted with `innerHTML`, so markup
+  in a document or its file name ran inside the app, with access to its local
+  API. They are now inserted as text.
+  *(Also open upstream as [PR #14](https://github.com/revisionhiep-create/LocalReader-Pro/pull/14).)*
+- **Markdown with a byte order mark lost its first heading.** Decoding tried
+  plain UTF-8 first, which kept the mark in front of `# Title`, and UTF-16 files
+  came out as noise. Markdown now uses the text reader's decoder.
 
 - **Missing dependencies.** `psutil` is imported by `app/server.py` but was never
   declared, so a clean install failed on first launch. On Python 3.13, `pydub`
