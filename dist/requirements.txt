@@ -1,23 +1,37 @@
-fastapi
-uvicorn
-torch
-huggingface_hub
-scipy
-soundfile
-kokoro-onnx
-python-multipart
-pywebview
-requests
-numpy
-pydantic
-ebooklib
-xhtml2pdf
-beautifulsoup4
-lxml
-pydub
-psutil
-markdown
+# Pinned to the versions the app is run and tested with (Python 3.12), so an
+# install made today and one made next month get the same libraries, and an
+# update changes them only when this file does. Raise a pin deliberately and
+# test before committing it.
+
+fastapi==0.141.1
+uvicorn==0.52.3
+python-multipart==0.0.32
+pydantic==2.13.4
+requests==2.34.2
+huggingface_hub==1.27.0
+pywebview==6.2.1
+psutil==7.2.2
+
+# The voice engine. Pinned with its own dependencies: a different onnxruntime or
+# phonemizer can change how a sentence sounds, and sleep recordings cache audio
+# per sentence.
+kokoro-onnx==0.5.0
+onnxruntime==1.28.0
+espeakng-loader==0.2.4
+phonemizer-fork==3.3.2
+numpy==2.5.2
+scipy==1.18.0
+soundfile==0.14.0
+pydub==0.25.1
+
+# Document formats
+ebooklib==0.20
+xhtml2pdf==0.2.17
+beautifulsoup4==4.15.0
+lxml==6.1.1
+Markdown==3.10.3
+
 # pydub imports the stdlib audioop module, which PEP 594 removed in Python 3.13.
 # audioop-lts is the drop-in replacement, and it requires 3.13+, so it must stay
-# behind a marker or it breaks installs on the 3.10-3.12 range the README supports.
+# behind a marker or it breaks installs on 3.12.
 audioop-lts; python_version >= "3.13"
