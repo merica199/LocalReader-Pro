@@ -17,6 +17,9 @@ except ImportError:
 # --- Global State Instances ---
 audio_cache = AudioCache(cache_db_path, max_size_mb=MAX_CACHE_SIZE_MB)
 kokoro = None  # The TTS engine instance
+# File name of the loaded model. The int8 and FP32 models sound different, so
+# anything that stores generated audio has to know which one made it.
+kokoro_model = None
 
 # Serializes every call into the TTS engine.
 #

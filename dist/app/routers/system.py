@@ -102,6 +102,7 @@ def load_engine_logic(requested_mode=None):
         if state_module.kokoro is not None:
             print("[ENGINE] Unloading previous model...")
             state_module.kokoro = None  # GC old model
+            state_module.kokoro_model = None
 
         print(f"[ENGINE] Initializing {actual_mode.upper()} model...")
 
@@ -111,6 +112,7 @@ def load_engine_logic(requested_mode=None):
         else:
             print("[ENGINE] Using default Kokoro for CPU model...")
             state_module.kokoro = Kokoro(str(model_to_load), str(voices_path))
+        state_module.kokoro_model = model_to_load.name
 
         if actual_mode != requested_mode:
             warn = f"Using {actual_mode.upper()} model (your selected {requested_mode.upper()} model not found)"

@@ -35,6 +35,7 @@ import {
   cancelExport,
   startFFMPEGDownload,
   openExportLocation,
+  initExportDialog,
 } from "./modules/export.js";
 import { initTimer } from "./modules/timer.js";
 
@@ -603,6 +604,7 @@ document.getElementById("startFFMPEGDownload").onclick = startFFMPEGDownload;
 document.getElementById("cancelFFMPEGBtn").onclick = () =>
   document.getElementById("ffmpegModal").classList.add("hidden");
 document.getElementById("openFileLocationBtn").onclick = openExportLocation;
+initExportDialog();
 
 // Rules
 document.getElementById("rulesList").addEventListener("input", (e) => {

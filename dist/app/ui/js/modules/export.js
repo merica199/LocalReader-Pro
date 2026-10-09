@@ -6,10 +6,43 @@ import { showToast, renderIcons } from './ui.js';
 let exportPollInterval = null;
 let ffmpegPollInterval = null;
 
-export async function startExport() {
-    const voiceSelect = document.getElementById('voiceSelect');
-    const speedRange = document.getElementById('speedRange');
+// "normal" or "sleep". Remembered for the session, so several sleep recordings
+// in a row do not mean re-picking it each time; a fresh start is back to normal.
+let exportMode = 'normal';
+// Mode of the export the progress view is showing, or null when none is.
+let runningMode = null;
+// A sleep render can take an hour, so its dialog can be hidden while it runs;
+// completion is then announced with a toast instead.
+let exportHidden = false;
+let sleepEstimateToken = 0;
 
+function formatDuration(seconds) {
+    const s = Math.max(0, Math.round(seconds));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function exportRequestBody(speed) {
+    return {
+        doc_id: state.currentDoc.id,
+        voice: document.getElementById('voiceSelect').value,
+        speed,
+        rules: state.rules,
+        ignore_list: state.ignoreList
+    };
+}
+
+export function initExportDialog() {
+    document.getElementById('exportModeNormal').onclick = () => setExportMode('normal');
+    document.getElementById('exportModeSleep').onclick = () => setExportMode('sleep');
+    document.getElementById('startExportBtn').onclick = beginExport;
+    document.getElementById('clearSleepCacheBtn').onclick = clearSleepCache;
+    document.getElementById('hideExportBtn').onclick = hideExport;
+    document.getElementById('sleepSpeed').onchange = refreshSleepEstimate;
+}
+
+export async function startExport() {
     if (!state.currentDoc) {
         showToast("No document selected");
         return;
@@ -19,50 +52,154 @@ export async function startExport() {
         return;
     }
 
+    exportHidden = false;
+    // Neither view until the status says which, so the last export's progress
+    // does not flash up before the options replace it.
+    document.getElementById('exportOptions').classList.add('hidden');
+    document.getElementById('exportRunning').classList.add('hidden');
+    document.getElementById('exportModal').classList.remove('hidden');
+
+    // A sleep recording may still be rendering in the background; show it
+    // rather than offering to start another.
     try {
-        const status = await fetchJSON(`/api/ffmpeg/status?t=${Date.now()}`);
-        if (!status.is_installed) {
-            showFFMPEGDownloadModal();
+        const status = await fetchJSON(`/api/export/status?t=${Date.now()}`);
+        if (status.is_exporting) {
+            showRunning(status.mode === 'sleep' ? 'sleep' : 'normal');
+            startExportPolling();
             return;
         }
+    } catch (e) {
+        console.error(e);
+    }
+    showOptions();
+}
 
-        const totalChars = state.currentPages.join('').length;
-        const estimatedSeconds = Math.ceil((totalChars / 1000) * 15);
-        const estimatedMins = Math.ceil(estimatedSeconds / 60);
+function showOptions() {
+    runningMode = null;
+    document.getElementById('exportTitle').textContent = 'Export Audio';
+    document.getElementById('exportOptions').classList.remove('hidden');
+    document.getElementById('exportRunning').classList.add('hidden');
 
-        if (!confirm(`This will export the entire document to MP3.\n\nEstimated time: ~${estimatedMins} minute${estimatedMins !== 1 ? 's' : ''}\n\nContinue?`)) {
-            return;
-        }
+    const totalChars = state.currentPages.join('').length;
+    const estimatedMins = Math.ceil(Math.ceil((totalChars / 1000) * 15) / 60);
+    document.getElementById('normalEstimate').textContent =
+        `The whole document at reading pace. Estimated time: ~${estimatedMins} minute${estimatedMins !== 1 ? 's' : ''}`;
+    setExportMode(exportMode);
+    renderIcons();
+}
 
-        const res = await fetchJSON(`/api/export/audio`, {
+function setExportMode(mode) {
+    exportMode = mode;
+    for (const [id, m] of [['exportModeNormal', 'normal'], ['exportModeSleep', 'sleep']]) {
+        const button = document.getElementById(id);
+        button.classList.toggle('border-blue-600', m === mode);
+        button.classList.toggle('bg-blue-600/10', m === mode);
+        button.classList.toggle('border-zinc-700', m !== mode);
+    }
+    document.getElementById('normalOptions').classList.toggle('hidden', mode !== 'normal');
+    document.getElementById('sleepOptions').classList.toggle('hidden', mode !== 'sleep');
+    if (mode === 'sleep') refreshSleepEstimate();
+}
+
+async function refreshSleepEstimate() {
+    // Responses can arrive out of order when the speed is changed quickly;
+    // only the latest request may write the estimate.
+    const token = ++sleepEstimateToken;
+    const estimate = document.getElementById('sleepEstimate');
+    estimate.textContent = 'Estimating length...';
+    refreshSleepCacheInfo();
+    try {
+        const speed = parseFloat(document.getElementById('sleepSpeed').value);
+        const plan = await fetchJSON('/api/export/sleep/plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                doc_id: state.currentDoc.id,
-                voice: voiceSelect.value,
-                speed: parseFloat(speedRange.value),
-                rules: state.rules,
-                ignore_list: state.ignoreList
-            })
+            body: JSON.stringify(exportRequestBody(speed))
         });
+        if (token !== sleepEstimateToken) return;
+        const cached = plan.cached_pieces ? ` (${plan.cached_pieces} already rendered)` : '';
+        estimate.textContent =
+            `About ${formatDuration(plan.estimated_seconds)} long, ${plan.pieces} sentences${cached}. ` +
+            `Rendering takes roughly ${formatDuration(plan.estimated_render_seconds)}.`;
+    } catch (e) {
+        if (token === sleepEstimateToken) estimate.textContent = 'Could not estimate: ' + e.message;
+    }
+}
 
-        const exportModal = document.getElementById('exportModal');
-        const exportStatus = document.getElementById('exportStatus');
+async function refreshSleepCacheInfo() {
+    try {
+        const usage = await fetchJSON(`/api/export/sleep/cache?t=${Date.now()}`);
+        document.getElementById('sleepCacheInfo').textContent =
+            `Sentence cache: ${Math.round(usage.bytes / 1e6)} MB`;
+    } catch (e) {
+        console.error(e);
+    }
+}
 
-        exportModal.classList.remove('hidden');
-        document.getElementById('exportComplete').classList.add('hidden');
-        document.getElementById('exportError').classList.add('hidden');
-        document.getElementById('exportProgress').textContent = '0%';
-        document.getElementById('exportProgressBar').style.width = '0%';
-        exportStatus.textContent = 'Initializing export...';
-        document.getElementById('playBtn').disabled = true;
+async function clearSleepCache() {
+    if (!confirm('Delete every cached sleep-recording sentence?\n\nExporting again will generate them from scratch.')) {
+        return;
+    }
+    try {
+        const res = await fetchJSON('/api/export/sleep/cache/clear', { method: 'POST' });
+        showToast(`Cleared ${Math.round(res.bytes / 1e6)} MB`);
+    } catch (e) {
+        showToast("Could not clear the cache: " + e.message);
+    }
+    refreshSleepEstimate();
+}
 
+async function beginExport() {
+    try {
+        if (exportMode === 'sleep') {
+            const speed = parseFloat(document.getElementById('sleepSpeed').value);
+            await fetchJSON('/api/export/sleep', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(exportRequestBody(speed))
+            });
+            // Reading stays available: the render takes the engine one
+            // sentence at a time, so read-aloud just waits its turn.
+            showRunning('sleep');
+        } else {
+            const status = await fetchJSON(`/api/ffmpeg/status?t=${Date.now()}`);
+            if (!status.is_installed) {
+                document.getElementById('exportModal').classList.add('hidden');
+                showFFMPEGDownloadModal();
+                return;
+            }
+            const speed = parseFloat(document.getElementById('speedRange').value);
+            await fetchJSON(`/api/export/audio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(exportRequestBody(speed))
+            });
+            showRunning('normal');
+            document.getElementById('playBtn').disabled = true;
+        }
         startExportPolling();
-
     } catch (e) {
         console.error(e);
         showToast("Export failed: " + e.message);
     }
+}
+
+function showRunning(mode) {
+    runningMode = mode;
+    document.getElementById('exportTitle').textContent =
+        mode === 'sleep' ? 'Rendering Sleep Recording' : 'Exporting Audio';
+    document.getElementById('exportOptions').classList.add('hidden');
+    document.getElementById('exportRunning').classList.remove('hidden');
+    document.getElementById('exportComplete').classList.add('hidden');
+    document.getElementById('exportError').classList.add('hidden');
+    document.getElementById('exportProgress').textContent = '0%';
+    document.getElementById('exportProgressBar').style.width = '0%';
+    document.getElementById('exportStatus').textContent = 'Initializing export...';
+    document.getElementById('hideExportBtn').classList.toggle('hidden', mode !== 'sleep');
+}
+
+function hideExport() {
+    exportHidden = true;
+    document.getElementById('exportModal').classList.add('hidden');
 }
 
 function startExportPolling() {
@@ -70,12 +207,15 @@ function startExportPolling() {
     exportPollInterval = setInterval(async () => {
         try {
             const status = await fetchJSON(`/api/export/status?t=${Date.now()}`);
+            const sleep = status.mode === 'sleep';
             if (status.error) {
                 clearInterval(exportPollInterval);
                 document.getElementById('exportError').classList.remove('hidden');
                 document.getElementById('exportErrorMsg').textContent = status.error;
                 document.getElementById('exportStatus').textContent = 'Export failed';
+                document.getElementById('hideExportBtn').classList.add('hidden');
                 document.getElementById('playBtn').disabled = false;
+                if (exportHidden) showToast("Sleep recording failed: " + status.error);
                 return;
             }
 
@@ -83,17 +223,23 @@ function startExportPolling() {
                 const percent = status.total > 0 ? Math.round((status.progress / status.total) * 100) : 0;
                 document.getElementById('exportProgress').textContent = `${percent}%`;
                 document.getElementById('exportProgressBar').style.width = `${percent}%`;
-                document.getElementById('exportStatus').textContent = `Processing paragraph ${status.progress} of ${status.total}...`;
+                document.getElementById('exportStatus').textContent = sleep
+                    ? `Sentence ${status.progress} of ${status.total}, ${formatDuration(status.audio_seconds)} recorded`
+                    : `Processing paragraph ${status.progress} of ${status.total}...`;
             } else if (status.output_file) {
                 clearInterval(exportPollInterval);
                 document.getElementById('exportProgress').textContent = '100%';
                 document.getElementById('exportProgressBar').style.width = '100%';
-                document.getElementById('exportStatus').textContent = 'Export complete!';
+                document.getElementById('exportStatus').textContent = sleep
+                    ? `Sleep recording complete: ${formatDuration(status.audio_seconds)} long`
+                    : 'Export complete!';
 
                 document.getElementById('exportFilePath').textContent = `./userdata/${status.output_file}`;
                 document.getElementById('exportComplete').classList.remove('hidden');
+                document.getElementById('hideExportBtn').classList.add('hidden');
                 document.getElementById('playBtn').disabled = false;
                 renderIcons();
+                if (exportHidden) showToast(`Sleep recording saved: ${status.output_file}`);
 
                 // Store output file in DOM for the "Open Folder" button
                 document.getElementById('exportModal').dataset.outputFile = status.output_file;
@@ -104,11 +250,21 @@ function startExportPolling() {
     }, 1000);
 }
 
-export function cancelExport() {
-    if (exportPollInterval) clearInterval(exportPollInterval);
-    fetchJSON(`/api/export/cancel`, { method: 'POST' }).catch(console.error);
+export async function cancelExport() {
+    // Before an export starts, the close button only closes.
+    if (runningMode) {
+        const status = await fetchJSON(`/api/export/status?t=${Date.now()}`).catch(() => ({}));
+        if (status.is_exporting) {
+            if (runningMode === 'sleep' &&
+                !confirm('Stop rendering the sleep recording?\n\nSentences already rendered stay cached, so exporting it again picks up where it stopped.')) {
+                return;
+            }
+            fetchJSON(`/api/export/cancel`, { method: 'POST' }).catch(console.error);
+        }
+        if (exportPollInterval) clearInterval(exportPollInterval);
+        document.getElementById('playBtn').disabled = false;
+    }
     document.getElementById('exportModal').classList.add('hidden');
-    document.getElementById('playBtn').disabled = false;
 }
 
 function showFFMPEGDownloadModal() {

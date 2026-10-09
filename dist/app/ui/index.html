@@ -912,7 +912,7 @@
         class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4"
       >
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-bold text-white">Exporting Audio</h3>
+          <h3 id="exportTitle" class="text-lg font-bold text-white">Export Audio</h3>
           <button
             id="cancelExportBtn"
             class="text-zinc-500 hover:text-red-500 transition-colors"
@@ -921,7 +921,69 @@
           </button>
         </div>
 
-        <div class="space-y-4">
+        <!-- Chosen before anything starts -->
+        <div id="exportOptions" class="space-y-4">
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              id="exportModeNormal"
+              class="export-mode px-3 py-3 rounded-lg border text-left transition-all"
+            >
+              <div class="text-sm font-semibold text-white">Normal</div>
+              <div class="text-[11px] text-zinc-500">MP3, reading pace</div>
+            </button>
+            <button
+              id="exportModeSleep"
+              class="export-mode px-3 py-3 rounded-lg border text-left transition-all"
+            >
+              <div class="text-sm font-semibold text-white">Sleep mode</div>
+              <div class="text-[11px] text-zinc-500">WAV, slow with long pauses</div>
+            </button>
+          </div>
+
+          <div id="normalOptions" class="text-xs text-zinc-400">
+            <span id="normalEstimate"></span>
+          </div>
+
+          <div id="sleepOptions" class="hidden space-y-3">
+            <label class="flex items-center justify-between text-sm text-zinc-300">
+              <span>Speed</span>
+              <input
+                type="number"
+                id="sleepSpeed"
+                min="0.5"
+                max="1.5"
+                step="0.05"
+                value="0.9"
+                class="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-right font-mono text-white"
+              />
+            </label>
+            <div id="sleepEstimate" class="text-xs text-zinc-400"></div>
+            <div class="flex items-center justify-between text-xs text-zinc-500">
+              <span id="sleepCacheInfo"></span>
+              <button
+                id="clearSleepCacheBtn"
+                class="text-zinc-400 hover:text-red-400 underline"
+              >
+                Clear cache
+              </button>
+            </div>
+            <p class="text-[11px] leading-relaxed text-zinc-500">
+              Script markup: a blank line is a paragraph pause, <code>...</code>
+              is a soft pause, <code>[pause 6]</code> is six seconds of
+              silence, and a line starting with <code>#</code> is skipped.
+            </p>
+          </div>
+
+          <button
+            id="startExportBtn"
+            class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-semibold"
+          >
+            Start export
+          </button>
+        </div>
+
+        <!-- Once started -->
+        <div id="exportRunning" class="hidden space-y-4">
           <div>
             <div class="flex justify-between text-sm mb-2">
               <span class="text-zinc-400">Progress</span>
@@ -975,6 +1037,13 @@
               <span id="exportErrorMsg"></span>
             </div>
           </div>
+
+          <button
+            id="hideExportBtn"
+            class="hidden w-full px-4 py-2 text-sm text-zinc-400 hover:text-white border border-zinc-700 rounded-lg transition-all"
+          >
+            Keep rendering in the background
+          </button>
         </div>
       </div>
     </div>

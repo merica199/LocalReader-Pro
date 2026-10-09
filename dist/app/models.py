@@ -57,6 +57,12 @@ class ExportRequest(BaseModel):
     ignore_list: List[str] = []
 
 
+class SleepExportRequest(ExportRequest):
+    # Slower than reading pace by default: the speed a sleep recording wants is
+    # not the speed someone reads a book at.
+    speed: float = 0.9
+
+
 class SynthesisRequest(BaseModel):
     text: str
     voice: str = "af_sky"

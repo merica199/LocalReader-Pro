@@ -27,6 +27,10 @@ cache_db_path = userdata_dir / "audio_cache.db"
 # is safe to delete; kept out of audio_cache.db because that cache evicts by
 # size and previews should survive a heavy reading session.
 preview_cache_dir = userdata_dir / "voice_previews"
+# One file per sentence of a sleep recording, so a long render can resume. Kept
+# apart from audio_cache.db: that cache holds 200 MB and is cleared whenever the
+# voice changes, either of which would throw away an unfinished render.
+sleep_cache_dir = userdata_dir / "sleep_cache"
 
 # File paths
 settings_file = userdata_dir / "settings.json"

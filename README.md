@@ -482,6 +482,32 @@ and is not in upstream.
   are cut near 2500 characters, between paragraphs where possible and
   mid-paragraph only when one paragraph is longer than a page. A binary file
   renamed to `.txt` is refused rather than read aloud.
+- **Sleep mode export.** The export dialog offers Normal (the MP3 export as
+  before, at reading pace) or Sleep mode, which renders a slow, evenly paced WAV
+  to fall asleep to. The model is given one sentence at a time and every pause is
+  silence inserted afterwards, so pacing is exact: 1.0 s after a sentence, 2.6 s
+  at a paragraph break, 3 s of lead-in and 8 s of tail. Each sentence is trimmed
+  of the silence the model leaves at its edges (0.07 to 0.25 s, varying) and
+  leveled to the same loudness. A script can mark up its own pacing:
+
+  | Markup | Effect |
+  |---|---|
+  | blank line | paragraph pause (2.6 s) |
+  | `...` or `…` | soft pause mid-thought (1.1 s) |
+  | `[pause 6]` | exactly 6 s of silence |
+  | `# note` | the whole line is skipped |
+
+  The WAV is written as it renders, so a three-hour recording never sits in
+  memory (a four-hour test render raised peak memory by 2 MB). Every sentence is
+  cached under `userdata/sleep_cache/`, about 170 MB per hour of speech, so a
+  cancelled or crashed render resumes where it stopped, and re-rendering an
+  edited script only generates the sentences that changed. Kokoro returns
+  identical audio for identical input, so a sentence that comes out implausibly
+  short or long is retried as two halves split at its middle clause rather than
+  regenerated unchanged. Default speed is 0.9. Paragraph pauses need blank lines
+  in the stored text, which text and Markdown files keep and PDF and EPUB
+  extraction does not. The approach comes from
+  [docs/reference/sleepcast.py](docs/reference/sleepcast.py).
 
 ### Fixed
 
