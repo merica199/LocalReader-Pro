@@ -22,8 +22,8 @@
 
 - **Multi-Format Support:** PDF, EPUB, Markdown and plain text files
 - **Multilingual UI:** Full interface translation (**English, French, Spanish, Chinese**)
-- **Dual-Model Architecture:** Choose between the quantized model (88 MB) and the full FP32 model (~309 MB). Note that the UI labels these "CPU" and "GPU", but the label refers to the *model file*, not the hardware — `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed, so both run on the CPU
-- **Fast TTS Engine:** Kokoro-82M v1.0. Synthesis speed is hardware-dependent — measured at ~2.3x real-time with the quantized model on an Apple Silicon Mac
+- **Dual-Model Architecture:** Choose between the quantized model (88 MB) and the full FP32 model (~309 MB). Note that the UI labels these "CPU" and "GPU", but the label refers to the *model file*, not the hardware: `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed, so both run on the CPU
+- **Fast TTS Engine:** Kokoro-82M v1.0. Synthesis speed is hardware-dependent, measured at ~2.3x real-time with the quantized model on an Apple Silicon Mac
 - **Auto-Save Progress:** Resume exactly where you left off
 - **Sentence-Level Control:** Click any sentence to start reading from there
 
@@ -53,8 +53,8 @@
 
 - **One-Click Export:** Convert entire document to MP3
 - **Background Processing:** UI stays responsive during export
-- **FFMPEG Handling:** On Windows, auto-downloads the encoder (~100MB) on first export. On macOS and Linux, uses the system-installed `ffmpeg` from `PATH` — the bundled download is a Windows build and is not used there
-- **Export is a batch job, not playback:** reading synthesizes one sentence at a time on demand and starts immediately, but export renders the whole document up front. Budget roughly (audiobook length ÷ synthesis speed) — check the estimate the app shows before confirming
+- **FFMPEG Handling:** On Windows, auto-downloads the encoder (~100MB) on first export. On macOS and Linux, uses the system-installed `ffmpeg` from `PATH`; the bundled download is a Windows build and is not used there
+- **Export is a batch job, not playback:** reading synthesizes one sentence at a time on demand and starts immediately, but export renders the whole document up front. Budget roughly (audiobook length ÷ synthesis speed), and check the estimate the app shows before confirming
 
 ### 🔘 Sleep Timer
 
@@ -131,7 +131,7 @@ voice models, is fetched by the app on first run.
 
 To run it as a normal double-clickable application with your data stored in
 `~/Library/Application Support` rather than inside the project, see
-**[MACOS-SETUP.md](MACOS-SETUP.md)** — it documents the `.app` bundle layout,
+**[MACOS-SETUP.md](MACOS-SETUP.md)**: it documents the `.app` bundle layout,
 where every file lives, and the macOS-specific launch pitfalls.
 
 ---
@@ -299,7 +299,7 @@ After launching the application:
    between sentences and so costs nothing.
 
    Defaults are defined in `dist/app/ui/js/modules/state.js`. They are only
-   applied when no `pause_settings` block has been saved yet — once a slider is
+   applied when no `pause_settings` block has been saved yet. Once a slider is
    touched, the saved values in `userdata/settings.json` take over.
 3. Settings save automatically
 
@@ -483,12 +483,12 @@ and is not in upstream.
   mid-paragraph only when one paragraph is longer than a page. A binary file
   renamed to `.txt` is refused rather than read aloud.
 - **Sleep mode export.** The export dialog offers Normal (the MP3 export as
-  before, at reading pace) or Sleep mode, which renders a slow, evenly paced WAV
-  to fall asleep to. The model is given one sentence at a time and every pause is
-  silence inserted afterwards, so pacing is exact: 1.0 s after a sentence, 2.6 s
-  at a paragraph break, 3 s of lead-in and 8 s of tail. Each sentence is trimmed
-  of the silence the model leaves at its edges (0.07 to 0.25 s, varying) and
-  leveled to the same loudness. A script can mark up its own pacing:
+  before, at reading pace) or Sleep mode, which renders a slow, evenly paced
+  recording to fall asleep to. The model is given one sentence at a time and
+  every pause is silence inserted afterwards, so pacing is exact. Each sentence
+  is trimmed of the silence the model leaves at its edges (0.07 to 0.25 s,
+  varying) and leveled to the same loudness. A script can mark up its own
+  pacing:
 
   | Markup | Effect |
   |---|---|
@@ -497,17 +497,43 @@ and is not in upstream.
   | `[pause 6]` | exactly 6 s of silence |
   | `# note` | the whole line is skipped |
 
-  The WAV is written as it renders, so a three-hour recording never sits in
-  memory (a four-hour test render raised peak memory by 2 MB). Every sentence is
-  cached under `userdata/sleep_cache/`, about 170 MB per hour of speech, so a
-  cancelled or crashed render resumes where it stopped, and re-rendering an
-  edited script only generates the sentences that changed. Kokoro returns
-  identical audio for identical input, so a sentence that comes out implausibly
-  short or long is retried as two halves split at its middle clause rather than
-  regenerated unchanged. Default speed is 0.9. Paragraph pauses need blank lines
-  in the stored text, which text and Markdown files keep and PDF and EPUB
-  extraction does not. The approach comes from
-  [docs/reference/sleepcast.py](docs/reference/sleepcast.py).
+  The voice track is then finished in two FFmpeg passes, one that measures
+  loudness and one that applies everything and encodes:
+
+  | Option | Default | Choices |
+  |---|---|---|
+  | Pauses | 1.0 s sentence, 2.6 s paragraph, 1.1 s `...`, 3 s before, 8 s after | any, after the voice up to an hour |
+  | Background | brown noise, 18 dB under the voice | none, brown, pink, white, or your own sound file looped |
+  | Soften the voice | light (low-pass at 8.5 kHz) | off, 6 kHz, 4 kHz |
+  | Room | subtle | off, roomy |
+  | Loudness | -22 LUFS | as rendered, -26, -18 |
+  | Fades | 3 s in, 45 s out | any |
+  | File | MP3, 96 kbps | M4A, WAV; 64 to 192 kbps |
+
+  The room is a generated reverb tail (noise decaying 60 dB over 0.45 s or
+  0.9 s, darker as it decays, different on each side) rather than the
+  reference's two fixed echoes. Loudness is measured with dual-mono weighting,
+  so a mono file and a stereo one at the same setting sound equally loud. A
+  limiter keeps peaks under -1 dBFS for the encoders. Background sounds you add
+  (rain, waves) are kept under `userdata/sleep_sounds/`; the background level is
+  set against the voice's measured loudness, so it holds whatever the source
+  file's own level. **Preview the first minute** renders the opening with every
+  option applied and plays it in the dialog, so a change can be heard in seconds;
+  its sentences land in the same cache, so the full render reuses them. Options
+  are remembered between sessions (`userdata/sleep_settings.json`).
+
+  Nothing holds the recording in memory: the voice is written as it renders,
+  and FFmpeg streams. Measured on a three-hour track: 6 s to measure, 85 s to
+  mix and encode, 130 MB as MP3. Every sentence is cached under
+  `userdata/sleep_cache/`, about 170 MB per hour of speech, so a cancelled or
+  crashed render resumes where it stopped, and re-rendering with different
+  pauses or sound regenerates nothing. Kokoro returns identical audio for
+  identical input, so a sentence that comes out implausibly short or long is
+  retried as two halves split at its middle clause rather than regenerated
+  unchanged. Default speed is 0.9. Paragraph pauses need blank lines in the
+  stored text, which text and Markdown files keep and PDF and EPUB extraction
+  does not. WAV with every sound option off needs no FFmpeg. The approach comes
+  from [docs/reference/sleepcast.py](docs/reference/sleepcast.py).
 - **Paragraph pause in live reading.** A Paragraph slider (1200 ms by default)
   sets the silence after the last sentence of a paragraph, which used to get the
   same 0.7 s as any sentence end. A paragraph ends where a blank line separates
@@ -521,14 +547,14 @@ and is not in upstream.
   comma, colon, semicolon and period, rendered each fragment as a separate
   utterance, and concatenated them with silence. The punctuation was consumed as
   a split marker and never reached the model, so it saw `Some years ago` rather
-  than `Some years ago,` — it could not produce comma prosody for a comma it was
-  never shown — and each fragment came out with its own falling sentence-final
+  than `Some years ago,`. It could not produce comma prosody for a comma it was
+  never shown, and each fragment came out with its own falling sentence-final
   contour. Punctuation now stays in the text and a split happens only where the
   pause for that mark is above zero.
 - **Playback went silent while the text kept advancing.** macOS binds an
   AudioContext to the output device it was created against, so when that device
   goes away (sleep/wake, headphones, Bluetooth) the context still reports
-  "running" and still fires its ended events — it just plays to nothing. There is
+  "running" and still fires its ended events; it just plays to nothing. There is
   no way to ask a context whether its audio is reaching a speaker, so the failure
   cannot be detected, only pre-empted: the context is rebuilt whenever playback
   is explicitly started. That is affordable because an AudioBuffer is not tied to
@@ -555,12 +581,42 @@ and is not in upstream.
   plain UTF-8 first, which kept the mark in front of `# Title`, and UTF-16 files
   came out as noise. Markdown now uses the text reader's decoder.
 
+- **Any website could use the app's server.** The server allowed cross-origin
+  requests from every origin, with credentials. A web page open in any browser
+  on the same Mac could read the library, delete documents and change settings
+  through `127.0.0.1:8000`. CORS is gone (the window loads the UI from the same
+  server, so it was never needed), and because browsers still deliver simple
+  requests such as form posts without asking first, the server also refuses any
+  request whose Host is not this machine (DNS rebinding), whose Origin is
+  another site, or whose `Sec-Fetch-Site` says another site sent it. Tested
+  from a page on another origin in a Chromium with its own localhost protection
+  turned off: before, it read the library and reached the delete route; after,
+  every request is refused.
+- **A wait soon after pressing play.** Nothing was generated until play was
+  pressed, so short opening sentences followed by a long one ran out before the
+  long one was ready. Opening a document, or changing voice, speed or pauses,
+  now generates the first 20 s or so from the reading position in the
+  background, which play picks up from the cache. Measured with two short
+  sentences before a long one: pressing play 12 s after opening, the wait
+  before the long sentence went from 6.8 s to none; pressing play at once is
+  unchanged (about 7.5 s), since nothing has had time to generate. Clicking a
+  sentence waits 2 s to let clicks settle; generation now runs during that wait
+  instead of after it (a long sentence: 9.6 s to sound, now 7.6 s).
+- **The server stalled while a sentence was generated.** Synthesis ran on the
+  server's event loop, so every other request queued behind it: a library read
+  measured up to 9.6 s during playback. It now runs on a worker thread; the same
+  read measured under 40 ms.
+- **The sleep timer showed its icon beside the countdown.** The timer kept a
+  reference to its button's icon from startup, which the icon library replaces
+  when it draws, so hiding it did nothing (and when the icons were drawn first,
+  every timer update threw an error). The icon is now looked up when needed.
+
 - **Missing dependencies.** `psutil` is imported by `app/server.py` but was never
   declared, so a clean install failed on first launch. On Python 3.13, `pydub`
   additionally needs `audioop-lts`, because PEP 594 removed the stdlib `audioop`
   module and pydub's fallback imports `pyaudioop`, which does not exist on PyPI.
   `audioop-lts` requires Python 3.13+, so it is gated behind an environment
-  marker rather than breaking installs on 3.10–3.12.
+  marker rather than breaking installs on 3.10 to 3.12.
   *(Also open upstream as [PR #9](https://github.com/revisionhiep-create/LocalReader-Pro/pull/9).)*
 - **Windows-only FFmpeg.** Binary paths were hardcoded to `.exe`, the installer
   downloaded a Windows build that cannot run elsewhere, and nothing consulted
@@ -568,7 +624,7 @@ and is not in upstream.
   install. *(Also open upstream as [PR #10](https://github.com/revisionhiep-create/LocalReader-Pro/pull/10).)*
 - **FFmpeg reported as missing when present.** `ffmpeg_status["is_installed"]`
   defaulted to `False` and was only ever set by the installer, so an existing
-  FFmpeg — including a bundled `bin/ffmpeg.exe` on Windows — was reported
+  FFmpeg (including a bundled `bin/ffmpeg.exe` on Windows) was reported
   missing and the UI kept offering an unnecessary download. It is now detected
   once at startup. This one affected Windows too.
 
