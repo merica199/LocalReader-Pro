@@ -1,0 +1,113 @@
+# Sample sleep script: a slow tour of the skin (histology)
+# Lines starting with # are skipped. A blank line is a paragraph pause,
+# "..." is a soft pause, and [pause 6] is exactly six seconds of silence.
+# The sentence about the dermal papillae is long on purpose: it should be
+# split at its commas with short pauses, instead of read in one breath.
+
+Tonight we are going to take a slow, quiet tour of something you carry with you everywhere... your skin.
+
+There is nothing to memorize, and nothing to get right. Just let the words drift past, the way light drifts up through a microscope slide.
+
+Take a slow breath in... hold it for a moment... and let it go.
+
+[pause 5]
+
+Imagine a thin slice of skin, laid flat on a glass slide and stained in two colors. The stain is called H and E. Hematoxylin colors the nuclei a deep blue purple, and eosin washes everything else in soft shades of pink.
+
+Under the lens, the skin shows two layers. On top is the epidermis, and beneath it is the dermis. Deeper still lies the soft, cushioning layer called the hypodermis.
+
+We will start at the very bottom of the epidermis, where new cells are born, and drift upward with them, the way they travel, slowly, over about a month.
+
+[pause 4]
+
+The deepest layer of the epidermis is the stratum basale. It is a single row of small, busy cells, resting on a thin basement membrane, like a row of seeds resting in soil.
+
+These are the stem cells of the skin. Every so often, one of them divides... and one of its daughters begins the long journey toward the surface.
+
+Tucked between them are melanocytes, with long and slender arms. They make melanin, and they hand it to the cells around them in tiny packages. The cells gather the pigment into little caps above their nuclei, like small umbrellas held over the DNA, shading it from the sun.
+
+Here and there, you might find a Merkel cell, resting against the end of a nerve. It is a touch receptor, listening quietly for the lightest pressure.
+
+[pause 4]
+
+Above the basal layer is the stratum spinosum, the spiny layer. Its cells are larger here, and they hold on to one another with thousands of tiny anchors called desmosomes.
+
+When the tissue is prepared for the microscope, the cells shrink a little, but the anchors hold. And so each cell seems to be covered in fine spines, like a field of soft thistles.
+
+Wandering among them are the Langerhans cells, quiet sentinels of the immune system, reaching out with their long branches and tasting whatever passes by.
+
+Breathe in slowly... and out.
+
+[pause 4]
+
+Higher still is the stratum granulosum, the granular layer. Here the cells begin to flatten, and they fill with dark purple granules of keratohyalin, scattered like poppy seeds.
+
+They also release lamellar bodies, small packets of lipid that spread into the spaces between the cells, sealing the skin and keeping the water in.
+
+This is where the cells begin to let go. One by one, their nuclei fade, and the cells quietly finish their work.
+
+In the thick skin of your palms and the soles of your feet, there is one more thin layer above this one. It is called the stratum lucidum, the clear layer, a pale and glassy band that barely takes up the stain at all.
+
+[pause 4]
+
+And then, at last, the surface. The stratum corneum, the horny layer.
+
+Here the cells are flat and thin, and stacked like the pages of an old book, many layers deep, each one filled with tough keratin and held together by that waxy seal.
+
+They are no longer alive, but they are still doing their work, standing guard between you and the world. Until one day, very gently, they flake away and drift off, and the cells below take their place.
+
+It has taken them about a month to make this journey, from the quiet row of the basal layer to the open air.
+
+Let your shoulders soften... and your jaw... and your hands.
+
+[pause 6]
+
+Now let us drift back down, beneath the epidermis, into the dermis.
+
+Something worth noticing here is that the epidermis has no blood vessels of its own. Every cell above us was fed by what drifted up from below.
+
+The top of the dermis is the papillary layer, a loose and delicate connective tissue that rises in small hills, called dermal papillae, which fit into the ridges of the epidermis above them the way two hands fold together, and inside each little hill there is a tiny loop of capillary, carrying warmth and nourishment up toward the surface.
+
+In some of these hills there are Meissner corpuscles, small oval coils of nerve that answer to light touch, like the brush of a sheet across your arm.
+
+Below the papillary layer is the reticular dermis, thick and strong. It is dense, irregular connective tissue, woven from bundles of type one collagen that stain a deep pink, with fine elastic fibers running between them so the skin can stretch and gently return.
+
+[pause 4]
+
+Scattered through the dermis are the quiet structures we rarely think about.
+
+Hair follicles reach down at a slant, and beside each one sits a sebaceous gland, softening the hair and skin with oil. Attached to each follicle is a tiny ribbon of smooth muscle, the arrector pili, which pulls the hair upright when you are cold.
+
+Coiled deep in the dermis are the eccrine sweat glands, wound tightly like small balls of thread, sending their thin ducts spiraling up toward the surface.
+
+[pause 4]
+
+And deepest of all, near the border with the hypodermis, rest the Pacinian corpuscles. Under the microscope they look like a sliced onion, ring after ring of thin layers, wrapped around a single nerve ending. They feel deep pressure, and the faint hum of vibration.
+
+Below them lies the hypodermis, the soft layer of fat that cushions and warms everything above it. Its cells are large and round and pale. Each one held a single drop of fat, which washes away when the slide is made, so the whole layer looks like a quiet field of empty bubbles.
+
+[pause 6]
+
+So, from the bottom to the top, one more time, slowly.
+
+The hypodermis, soft and warm.
+
+The reticular dermis, woven and strong.
+
+The papillary dermis, with its small hills and tiny loops of blood.
+
+The stratum basale, where new cells are born.
+
+The stratum spinosum, held together by its spines.
+
+The stratum granulosum, with its dark granules and its waxy seal.
+
+And the stratum corneum, the quiet pages at the surface.
+
+[pause 8]
+
+There is nothing else you need to do tonight... nothing to hold on to.
+
+Let the layers settle... one on top of another... and let yourself settle with them.
+
+Rest now.

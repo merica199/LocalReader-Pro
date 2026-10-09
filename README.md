@@ -533,7 +533,9 @@ and is not in upstream.
   unchanged. Default speed is 0.9. Paragraph pauses need blank lines in the
   stored text, which text and Markdown files keep and PDF and EPUB extraction
   does not. WAV with every sound option off needs no FFmpeg. The approach comes
-  from [docs/reference/sleepcast.py](docs/reference/sleepcast.py).
+  from [docs/reference/sleepcast.py](docs/reference/sleepcast.py). To try it,
+  add [sample-scripts/skin-histology.txt](sample-scripts/skin-histology.txt), a
+  nine-minute slow tour of the skin that uses every kind of markup.
 - **Paragraph pause in live reading.** A Paragraph slider (1200 ms by default)
   sets the silence after the last sentence of a paragraph, which used to get the
   same 0.7 s as any sentence end. A paragraph ends where a blank line separates
