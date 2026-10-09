@@ -49,7 +49,11 @@ def download_kokoro_model(model_type: Literal["gpu", "cpu"] = "gpu") -> None:
                 
                 print(f"  Total size: {total_size_mb:.1f} MB")
                 
-                with open(model_dest, 'wb') as f:
+                # Written aside and renamed when complete: the app treats an
+                # existing file as a finished download, so an interrupted one
+                # must never sit at the final name.
+                part = model_dest + ".part"
+                with open(part, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
@@ -60,6 +64,11 @@ def download_kokoro_model(model_type: Literal["gpu", "cpu"] = "gpu") -> None:
                                 downloaded_mb = downloaded / (1024 * 1024)
                                 print(f"  Progress: {progress:.1f}% ({downloaded_mb:.1f}/{total_size_mb:.1f} MB)", end='\r')
                 
+                # Content-Length is the compressed size when the server
+                # compresses, so it is only a check on an uncompressed reply.
+                if total_size and not r.headers.get('content-encoding') and downloaded != total_size:
+                    raise IOError(f"download ended at {downloaded} of {total_size} bytes")
+                os.replace(part, model_dest)
                 print(f"\n  [OK] {model_label} saved as kokoro.int8.onnx")
             else:
                 # HuggingFace download for GPU model
@@ -89,12 +98,19 @@ def download_kokoro_model(model_type: Literal["gpu", "cpu"] = "gpu") -> None:
         try:
             r = requests.get(voices_url, stream=True, timeout=60)
             r.raise_for_status()
-            
-            with open(voices_dest, 'wb') as f:
+            expected = int(r.headers.get('content-length', 0))
+            written = 0
+
+            part = voices_dest + ".part"
+            with open(part, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
-            
+                        written += len(chunk)
+            if expected and not r.headers.get('content-encoding') and written != expected:
+                raise IOError(f"download ended at {written} of {expected} bytes")
+            os.replace(part, voices_dest)
+
             print("Voice Pack saved as voices.bin")
             
             # Remove old voices.json to avoid confusion
