@@ -274,7 +274,10 @@ if ((Test-Path -LiteralPath (Join-Path $models 'kokoro.int8.onnx')) -and (Test-P
     Note 'Downloading (about 115 MB)...'
     Push-Location $appCode
     try {
-        Run $vpy -c 'from logic.downloader import download_kokoro_model; download_kokoro_model("cpu")'
+        # Python's own quotes are single quotes (doubled inside this PowerShell
+        # string): Windows PowerShell 5.1 strips double quotes from arguments
+        # it passes to a program, which turned "cpu" into a bare name.
+        Run $vpy -c 'from logic.downloader import download_kokoro_model; download_kokoro_model(''cpu'')'
         Check 'Downloading the voice model'
     } finally { Pop-Location }
 }
@@ -286,7 +289,7 @@ if (Test-Path -LiteralPath (Join-Path $AppDir 'dist\bin\ffmpeg.exe')) {
     Note 'Downloading (about 100 MB)...'
     Push-Location $appCode
     try {
-        Run $vpy -c 'import sys; from logic.dependency_manager import FFMPEGInstaller; ok, err = FFMPEGInstaller().install(); print(err or "FFmpeg installed"); sys.exit(0 if ok else 1)'
+        Run $vpy -c 'import sys; from logic.dependency_manager import FFMPEGInstaller; ok, err = FFMPEGInstaller().install(); print(err or ''FFmpeg installed''); sys.exit(0 if ok else 1)'
         # Not fatal: the app offers the same download on first export.
         if ($LASTEXITCODE -ne 0) { Note 'FFmpeg did not install; the app will offer it the first time you export.' }
     } finally { Pop-Location }
