@@ -36,7 +36,7 @@ export const state = {
     // piece and produces its own comma and colon prosody. A non-zero value here
     // forces a hard split at that mark and inserts literal silence, which is
     // occasionally wanted but costs the natural intonation across the sentence.
-    pauseSettings: { comma: 0, period: 600, question: 600, exclamation: 600, colon: 0, semicolon: 0, newline: 0 },
+    pauseSettings: { comma: 0, period: 600, question: 600, exclamation: 600, colon: 0, semicolon: 0, newline: 0, paragraph: 1200 },
 
     // Voices & Language
     currentLangIndex: 0,

@@ -42,6 +42,7 @@ class AppSettings(BaseModel):
         "colon": 400,
         "semicolon": 400,
         "newline": 800,
+        "paragraph": 1200,
     }
 
 

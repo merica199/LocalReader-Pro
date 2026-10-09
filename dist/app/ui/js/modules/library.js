@@ -456,6 +456,19 @@ export async function processPdfBlob(blob, fileName) {
   reader.readAsArrayBuffer(blob);
 }
 
+// Which sentences end a paragraph, per page, recorded when the page is split.
+// Kept beside the sentence list rather than in it: sentence numbers are what
+// saved progress points to, so the list itself must not change shape.
+const paragraphEndsByPage = new Map();
+
+function paragraphKey(pageIndex) {
+  return `${state.currentDoc?.id}|${state.headerFooterMode}|${pageIndex}`;
+}
+
+export function endsParagraph(pageIndex, sentenceIndex) {
+  return paragraphEndsByPage.get(paragraphKey(pageIndex))?.has(sentenceIndex) ?? false;
+}
+
 export async function getSentencesForPage(pageIndex) {
   if (!state.currentPages || !state.currentPages[pageIndex]) return [];
 
@@ -486,10 +499,15 @@ export async function getSentencesForPage(pageIndex) {
   const protectedText = text.replace(abbrRegex, '$1<DOT>');
 
   const sentences = [];
+  const paragraphEnds = new Set();
   const segmenter = new Intl.Segmenter(state.uiLanguage || 'en', { granularity: 'sentence' });
+  // Where the previous sentence's words ended, to see what lies between it and
+  // the next: a blank line there means it ended a paragraph.
+  let previousEnd = -1;
 
   for (const segmentItem of segmenter.segment(protectedText)) {
-    let s = segmentItem.segment.trim()
+    const raw = segmentItem.segment;
+    let s = raw.trim()
       .replace(/<DOT>/g, '.') // Restore dots
       .replace(/^[\"\'\u201c\u2018\u201d\u2019]+(?=[\"\'\u201c\u2018\u201d\u2019])/, '')
       .replace(/[\"\'\u201c\u2018\u201d\u2019]+$/, (match) => match.length > 1 ? match[0] : match);
@@ -497,8 +515,20 @@ export async function getSentencesForPage(pageIndex) {
         // Fix broken DIM tags
         if (s.includes("[DIM]") && !s.includes("[/DIM]")) s += "[/DIM]";
         if (!s.includes("[DIM]") && s.includes("[/DIM]")) s = "[DIM]" + s;
+        const start = segmentItem.index + raw.length - raw.trimStart().length;
+        if (previousEnd >= 0 && /\n\s*\n/.test(protectedText.slice(previousEnd, start))) {
+          paragraphEnds.add(sentences.length - 1);
+        }
+        previousEnd = segmentItem.index + raw.trimEnd().length;
         sentences.push(s);
     }
   }
+  // Text and Markdown are cut into pages between paragraphs, so the last
+  // sentence on one of their pages ends a paragraph. A PDF page (EPUBs are
+  // stored as the PDF they were converted to) ends wherever the printed page did.
+  if (sentences.length && !/\.pdf$/i.test(state.currentDoc?.fileName || "")) {
+    paragraphEnds.add(sentences.length - 1);
+  }
+  paragraphEndsByPage.set(paragraphKey(pageIndex), paragraphEnds);
   return sentences;
 }

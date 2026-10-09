@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { fetchJSON, fetchBlob, API_URL } from "./api.js";
 import { showToast, stripHTML, renderIcons } from "./ui.js";
-import { renderPage, getSentencesForPage } from "./library.js";
+import { renderPage, getSentencesForPage, endsParagraph } from "./library.js";
 
 // The output device can change out from under a live AudioContext: the machine
 // sleeps and wakes, headphones are unplugged, a Bluetooth device connects. WebKit
@@ -83,7 +83,24 @@ export function ensureAudioContextForPlayback() {
   lastPlaybackStartedAt = Date.now();
 }
 
-export function playAudioBuffer(audioBuffer) {
+// A copy of the buffer with silence on the end, for the pause after a
+// paragraph. Putting the pause in the audio, rather than waiting on a timer
+// before the next sentence, keeps it inside the ended-event chain the race
+// guards already cover: a timer still pending after a jump would start a
+// second playback.
+function withTrailingSilence(buffer, seconds) {
+  const out = state.audioContext.createBuffer(
+    buffer.numberOfChannels,
+    buffer.length + Math.round(seconds * buffer.sampleRate),
+    buffer.sampleRate,
+  );
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    out.getChannelData(c).set(buffer.getChannelData(c));
+  }
+  return out;
+}
+
+export function playAudioBuffer(audioBuffer, trailingSilence = 0) {
   if (state.currentAudioSource) {
     try {
       // Detaching onended BEFORE stop() is required, not tidiness. stop()
@@ -101,7 +118,8 @@ export function playAudioBuffer(audioBuffer) {
 
   // Create new source node
   const source = state.audioContext.createBufferSource();
-  source.buffer = audioBuffer;
+  source.buffer =
+    trailingSilence > 0 ? withTrailingSilence(audioBuffer, trailingSilence) : audioBuffer;
   source.connect(state.audioContext.destination);
 
   source.onended = async () => {
@@ -205,6 +223,7 @@ export async function playNext() {
   );
 
   const pageIndex = state.readingPageIndex;
+  const trailingSilence = paragraphPauseAfter(pageIndex, targetIndex, text);
   const cached = state.audioBufferCache.get(audioKey(pageIndex, targetIndex, text));
 
   if (cached) {
@@ -216,7 +235,7 @@ export async function playNext() {
     }
     console.log(`[WebAudio] CACHE HIT - Playing cached buffer instantly`);
     initAudioContext(); // this path never went through the synthesis branch
-    playAudioBuffer(cached);
+    playAudioBuffer(cached, trailingSilence);
     readAhead();
     return;
   }
@@ -242,7 +261,7 @@ export async function playNext() {
       return;
     }
 
-    playAudioBuffer(audioBuffer);
+    playAudioBuffer(audioBuffer, trailingSilence);
     readAhead();
   } catch (e) {
     console.error("Synthesis error:", e);
@@ -352,6 +371,13 @@ let readAheadRunning = false;
 // sending a second one.
 const pendingAudio = new Map();
 
+// The paragraph pause is added by the client after the clip, so it is not sent
+// to the server, where it would only split the server's cache.
+function serverPauseSettings() {
+  const { paragraph, ...rest } = state.pauseSettings;
+  return rest;
+}
+
 // Everything that changes a sentence's audio, including its text. A key can
 // therefore never return audio for different words or old settings, which is
 // what lets audio survive a page turn instead of being thrown away at each one.
@@ -361,7 +387,7 @@ function audioKey(pageIndex, sentenceIndex, text) {
     sentenceIndex,
     document.getElementById("voiceSelect").value,
     document.getElementById("speedRange").value,
-    state.pauseSettings,
+    serverPauseSettings(),
     state.rules,
     state.ignoreList,
     text,
@@ -393,7 +419,7 @@ function requestAudio(pageIndex, sentenceIndex, text) {
         speed: parseFloat(document.getElementById("speedRange").value),
         rules: state.rules,
         ignore_list: state.ignoreList,
-        pause_settings: state.pauseSettings,
+        pause_settings: serverPauseSettings(),
       }),
     });
     if (!res.ok) {
@@ -469,6 +495,25 @@ async function readAhead() {
   } finally {
     readAheadRunning = false;
   }
+}
+
+// --- Paragraph pause ---------------------------------------------------------
+// For settings saved before the paragraph pause existed.
+const DEFAULT_PARAGRAPH_PAUSE_MS = 1200;
+// The server already ends each clip with the pause for its final mark, so a
+// paragraph only needs the difference added.
+const END_MARK_PAUSE = {
+  ".": "period", "\u3002": "period",
+  "?": "question", "\uff1f": "question",
+  "!": "exclamation", "\uff01": "exclamation",
+};
+
+function paragraphPauseAfter(pageIndex, sentenceIndex, text) {
+  if (!endsParagraph(pageIndex, sentenceIndex)) return 0;
+  const wanted = state.pauseSettings.paragraph ?? DEFAULT_PARAGRAPH_PAUSE_MS;
+  const mark = stripHTML(text).replace(/["'\u201d\u2019)\]\s]+$/, "").slice(-1);
+  const already = state.pauseSettings[END_MARK_PAUSE[mark]] || 0;
+  return Math.max(0, wanted - already) / 1000;
 }
 
 // --- Voice preview ---------------------------------------------------------

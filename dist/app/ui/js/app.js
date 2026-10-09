@@ -99,6 +99,7 @@ async function init() {
       "exclamation",
       "colon",
       "semicolon",
+      "paragraph",
     ].forEach((key) => {
       const input = document.getElementById(
         `pause${key.charAt(0).toUpperCase() + key.slice(1)}`,
@@ -696,7 +697,7 @@ window.selectDocById = async (id) => {
 };
 
 // Pause Settings
-["Comma", "Period", "Question", "Exclamation", "Colon", "Semicolon"].forEach(
+["Comma", "Period", "Question", "Exclamation", "Colon", "Semicolon", "Paragraph"].forEach(
   (k) => {
     const el = document.getElementById(`pause${k}`);
     if (el) {
