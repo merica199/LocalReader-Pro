@@ -121,6 +121,8 @@ export async function selectDocument(item) {
 
     renderPage();
     loadLibrary(); // Update active state in list
+    // Lets read-aloud start generating before play is pressed (tts.js warmUp).
+    window.dispatchEvent(new CustomEvent("document-opened"));
   } catch (e) {
     console.error("Select document error:", e);
     showToast("Failed to load document content");

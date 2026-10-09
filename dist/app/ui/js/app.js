@@ -29,6 +29,7 @@ import {
   jumpToSentence,
   initAudioContext,
   saveProgress,
+  warmUp,
 } from "./modules/tts.js";
 import {
   startExport,
@@ -336,6 +337,10 @@ document.getElementById("tabIgnore").onclick = () =>
 
 // Settings
 async function saveSettings() {
+  // Voice, speed, pauses and rules are all part of what a sentence sounds
+  // like, so a change here means new audio. Warm-up does nothing when the
+  // audio for the reading position is already there.
+  warmUp();
   try {
     await fetchJSON(`/api/settings`, {
       method: "POST",
@@ -714,6 +719,7 @@ document.getElementById("pauseSettingsToggle").onclick = () => {
 };
 
 window.addEventListener("jump-to-sentence", (e) => jumpToSentence(e.detail));
+window.addEventListener("document-opened", warmUp);
 
 // Status Polling
 let lastSysState = null;

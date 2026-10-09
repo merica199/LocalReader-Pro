@@ -316,6 +316,12 @@ export async function jumpToSentence(i) {
     }
   }
 
+  // Generate during the wait below instead of after it. The wait lets a run of
+  // clicks or arrow presses settle on one sentence; it used to pass with
+  // nothing happening, so the new sentence started generating only once it
+  // was over.
+  readAhead();
+
   // 3. Buffer for 2 seconds then start playing
   console.log(`[TTS] Buffering 2 seconds for jump to index ${i}...`);
   state.jumpTimer = setTimeout(() => {
@@ -438,15 +444,15 @@ function requestAudio(pageIndex, sentenceIndex, text) {
 }
 
 // The first sentence without audio yet, starting from the current one, or null
-// once READ_AHEAD_SECONDS of audio past the current sentence is ready. Looks at
-// most one page ahead.
-async function nextSentenceToGenerate() {
+// once `seconds` of audio past the current sentence is ready. Looks at most one
+// page ahead.
+async function nextSentenceToGenerate(seconds) {
   let pageIndex = state.readingPageIndex;
   let sentences = state.readingSentences || [];
   let index = state.currentSentenceIndex;
   let ahead = 0;
   let count = 0;
-  while (ahead < READ_AHEAD_SECONDS && count < READ_AHEAD_MAX_SENTENCES) {
+  while (ahead < seconds && count < READ_AHEAD_MAX_SENTENCES) {
     if (index >= sentences.length) {
       if (pageIndex !== state.readingPageIndex || pageIndex >= state.currentPages.length - 1) {
         return null;
@@ -481,8 +487,10 @@ async function readAhead() {
   if (readAheadRunning) return;
   readAheadRunning = true;
   try {
-    while (state.isPlaying) {
-      const next = await nextSentenceToGenerate();
+    while (state.isPlaying || warming) {
+      const next = await nextSentenceToGenerate(
+        state.isPlaying ? READ_AHEAD_SECONDS : WARM_UP_SECONDS,
+      );
       if (!next) break;
       try {
         await requestAudio(next.pageIndex, next.index, next.text);
@@ -494,7 +502,31 @@ async function readAhead() {
     }
   } finally {
     readAheadRunning = false;
+    warming = false;
   }
+}
+
+// --- Warm-up -------------------------------------------------------------------
+// Pressing play used to be the first moment anything was generated. With short
+// sentences first and a long one soon after, playback caught up with the
+// generator and stopped for several seconds (measured: 4.6 s) before the long
+// one. Opening a document is a strong sign that play comes next, so the start
+// of what play would read is generated then, while nothing is playing. It is
+// the read-ahead loop with a smaller budget, so pressing play mid-warm-up
+// carries straight on, and play finds the audio in the same cache.
+const WARM_UP_SECONDS = 20;
+let warming = false;
+let warmUpTimer = null;
+
+export function warmUp() {
+  clearTimeout(warmUpTimer);
+  // A moment's wait, so clicking through documents or dragging a setting does
+  // not start generating for each one on the way.
+  warmUpTimer = setTimeout(() => {
+    if (state.isPlaying || !state.currentDoc || !window.isEngineReady) return;
+    warming = true;
+    readAhead();
+  }, 1000);
 }
 
 // --- Paragraph pause ---------------------------------------------------------

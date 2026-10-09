@@ -432,8 +432,12 @@ async def get_locale(lang: str):
         return {}
 
 
+# A plain def, so FastAPI runs it on a worker thread. As an async def, the
+# second or so of synthesis ran on the event loop and every other request
+# waited behind it: page loads, progress saves, the export dialog. The
+# engine itself is still serialized by state.engine_lock.
 @router.post("/api/synthesize")
-async def synthesize(request: SynthesisRequest):
+def synthesize(request: SynthesisRequest):
     import app.state as state_module
 
     if state_module.kokoro is None:
