@@ -52,20 +52,18 @@ async def convert_markdown(file: UploadFile = File(...)):
     if not file.filename.lower().endswith((".md", ".markdown", ".mdown", ".mkd")):
         raise HTTPException(status_code=400, detail="Not a Markdown file")
 
-    raw = await file.read()
-    for encoding in ("utf-8", "utf-8-sig", "latin-1"):
-        try:
-            text = raw.decode(encoding)
-            break
-        except UnicodeDecodeError:
-            continue
-    else:
-        text = raw.decode("utf-8", errors="replace")
-
     try:
         from logic.markdown_reader import markdown_to_pages
+        from logic.text_reader import decode_text
     except ImportError:
         from ..logic.markdown_reader import markdown_to_pages
+        from ..logic.text_reader import decode_text
+
+    # Decoded the way a text file is. Trying plain UTF-8 first succeeded on a
+    # file with a byte order mark and kept the mark in front of the first line,
+    # where it stopped "# Title" parsing as a heading; UTF-16 fell through to
+    # Latin-1 and came out as NUL-riddled noise.
+    text = decode_text(await file.read())
 
     try:
         pages, title = markdown_to_pages(text)
