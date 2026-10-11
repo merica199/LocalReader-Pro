@@ -4,7 +4,10 @@ A desktop app that reads documents aloud with a voice running entirely on this
 computer (Kokoro, through kokoro_onnx and espeak-ng), and exports MP3s,
 including slow "sleep mode" recordings with background sound. A FastAPI server
 (`dist/app/`) serves a web UI (`dist/app/ui/`) inside a pywebview window
-(`dist/main.py`). The README covers features and installation.
+(`dist/main.py`). The README covers installation;
+[docs/user-guide.md](docs/user-guide.md) covers every feature and
+[docs/settings-reference.md](docs/settings-reference.md) every setting, both
+taken from the code. Read them before answering how something works.
 
 ## Writing scripts for it
 
@@ -77,6 +80,11 @@ app (`~/Library/Application Support/LocalReader Pro`, or
   machines (`.github/workflows/installers.yml`).
 
 ## Design rules
+
+- When a feature or setting changes, update the user guide and the settings
+  reference in the same change, and the user guide's Known issues list when a
+  bug is fixed or found. They describe what the app does, not what it should
+  do.
 
 - Sleep mode is a separate mode of the Export dialog. Sleep features stay
   inside it, and normal reading and normal MP3 export keep working as they do.

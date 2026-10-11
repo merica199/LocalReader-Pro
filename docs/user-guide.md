@@ -1,0 +1,414 @@
+# LocalReader Pro user guide
+
+LocalReader Pro reads your documents aloud in a natural voice that runs
+entirely on your computer, and turns them into audio files: ordinary MP3s at
+reading pace, or slow, calm sleep recordings with background sound.
+
+This guide covers every feature and how to use it. Every setting, with its
+default, its range and exactly what it affects, is in the
+[settings reference](settings-reference.md), so this guide stays readable as
+the settings grow.
+
+On GitHub, the list icon at the top right of this page opens a clickable
+outline, and Ctrl+F (Cmd+F on a Mac) searches it.
+
+## Contents
+
+1. [Getting started](#1-getting-started)
+2. [The window at a glance](#2-the-window-at-a-glance)
+3. [Your library](#3-your-library)
+4. [Reading](#4-reading)
+5. [Voice and audio](#5-voice-and-audio)
+6. [Pronunciation](#6-pronunciation)
+7. [Exporting audio](#7-exporting-audio)
+8. [Sleep recordings](#8-sleep-recordings)
+9. [Sleep timer](#9-sleep-timer)
+10. [Updates](#10-updates)
+11. [Where your files are](#11-where-your-files-are)
+12. [Working with Claude](#12-working-with-claude)
+13. [Troubleshooting and known issues](#13-troubleshooting-and-known-issues)
+
+## 1. Getting started
+
+**Installing.** Follow [Installation](../README.md#-installation) in the
+README. On Windows you download the ZIP and double-click the installer; on a
+Mac you clone the repository and double-click the installer. Either way it
+sets up everything, including the voice.
+
+**First launch.** Open LocalReader Pro from the Desktop or Start menu shortcut
+(Windows) or from Applications (Mac). The window takes a few seconds to appear
+the first time. The small dot at the top right of the left panel shows the
+voice engine's state:
+
+| Dot | Meaning |
+|---|---|
+| Green | Ready |
+| Yellow, pulsing | Loading the voice |
+| Blue, pulsing | Downloading the voice |
+| Red | No voice yet: click **Setup Voice Engine** |
+
+The installers download the voice for you, so you normally see green straight
+away. If you see **Setup Voice Engine**, click it: it downloads the voice
+(about 115 MB) and the upload button appears when it is done.
+
+## 2. The window at a glance
+
+- **Left panel (sidebar):** the upload button, text size, the Export Audio
+  button, three tabs (Library, Rules, Ignore), and at the bottom Processing
+  Mode and Updates. The panel icon at its top collapses it; a small tab on the
+  left edge brings it back. Drag its edge to make it wider or narrower.
+- **Reader (middle):** the open document, a page at a time, with the page
+  controls and search at the top.
+- **Player bar (bottom):** play and pause, skip, and the sentence being read.
+- **Two round buttons on the right edge:** the upper one opens **Voice &
+  Audio**, the lower one the **Sleep Timer**.
+- **Menus:** Playback, Document and Help (Mac menu bar, or the window's menu
+  on Windows).
+
+## 3. Your library
+
+### Adding documents
+
+Click **Upload Book (PDF/EPUB/MD/TXT)**, or drag a file anywhere onto the
+window. Each format is handled differently:
+
+| Format | How it is read | Notes |
+|---|---|---|
+| Text (`.txt`) | As written, split into pages of about 2,500 characters | Best for scripts: blank lines are kept, so paragraph pauses work |
+| Markdown (`.md`) | Formatting removed, headings read as sentences, links as their text, code blocks as "code block" | Named after its first heading |
+| PDF | Text extracted page by page | Blank lines are lost, so no paragraph pauses. A scanned PDF has no text to read |
+| EPUB | Converted to a PDF, then read like one | Shows up in the library as a `.pdf`. Copy-protected books cannot be read |
+
+Uploading the same file twice makes two entries. The app keeps only the
+extracted text, not your original file.
+
+### Opening, resuming and deleting
+
+- **Open** a document by clicking it. It opens where you left off: the page and
+  the sentence.
+- **Progress is saved** every time a sentence starts playing. Turning pages
+  without playing does not move your place.
+- **Smart start:** if a book is still on its first page, the app skips ahead to
+  where the real content starts (past the title pages and contents), and says
+  so.
+- **Delete** a document with the red X that appears when you hover over it.
+  This removes it from the library; any audio you exported from it stays.
+
+## 4. Reading
+
+### Playing
+
+- **Play / pause:** the big blue button, or the Space bar.
+- **Skip:** the arrows either side of it, or the Left and Right arrow keys, move
+  one sentence back or forward. Skipping forward past the last sentence goes
+  on to the next page.
+- **Jump to any sentence:** click it. Reading starts there after a short
+  pause.
+
+Skipping and clicking a sentence both start playback, even when paused.
+
+The line in the player bar shows the sentence being read. The chevron at its
+right hides the player; a **Show Player** button brings it back.
+
+### Moving around
+
+- **Pages:** the arrows and page number at the top, or scroll past the bottom
+  or top of a page. Typing a page number and pressing Enter jumps there.
+- **Follow along:** while it reads, the view turns pages with the voice. If you
+  scroll or turn pages yourself, it stops following so you can look around.
+  **Back to Reading** (above the player) returns you to the sentence being
+  read.
+- **Text size:** the slider in the left panel, from 12 to 24.
+
+### Search
+
+The magnifying glass at the top, or Ctrl+F (Cmd+F on a Mac), searches the open
+document. Type at least two letters; results show the page and the words
+around each match. Clicking one shows that page with the matches highlighted;
+it does not move your reading place.
+
+### Keyboard and menus
+
+| Key | Action |
+|---|---|
+| Space | Play / pause |
+| Left / Right arrow | Previous / next sentence |
+| Ctrl+F or Cmd+F | Search |
+
+Keys do nothing while you are typing in a box. After dragging a slider, click
+somewhere in the reader before using them, or they move the slider instead.
+
+The **Playback** menu has Play / Pause and the sentence skips; **Document** has
+the page arrows and **Reload Interface** (refreshes the window if something
+looks stuck); **Help** has **Check for Updates**.
+
+### Page headers and footers
+
+PDFs often repeat a title or page number at the top or bottom of every page.
+**Header & Footer Mode** in Voice & Audio can hide them or dim them so they are
+not read. See the [settings reference](settings-reference.md#header--footer-mode).
+
+## 5. Voice and audio
+
+The upper round button on the right edge opens **Voice & Audio**:
+
+- **Voice Selection:** about fifty voices, grouped by language, each labelled
+  with its accent and gender. The play button beside the list plays a short
+  sample of the selected voice.
+- **Playback Speed:** how fast the voice reads, for reading and normal MP3
+  export. Sleep recordings have their own speed.
+- **Header & Footer Mode:** see above.
+- **Pause Settings:** how long the voice pauses at commas, sentence ends,
+  paragraphs and so on, while reading.
+
+Changing the voice stops reading; press play to continue with the new one.
+Every option is explained in the [settings reference](settings-reference.md#voice--audio).
+
+**Processing Mode** (bottom of the left panel) chooses between two versions of
+the voice: "High Performance (CPU)", smaller and faster and the default, and
+"High Quality (GPU)", larger. Despite the labels, both run on your computer's
+processor. See the [settings reference](settings-reference.md#processing-mode).
+
+## 6. Pronunciation
+
+### Science words are built in
+
+The voice works out how to say a word it does not know from its spelling, and
+for anatomy, physiology, biochemistry and drug names it often guesses wrong.
+LocalReader Pro corrects about 230 of them automatically (diastole,
+glomerulus, vagus, kinase, ATP, NADH and many more), in reading, MP3 export
+and sleep recordings alike. You do not need to do anything.
+
+### Check them by ear
+
+> The built-in pronunciations were written by an AI from its own knowledge and
+> checked against the voice engine's phonetic output, but an AI cannot hear the
+> result. **A person needs to listen to them.** The person who knows the
+> subject best is the right judge: for medical terms, a medical student over
+> anyone else. Anything wrong is a one-line fix.
+>
+> To make a recording of every built-in word, with a list of each word's time
+> in the recording, run this from the app's folder:
+>
+> ```bash
+> venv/bin/python tools/pronunciation_check.py --out ~/Desktop
+> ```
+>
+> On Windows use `venv\Scripts\python.exe` instead of `venv/bin/python`. It
+> writes `pronunciation-check.mp3` (about six minutes) and
+> `pronunciation-check.txt`. Name words after the command to record just those;
+> a word not on the list comes out as the voice's own guess, which tells you
+> whether it needs an entry. Whenever words are added to the list, record and
+> listen to them before relying on them. A Claude agent working in this
+> repository is told to do this and to ask you to listen.
+
+How to check a word and add one is in
+[writing for read-aloud](writing-for-read-aloud.md#pronunciation).
+
+### Your own rules (Rules tab)
+
+The **Rules** tab replaces words with something easier to say before the voice
+reads them: an abbreviation spelled out, a name respelled, a symbol turned into
+a word.
+
+1. Click **+**.
+2. Fill in **Original Text** (what is in the document) and **Replacement Text**
+   (what to say instead).
+3. Choose the options: **Match Case** (only exactly that capitalization) and
+   **Whole Word** (not inside longer words; on by default).
+4. Click **Done**.
+
+Rules save as you type and apply to reading and both kinds of export. Your rule
+for a word wins over the built-in list. Note that **Use Pattern Matching** does
+not work yet: rules always match the text literally.
+
+### Words to skip (Ignore tab)
+
+The **Ignore** tab lists text the voice should skip, such as a running title
+or a watermark. Click **+**, type the text, and press Enter. It is removed
+wherever it appears, even inside longer words, so prefer longer, specific
+phrases.
+
+## 7. Exporting audio
+
+Click **Export Audio** (left panel, once a document is open) and choose a mode:
+
+- **Normal:** the whole document as an MP3 at reading pace, in the current
+  voice and Playback Speed.
+- **Sleep mode:** a slow, calm recording with long pauses, background sound and
+  gentle fades. See [Sleep recordings](#8-sleep-recordings).
+
+Both always export the whole document from the first page. If FFmpeg (the
+audio encoder) is missing, the app offers it first; on Windows it downloads it,
+on a Mac it must be installed with Homebrew (the installer does this).
+
+**Normal export** shows its progress and, when done, the file name and an
+**Open Folder** button. Closing the dialog during a normal export cancels it.
+
+Exported files are saved in your library folder; **Open Folder** opens it. See
+[Where your files are](#11-where-your-files-are).
+
+## 8. Sleep recordings
+
+Sleep mode turns a document into the kind of slow, soothing narration made for
+falling asleep to: every sentence followed by real silence, long pauses
+between paragraphs, background noise underneath, the voice softened and placed
+in a gentle room, and long fades in and out. It works on any document, but it
+is at its best with a script written for it.
+
+### Writing a script
+
+A sleep script is a plain `.txt` file with a little markup:
+
+| Markup | Effect |
+|---|---|
+| a blank line | a paragraph pause |
+| `...` | a soft pause in the middle of a thought |
+| `[pause 6]` | exactly that many seconds of silence |
+| a line starting with `#` | skipped (notes to yourself) |
+
+[Writing sleep scripts](writing-sleep-scripts.md) explains how to write one
+that works (length, shape, style and accuracy), and
+[sample-scripts/skin-histology.txt](../sample-scripts/skin-histology.txt) is a
+nine-minute example. A Claude agent can write one for you on whatever you are
+studying; see [Working with Claude](#12-working-with-claude). If the script
+has technical words that are not on the built-in list, check them by ear
+first ([how](#check-them-by-ear)).
+
+### Making the recording
+
+1. Upload the script with **Upload Book**.
+2. Open it, click **Export Audio**, and choose **Sleep mode**.
+3. Set the options, or leave the defaults:
+   - **Speed** (0.9 by default; slower is sleepier).
+   - **Pauses:** the silence after sentences, at blank lines and at `...`, and
+     before and after the voice.
+   - **Sound:** the background (brown, pink or white noise, or a sound file of
+     your own), how loud it is, how much to soften the voice, the room, the
+     loudness, and the fades.
+   - **File:** MP3, M4A or WAV, and the quality.
+4. Click **Preview the first minute** to hear it with every option applied.
+   Change something and preview again to compare.
+5. Read the estimate line: how long the recording will be and how long it will
+   take to make.
+6. Click **Start export**.
+
+Every option is in the [settings reference](settings-reference.md#sleep-mode),
+and they are remembered for next time. **Reset to defaults** puts them all
+back.
+
+**While it renders,** you can keep reading in the app, or click **Keep
+rendering in the background** and close the dialog; a message tells you when it
+is finished. Closing the dialog with the X asks whether to stop. Stopping loses
+nothing: every finished sentence is saved, so exporting again picks up where it
+stopped.
+
+**Making changes is quick.** Each spoken sentence is saved as it is made.
+Exporting again after changing the pauses or the sound only re-mixes the
+recording. Editing a few sentences of the script re-voices only those. Changing
+the voice or the speed re-voices everything. The saved sentences take about
+170 MB per hour of speech; **Clear cache** under the estimate frees the space.
+
+### Your own background sounds
+
+In **Background**, choose **Add a sound file...** and pick an audio file (MP3,
+M4A, WAV, FLAC, OGG or AIFF): rain, a fan, waves. It loops under the voice for
+the whole recording and appears under **Your sounds** from then on.
+**Remove this sound** deletes it.
+
+### Getting it onto your phone
+
+A long recording is too big to email (an hour and a half at the default
+quality is about 65 MB). On an iPhone, AirDrop it from the Mac, save it to
+Files, and play it in a player app such as VLC, which keeps playing with the
+screen locked. On Android, copy it over with a cable or through a cloud drive.
+
+## 9. Sleep timer
+
+The lower round button on the right edge opens the **Sleep Timer**. Set hours
+and minutes and click **Start Timer**; the button then shows the time left.
+**Stop Timer** cancels it.
+
+**When the time is up, the timer closes the whole app,** not just the
+playback, and stops any export in progress (a sleep recording keeps its
+finished sentences and can be resumed).
+
+## 10. Updates
+
+The app checks for updates only when you ask: **Help > Check for Updates**, or
+**Check for updates** in the Updates box at the bottom of the left panel. It
+lists what changed. **Update and restart** closes the app, installs the
+update, and opens it again; your library and settings are untouched. If an
+update cannot be installed, the app is left as it was, and the next time it
+opens it tells you what went wrong.
+
+## 11. Where your files are
+
+Your library, settings, saved sentences and exported audio live outside the
+app, so updating or reinstalling never touches them:
+
+- **Mac:** `~/Library/Application Support/LocalReader Pro/userdata`
+- **Windows:** `%APPDATA%\LocalReader Pro\userdata`
+
+Exported recordings are saved directly in that folder (**Open Folder** in the
+Export dialog opens it). To back up everything that matters, copy the
+`userdata` folder. Uninstalling is covered in the
+[README](../README.md#uninstalling).
+
+## 12. Working with Claude
+
+This repository is set up for Claude Code. Open Claude Code in a copy of the
+repository (not in the installed app's own folder, which updates itself) and
+ask in plain words, for example: *write me a 90 minute sleep script about the
+cranial nerves, in the style of the sample.* The agent reads
+[CLAUDE.md](../CLAUDE.md) and the writing guides on its own. It will:
+
+- follow the rules for writing text the voice reads well,
+- time the script to the length you asked for,
+- check the technical words, and record any new ones for you to listen to,
+- keep personal scripts out of the repository, which is public.
+
+## 13. Troubleshooting and known issues
+
+### Troubleshooting
+
+| What you see | What to do |
+|---|---|
+| Red dot and **Setup Voice Engine** | Click it to download the voice. If it fails, the button simply comes back: check your internet connection and try again |
+| No sound when pressing play | Press pause and play again; the app rebuilds its audio output each time, which fixes it after sleep or a headphone change |
+| Space or the arrows move a slider | Click in the reader first, then use the keys |
+| The window looks frozen or unstyled | **Document > Reload Interface**. The window's styling is loaded from the internet, so without a connection it can look plain until you are back online |
+| Export says FFmpeg is needed | Accept the download (Windows), or run the installer again (Mac) |
+| A word is mispronounced | Add a rule for it, or add it to the built-in list ([how](writing-for-read-aloud.md#pronunciation)) |
+
+### Known issues
+
+These are how the app behaves today; they are on the list to fix.
+
+- **Sleep timer:** it closes the whole app when the time is up, not just the
+  playback.
+- **Rules:** **Use Pattern Matching** has no effect. A backslash in a
+  replacement can make the rules for that sentence silently stop applying.
+- **Processing Mode:** both choices run on the processor, not a graphics card.
+  Switching takes effect the next time the app opens, unless the chosen voice
+  still needs downloading.
+- **Header & Footer Mode:** it affects reading only; both kinds of export still
+  read headers and page numbers. While it is on, paragraph pauses stop working,
+  and it can drop a line made only of letters that look like Roman numerals
+  ("mix", "civil").
+- **Paragraph pauses** never happen in PDFs or EPUBs while reading, because
+  their blank lines are lost.
+- **Period Pause** pauses at every period, including in "3.5" and "Dr.".
+- **Ignore list** entries are removed even inside longer words.
+- **Normal export** names the file with "pdf" stuck to the title
+  ("Bookpdf_af_bella.mp3"), replaces an earlier export of the same document
+  without asking, and is always MP3 at 128 kbps.
+- **Search:** Escape does not close it while the search box is selected, and
+  match highlights stay on until the app is reopened.
+- **Language button:** switching language while a document is open blanks the
+  title until you reopen the document.
+- **EPUB:** chapters can come out of order, and any conversion error says only
+  "Conversion failed".
+- **Voices:** one Japanese voice (Alpha) is hidden by mistake.
+- **Messages:** every message appears in red, even good news, and setup errors
+  are not shown.

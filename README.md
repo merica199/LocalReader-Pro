@@ -161,171 +161,21 @@ The app downloads the voice model on first run (**Setup Voice Engine** in the si
 
 ---
 
-## 🔘 First-Time Setup
+## 🔘 Using the app
 
-After launching the application:
+The [user guide](docs/user-guide.md) covers every feature: the library,
+reading, voices, pronunciation, exporting, sleep recordings, the sleep timer,
+updates, and troubleshooting, including the app's known issues. Every setting,
+with its default, range and exactly what it affects, is in the
+[settings reference](docs/settings-reference.md).
 
-1. **Choose Your Engine Mode:**
+Writing text for the app to read, and sleep scripts in particular, is covered
+in [writing for read-aloud](docs/writing-for-read-aloud.md) and
+[writing sleep scripts](docs/writing-sleep-scripts.md).
 
-   - Open **Settings** section in sidebar
-   - Find **"Processing Mode"** dropdown
-   - Choose between:
-     - **High Performance (CPU):** Faster, lower RAM (~87MB model)
-     - **High Quality (GPU):** Best audio quality (~309MB model)
-
-2. **Download Voice Engine** (the installers already did this; only needed after a
-   manual install, or to add the other model):
-
-   - Click **"Setup Voice Engine"** button in sidebar
-   - Downloads the model matching your selected mode
-   - Wait for green status indicator (⚪ → 🔘)
-   - **Tip:** You can download both models and switch anytime!
-
-3. **Upload Your First Book:**
-
-   - Click **"Upload Book (PDF/EPUB)"**
-   - Select any PDF or EPUB file
-   - App will process and display the book
-
-4. **Start Reading:**
-
-   - Click the blue **Play** button
-   - Or press `Space` to play/pause
-
-5. **First MP3 Export (Optional; the installers already set up FFmpeg):**
-   - Click **"Export Audio (MP3)"** in sidebar
-   - Prompt appears: "Download FFMPEG encoder (~100MB)"
-   - Click **"Download FFMPEG"** and wait ~2-3 minutes
-   - Export starts automatically after download
-   - Subsequent exports skip this step
-
----
-
-## 🔘 Usage Guide
-
-### Basic Reading
-
-- **Navigate Pages:** Use buttons (◀ ▶) or scroll to bottom/top for auto-flip
-- **Play Audio:** Press `Space` or click play button
-- **Jump to Sentence:** Click any sentence in the text
-- **Change Voice:** Use dropdown in sidebar settings
-- **Adjust Speed:** Drag speed slider (0.5x - 3.0x)
-
-### Smart Features
-
-**Smart Start:**
-
-- Automatically activates on first open
-- Finds first page with >500 characters
-- Shows notification: "🔘 Skipped to start of content (Page X)"
-
-**Header/Footer Filter:**
-
-1. Open **Settings** section in sidebar
-2. Find **"Header/Footer Filter"** dropdown
-3. Choose: **Off**, **Clean** (remove), or **Dim** (show faded)
-4. TTS skips filtered content in all modes
-
-**Global Search:**
-
-1. Press `Ctrl+F` (or `Cmd+F` on Mac)
-2. Type query (minimum 2 characters)
-3. Click any result to jump to that page
-4. Press `ESC` to close
-
-### Custom Pronunciation Rules
-
-1. Click **"Pronunciation"** tab in sidebar
-2. Click **+** button to add rule
-3. Configure:
-   - **Original Text:** The text to replace (e.g., "SQL")
-   - **Replacement Text:** How to pronounce (e.g., "S Q L")
-4. Options:
-   - ☑️ **Match Case:** "SQL" ≠ "sql"
-   - ☑️ **Whole Word:** "cat" won't match "category"
-   - ☑️ **Use Pattern Matching:** Enable RegEx
-
-**Example Rules:**
-
-- `ChatGPT` → `Chat G P T` (spell out)
-- `COVID-19` → `COVID nineteen` (pronounce naturally)
-
-**Built-in science pronunciations:** about 230 biology, chemistry and medical
-words the voice gets wrong (diastole, glomerulus, kinase, ATP, NADH and so on)
-are corrected automatically, in reading, MP3 export and sleep mode. Each entry
-gives the word's exact sounds, which a respelling cannot: the voice still
-guesses where the stress goes. A rule you add for the same word wins. The list
-is [dist/app/logic/pronunciations.json](dist/app/logic/pronunciations.json);
-[docs/writing-for-read-aloud.md](docs/writing-for-read-aloud.md) explains how
-to check a word and add one.
-
-### Custom Pause Settings
-
-1. Open **"Pause Settings"** section in sidebar
-2. Adjust sliders to set pause duration (0-2000ms):
-   - **Comma (,)** - Default: 0ms
-   - **Period (.)** - Default: 600ms
-   - **Question (?)** - Default: 600ms
-   - **Exclamation (!)** - Default: 600ms
-   - **Colon (:)** - Default: 0ms
-   - **Semicolon (;)** - Default: 0ms
-   - **Newline** - Default: 0ms
-
-   **A non-zero pause splits the sentence there.** The text before the mark is
-   sent to the model as one utterance, silence is inserted, and the text after
-   it is sent as another. That is occasionally what you want, but it costs the
-   intonation the model would otherwise carry across the whole sentence, so the
-   marks that fall *inside* a sentence default to 0 and let the model do its own
-   phrasing. Sentence-ending marks default to 600ms, which only ever splits
-   between sentences and so costs nothing.
-
-   Defaults are defined in `dist/app/ui/js/modules/state.js`. They are only
-   applied when no `pause_settings` block has been saved yet. Once a slider is
-   touched, the saved values in `userdata/settings.json` take over.
-3. Settings save automatically
-
-**Smart Behavior:**
-
-- Pauses apply only to single punctuation or the last char of a group
-- `"..."` creates ONE pause (e.g. 600ms), not three
-- `"?!` creates ONE pause (based on `!`)
-- `Title\n` creates a soft pause (300ms)
-
-### Exporting to MP3
-
-1. Open any PDF/EPUB document
-2. Click **"Export Audio (MP3)"** button
-3. Review time estimate (e.g., "~3 minutes")
-4. Confirm export
-5. Monitor real-time progress
-6. Click **"📂 Open Folder"** to access file
-
-**Export Details:**
-
-- **Format:** MP3, 192 kbps
-- **Naming:** `{document_name}_{voice_name}.mp3`
-- **Location:** `userdata/` folder in project directory
-- **Speed:** ~15 seconds per 1,000 characters
-
-### Sleep Timer
-
-1. Click the **Timer Icon** (clock) on the right side of the screen.
-2. Set the desired duration in **Hours** and **Minutes**.
-3. Click **"Start Timer"**.
-4. The drawer will show a countdown, and the main button will display the remaining minutes.
-5. The application will automatically close when the timer reaches zero.
-
----
-
-## 🔳 Keyboard Shortcuts
-
-| Key                | Action            |
-| ------------------ | ----------------- |
-| `Space`            | Play/Pause        |
-| `←`                | Previous Sentence |
-| `→`                | Next Sentence     |
-| `Ctrl+F` / `Cmd+F` | Open Search       |
-| `ESC`              | Close Search      |
+**Quick start:** click **Upload Book** (or drop a file on the window), click
+the document in the library, and press play. Space plays and pauses, the left
+and right arrows move a sentence, and Ctrl+F (Cmd+F) searches.
 
 ---
 
@@ -357,7 +207,7 @@ LocalReader-Pro/
 │   ├── update.py                # Applies an update once the app has closed
 │   └── tests/check_install.py   # End-to-end check of an installed copy
 ├── sample-scripts/              # A sleep script to try
-├── docs/                        # Writing for the voice, and sleep scripts
+├── docs/                        # User guide, settings reference, writing guides
 ├── tests/                       # Pronunciation list checks
 ├── tools/                       # Sleep script length estimate
 ├── CLAUDE.md                    # Notes for a Claude agent working here
