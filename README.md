@@ -250,6 +250,15 @@ After launching the application:
 - `ChatGPT` → `Chat G P T` (spell out)
 - `COVID-19` → `COVID nineteen` (pronounce naturally)
 
+**Built-in science pronunciations:** about 230 biology, chemistry and medical
+words the voice gets wrong (diastole, glomerulus, kinase, ATP, NADH and so on)
+are corrected automatically, in reading, MP3 export and sleep mode. Each entry
+gives the word's exact sounds, which a respelling cannot: the voice still
+guesses where the stress goes. A rule you add for the same word wins. The list
+is [dist/app/logic/pronunciations.json](dist/app/logic/pronunciations.json);
+[docs/writing-for-read-aloud.md](docs/writing-for-read-aloud.md) explains how
+to check a word and add one.
+
 ### Custom Pause Settings
 
 1. Open **"Pause Settings"** section in sidebar
@@ -348,6 +357,10 @@ LocalReader-Pro/
 │   ├── update.py                # Applies an update once the app has closed
 │   └── tests/check_install.py   # End-to-end check of an installed copy
 ├── sample-scripts/              # A sleep script to try
+├── docs/                        # Writing for the voice, and sleep scripts
+├── tests/                       # Pronunciation list checks
+├── tools/                       # Sleep script length estimate
+├── CLAUDE.md                    # Notes for a Claude agent working here
 ├── README.md
 │
 └── dist/
@@ -516,6 +529,20 @@ and is not in the original.
   from [docs/reference/sleepcast.py](docs/reference/sleepcast.py). To try it,
   add [sample-scripts/skin-histology.txt](sample-scripts/skin-histology.txt), a
   nine-minute slow tour of the skin that uses every kind of markup.
+- **Built-in science pronunciations.** About 230 biology, chemistry and medical
+  terms that espeak-ng mispronounces, found by running 627 common terms through
+  it and reading the sounds it produced. Each entry is the word's sounds in
+  espeak's own phonetic alphabet, put into the engine's output in place of its
+  guess (`logic/pronunciations.py`), so it covers every reading path and both
+  models, and controls stress, which respelling cannot. Saved audio is keyed on
+  the entries each sentence uses, so changing an entry regenerates only the
+  sentences that say that word. Also found: the PDF cleanup joins spaced single
+  letters, so "A T P" was read as "aptee".
+- **Writing guides and notes for Claude.** `docs/writing-for-read-aloud.md` and
+  `docs/writing-sleep-scripts.md` hold what testing showed about writing for the
+  voice (numbers, units, acronyms, pronunciation, and how a sleep script is
+  built), `tools/estimate_sleep_script.py` times a script the way the Export
+  dialog does, and `CLAUDE.md` points a Claude agent at all of it.
 - **One-click install and in-app updates.** Download the repository (on Windows the
   ZIP is enough; the installer then clones the app from GitHub itself) and double-click
   `Install on Mac.command` or `Install on Windows.bat`; see [Installation](#-installation).
