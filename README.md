@@ -387,7 +387,11 @@ and is not in the original.
   models, and controls stress, which respelling cannot. Saved audio is keyed on
   the entries each sentence uses, so changing an entry regenerates only the
   sentences that say that word. Also found: the PDF cleanup joins spaced single
-  letters, so "A T P" was read as "aptee".
+  letters, so "A T P" was read as "aptee". Checked against Wiktionary with
+  `tools/lookup_pronunciation.py --audit`: of the 118 words it has
+  pronunciations for, 116 agree on stress and syllables, and the other two
+  (microglia, oxaloacetate) have more than one accepted pronunciation. The
+  rest are not on Wiktionary and await a listener.
 - **Personal pronunciations, and Claude doing the work.** Each user has a
   personal pronunciation list in their library folder, which wins over the
   built-in one, applies without a restart and survives updates, so a word heard

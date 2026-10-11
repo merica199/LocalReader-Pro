@@ -199,7 +199,8 @@ the recording. Listen with the list open, and for any word that sounds wrong,
 tell Claude the word and how it should sound ("glomerulus sounds wrong, it's
 glo-MER-yu-lus"). Claude fixes it in your personal list, records it again,
 and you check once more. You can also ask it to check particular words: "how
-will it say renin and angiotensin?"
+will it say renin and angiotensin?" Claude looks each word up in published
+pronunciations before fixing anything, and asks you when sources disagree.
 
 **If you use a terminal,** the same recording is one command from the app's
 folder (`venv\Scripts\python.exe` on Windows):

@@ -69,8 +69,9 @@ only the app's has the voice and its libraries.
    (several files are timed as one recording). Adjust until it is within a
    few minutes of the length asked for, then join the parts into one `.txt`.
 6. **Check every technical word** before calling the script done (see
-   "Check how words are said"). Fix the ones that come out wrong in the
-   personal list, and record the new fixes for the person to hear.
+   "Check how words are said"): run them all through
+   `tools/lookup_pronunciation.py`, and fix every one the engine gets wrong in
+   the personal list. Record the new fixes for the person to hear.
 7. Save the script in the scripts folder, named for the topic
    (`cranial-nerves.txt`). Never in this repository: it is public.
 8. Tell them where it is and how long it runs, and offer to record it.
@@ -103,20 +104,36 @@ trying a new voice or setting.
 
 ### "Check how words are said" / "Make me a pronunciation check"
 
-You can read how the voice will say a word, but **you cannot hear it**. Both
-matter.
+Use everything you have, in this order. Never write a pronunciation from
+memory alone when a published one can be found, and **you cannot hear the
+voice**, so a person listening is always the last step.
 
-1. To see what the voice will say, read the sounds it produces (IPA, the
-   International Phonetic Alphabet, stress mark `ˈ` before the stressed
-   vowel):
+1. **Look it up, and see what the voice will say**, in one step:
 
    ```bash
-   python -c "import sys; sys.path.insert(0, 'dist/app'); from logic import pronunciations as p; from kokoro_onnx.tokenizer import Tokenizer; t = Tokenizer(); w = 'renin'; print(p.lookup(w) or t.phonemize(w, 'en-us'))"
+   python tools/lookup_pronunciation.py renin angiotensin
    ```
 
-   An entry from the lists comes first; otherwise this is the engine's own
-   guess. Compare it with the correct pronunciation.
-2. Record words for a person to hear, with a list of each word's time in the
+   For each word it prints the published pronunciations on Wiktionary (IPA,
+   the International Phonetic Alphabet, labelled US or GA for American, UK or
+   RP for British), the app's entry if it has one, and the engine's own guess,
+   with a note when they disagree. It needs the internet.
+2. **When Wiktionary has nothing** (common for eponyms, Latin muscle names,
+   plurals and newer drugs), search the web: "<word> pronunciation", the
+   Merriam-Webster medical dictionary, MedlinePlus, university anatomy
+   pronunciation guides, or the singular form for a plural. Use what you find
+   to decide; do not copy pages.
+3. **Choose the right pronunciation.** Prefer American medical usage. When
+   sources give more than one accepted pronunciation (Purkinje as
+   pur-KIN-jee or pur-kin-JAY), say so and ask which one their course uses:
+   the person's ear and their professors are the authority. Only fall back on
+   your own knowledge when nothing published can be found, and say that you
+   did.
+4. **Write it in the engine's style.** Published IPA marks stress at the start
+   of a syllable; the engine puts the stress mark right before the stressed
+   vowel, and writes some sounds its own way (ɹ for r, ɚ, ᵻ). Phonemize a
+   word with the same sounds to see how it writes them, and match that.
+5. Record words for a person to hear, with a list of each word's time in the
    recording:
 
    ```bash
@@ -125,7 +142,7 @@ matter.
 
    With no words named it records every entry, built-in and personal (about
    six minutes).
-3. **Then tell them, plainly and before anything else:** "Please listen to
+6. **Then tell them, plainly and before anything else:** "Please listen to
    pronunciation-check.mp3 on your Desktop. It's <N> minutes, and
    pronunciation-check.txt gives each word's time in the recording. I wrote
    every pronunciation from my own knowledge, checked against the engine's
@@ -140,10 +157,11 @@ the app's own files: editing the installed app makes its updater refuse to
 update. The personal list wins over the built-in one, takes effect
 immediately (no restart), and survives updates.
 
-1. Ask how it should sound if you are not sure ("glo-MER-yu-lus"). Their ear
-   and their course are the authority.
-2. Work out the IPA in the engine's own style: phonemize a rhyming word or
-   the parts, and copy how it writes those sounds.
+1. Find the right pronunciation as in "Check how words are said": look it up
+   (`tools/lookup_pronunciation.py`, then the web), and ask the person how it
+   should sound when sources disagree or you are unsure. Their ear and their
+   course are the authority.
+2. Write the IPA in the engine's own style (step 4 there).
 3. Add it to the personal list, creating the file if needed:
 
    ```json
@@ -156,8 +174,9 @@ immediately (no restart), and survives updates.
    `words` match any capitalization; `acronyms` only as written. An empty
    value (`"ROS": ""`) switches a built-in entry off, for when the built-in
    one is wrong.
-4. Check it uses only sounds the voice knows and reads back as intended (step
-   1 of the previous section), then record it (step 2) and ask them to listen.
+4. Check it reads back as intended (`tools/lookup_pronunciation.py <word>`
+   shows the app's entry now in use), then record it and ask them to listen
+   (steps 5 and 6 there).
 5. Words that need it everywhere should reach the shared list: see "Share
    pronunciation fixes".
 
@@ -177,8 +196,10 @@ personal fixes reach it like this:
 2. In a clone of the repository (not an installed app), the owner's agent
    runs `python tools/promote_pronunciations.py <their file>`, which adds,
    updates or removes entries and prints every change; then
-   `python tests/test_pronunciations.py`, a listening check of the changed
-   words, and a commit.
+   `python tests/test_pronunciations.py`,
+   `python tools/lookup_pronunciation.py --audit` (flags any entry that
+   disagrees with Wiktionary), a listening check of the changed words, and a
+   commit.
 3. After their next update, those entries are in the built-in list, and the
    personal copies can be cleared.
 

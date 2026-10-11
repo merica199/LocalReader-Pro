@@ -27,8 +27,9 @@ handled. The user's own rules (the Rules tab) are applied to the text before
 it reaches the engine, so a word they respell no longer matches here and their
 version wins.
 
-To add a word: phonemize the correct pronunciation's parts, or another word
-that rhymes, to see how the engine writes those sounds, then add the entry and
+To add a word: find a published pronunciation (tools/lookup_pronunciation.py
+looks it up on Wiktionary), phonemize a word with the same sounds to see how
+the engine writes them, then add the entry and
 run tests/test_pronunciations.py, which checks every entry uses only sounds the
 voice model knows. Then record it with tools/pronunciation_check.py and have a
 person listen.

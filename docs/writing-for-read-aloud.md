@@ -66,8 +66,20 @@ where they were heard; fixes that help everyone are later merged into the
 built-in list with `tools/promote_pronunciations.py`, in a clone of the
 repository.
 
-To find out whether the voice says a word correctly, run it through the engine
-and read the sounds (IPA, the International Phonetic Alphabet):
+To find out whether the voice says a word correctly, look it up and compare
+in one step:
+
+```bash
+venv/bin/python tools/lookup_pronunciation.py glomerulus renin
+```
+
+It prints the published pronunciations on Wiktionary, the app's entry if it
+has one, and the voice's own guess, and notes when they disagree.
+`--audit` checks every word in the lists against Wiktionary. When Wiktionary
+has nothing, search the web; when sources disagree, ask someone who knows the
+subject which pronunciation is used. To see only the voice's own guess, run it
+through the engine and read the sounds (IPA, the International Phonetic
+Alphabet):
 
 ```bash
 venv/bin/python -c "from kokoro_onnx.tokenizer import Tokenizer; print(Tokenizer().phonemize('glomerulus', 'en-us'))"
