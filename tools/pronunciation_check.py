@@ -3,7 +3,7 @@ Record words the way the app will say them, so a person can check them by ear.
 
 Run with the app's own Python:
 
-    venv/bin/python tools/pronunciation_check.py                  every built-in entry
+    venv/bin/python tools/pronunciation_check.py                  every entry, built-in and personal
     venv/bin/python tools/pronunciation_check.py kinase diastole  just these words
     venv/bin/python tools/pronunciation_check.py --out ~/Desktop  where to save
 
@@ -56,7 +56,8 @@ if models is None:
 kokoro = Kokoro(str(models / "kokoro.int8.onnx"), str(models / "voices.bin"))
 pronunciations.install(kokoro)
 
-words = args.words or sorted(pronunciations.ACRONYMS) + sorted(pronunciations.WORDS)
+table = pronunciations._table()  # the built-in list plus any personal entries
+words = args.words or sorted(table.acronyms) + sorted(table.words)
 lang = "en-gb" if args.voice.startswith("b") else "en-us"
 out = Path(args.out).expanduser()
 out.mkdir(parents=True, exist_ok=True)
@@ -67,7 +68,7 @@ for word in words:
     audio, rate = kokoro.create(word + ".", args.voice, args.speed, lang)
     if gap is None:
         gap = np.zeros(int(rate * GAP_SECONDS), dtype=np.float32)
-    on_list = word in pronunciations.ACRONYMS or word.lower() in pronunciations.WORDS
+    on_list = pronunciations.lookup(word) is not None
     note = "" if on_list else "  (not on the list: the engine's own guess)"
     lines.append(f"{int(elapsed // 60)}:{int(elapsed % 60):02d}  {word}{note}")
     parts += [audio, gap]

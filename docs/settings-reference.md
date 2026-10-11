@@ -178,6 +178,14 @@ as written ("ATP", not "atp"), and possessives ("Henle's") are handled. Adding
 to it, and checking the result by ear, is explained in
 [writing for read-aloud](writing-for-read-aloud.md#pronunciation).
 
+### Personal pronunciations
+
+`pronunciations.json` in the userdata folder, in the same format as the
+built-in list: `{"words": {...}, "acronyms": {...}}`. Its entries win over the
+built-in ones, an entry with an empty value switches a built-in one off, and
+changes take effect immediately. Updates never touch it. The
+[user guide](user-guide.md#your-personal-pronunciation-list) explains it.
+
 ## Normal export
 
 **Export Audio**, then **Normal**. It has no settings of its own; it uses the

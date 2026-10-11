@@ -58,6 +58,14 @@ and [dist/app/logic/pronunciations.py](../dist/app/logic/pronunciations.py)
 explains how to add a word. After any change, run
 `venv/bin/python tests/test_pronunciations.py`.
 
+Each user also has a **personal list** in the same format,
+`pronunciations.json` in their library folder (`userdata`). It wins over the
+built-in list, takes effect without restarting, survives updates, and an empty
+value switches a built-in entry off. Fix words there first, on the computer
+where they were heard; fixes that help everyone are later merged into the
+built-in list with `tools/promote_pronunciations.py`, in a clone of the
+repository.
+
 To find out whether the voice says a word correctly, run it through the engine
 and read the sounds (IPA, the International Phonetic Alphabet):
 

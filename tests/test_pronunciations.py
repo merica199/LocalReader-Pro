@@ -21,6 +21,10 @@ from logic import pronunciations  # noqa: E402
 from logic.pronunciations import ACRONYMS, WORDS, phonemize_with  # noqa: E402
 from logic.text_normalizer import apply_custom_pronunciations  # noqa: E402
 
+# Never read a real personal list: every check below is about the built-in one
+# unless it says otherwise.
+pronunciations.PERSONAL_FILE = Path(__file__).parent / "no-personal-list.json"
+
 failures = 0
 
 
@@ -125,6 +129,22 @@ check(
     "a saved sleep sentence with a listed word gets a new key",
     cache.path("The vagus nerve slows it.").stem != old_key("The vagus nerve slows it."),
 )
+
+
+# The personal list in userdata wins over the built-in one, can switch an entry
+# off, is picked up as soon as it changes, and a broken one is ignored.
+personal = Path(tempfile.mkdtemp()) / "pronunciations.json"
+pronunciations.PERSONAL_FILE = personal
+personal.write_text(json.dumps({"words": {"diastole": "dˈaɪəstˌoʊl", "kreb": "kɹˈɛb"}, "acronyms": {"ATP": ""}}), encoding="utf-8")
+check("a personal entry wins over the built-in one", spoken("diastole") == "dˈaɪəstˌoʊl", spoken("diastole"))
+check("a personal entry adds a new word", pronunciations.lookup("Kreb") == "kɹˈɛb")
+check("an empty personal entry switches a built-in one off", spoken("ATP") == plain("ATP"), spoken("ATP"))
+personal.write_text(json.dumps({"words": {"diastole": "dˈaɪəstˌoʊliː"}}), encoding="utf-8")
+check("an edited personal list is picked up without restarting", spoken("diastole") == "dˈaɪəstˌoʊliː", spoken("diastole"))
+personal.write_text("{ not json", encoding="utf-8")
+check("a broken personal list is ignored, not fatal", spoken("diastole") == WORDS["diastole"], spoken("diastole"))
+personal.unlink()
+check("with no personal list, the built-in one applies", spoken("ATP") == ACRONYMS["ATP"])
 
 
 class FakeEngine:
