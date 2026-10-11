@@ -19,10 +19,12 @@ if str(base_dir_parent) not in sys.path:
 try:
     from logic.smart_content_detector import filter_text_for_tts
     from logic.text_normalizer import apply_custom_pronunciations
+    from logic import pronunciations
 except ImportError:
     sys.path.append(str(base_dir_parent / "logic"))
     from smart_content_detector import filter_text_for_tts
     from text_normalizer import apply_custom_pronunciations
+    import pronunciations
 
 from ..state import audio_cache, kokoro
 from ..models import SynthesisRequest
@@ -281,6 +283,7 @@ def generate_cache_key(text, voice, speed, pause_settings, rules, ignore_list):
         "pause_settings": pause_settings,
         "rules": [str(r) for r in rules],
         "ignore_list": sorted(ignore_list),
+        "pronunciations": pronunciations.used(text),
     }
     cache_string = json.dumps(cache_data, sort_keys=True)
     return hashlib.md5(cache_string.encode("utf-8")).hexdigest()

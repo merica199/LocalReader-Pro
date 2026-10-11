@@ -19,8 +19,10 @@ import numpy as np
 import soundfile as sf
 
 try:
+    from logic import pronunciations
     from logic.sleep_script import Event, Pacing, ensure_end, split_middle
 except ImportError:
+    import pronunciations
     from sleep_script import Event, Pacing, ensure_end, split_middle
 
 SAMPLE_RATE = 24000
@@ -138,7 +140,10 @@ class SentenceCache:
         self.signature = [CACHE_VERSION, *signature]
 
     def path(self, text: str) -> Path:
-        key = hashlib.sha1(json.dumps([self.signature, text]).encode("utf-8")).hexdigest()
+        # The built-in pronunciations this text uses change its sound too.
+        used = pronunciations.used(text)
+        parts = [self.signature, text, used] if used else [self.signature, text]
+        key = hashlib.sha1(json.dumps(parts).encode("utf-8")).hexdigest()
         return self.directory / f"{key}.npy"
 
     def get(self, text: str) -> Optional[np.ndarray]:

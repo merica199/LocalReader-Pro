@@ -19,6 +19,7 @@ try:
         get_available_models,
     )
     from logic.audio_cache import AudioCache
+    from logic import pronunciations
 
     # We should also import load_engine logic or reimplement it
 except ImportError:
@@ -28,6 +29,7 @@ except ImportError:
         check_model_exists,
         get_available_models,
     )
+    import pronunciations
 
 router = APIRouter()
 
@@ -112,6 +114,8 @@ def load_engine_logic(requested_mode=None):
         else:
             print("[ENGINE] Using default Kokoro for CPU model...")
             state_module.kokoro = Kokoro(str(model_to_load), str(voices_path))
+        # Science words the engine mispronounces (logic/pronunciations.py).
+        pronunciations.install(state_module.kokoro)
         state_module.kokoro_model = model_to_load.name
 
         if actual_mode != requested_mode:
