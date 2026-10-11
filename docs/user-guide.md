@@ -186,24 +186,44 @@ and sleep recordings alike. You do not need to do anything.
 > result. **A person needs to listen to them.** The person who knows the
 > subject best is the right judge: for medical terms, a medical student over
 > anyone else. Anything wrong is a one-line fix.
->
-> To make a recording of every built-in word, with a list of each word's time
-> in the recording, run this from the app's folder:
->
-> ```bash
-> venv/bin/python tools/pronunciation_check.py --out ~/Desktop
-> ```
->
-> On Windows use `venv\Scripts\python.exe` instead of `venv/bin/python`. It
-> writes `pronunciation-check.mp3` (about six minutes) and
-> `pronunciation-check.txt`. Name words after the command to record just those;
-> a word not on the list comes out as the voice's own guess, which tells you
-> whether it needs an entry. Whenever words are added to the list, record and
-> listen to them before relying on them. A Claude agent working in this
-> repository is told to do this and to ask you to listen.
 
-How to check a word and add one is in
-[writing for read-aloud](writing-for-read-aloud.md#pronunciation).
+**The easy way: ask Claude.** With Claude open in the app's folder (see
+[Working with Claude](#12-working-with-claude)), say:
+
+> Make me a pronunciation check recording of the built-in words and put it on
+> my Desktop.
+
+You get `pronunciation-check.mp3` (about six minutes, every word spoken one at
+a time) and `pronunciation-check.txt`, which lists each word with its time in
+the recording. Listen with the list open, and for any word that sounds wrong,
+tell Claude the word and how it should sound ("glomerulus sounds wrong, it's
+glo-MER-yu-lus"). Claude fixes it in your personal list, records it again,
+and you check once more. You can also ask it to check particular words: "how
+will it say renin and angiotensin?"
+
+**If you use a terminal,** the same recording is one command from the app's
+folder (`venv\Scripts\python.exe` on Windows):
+
+```bash
+venv/bin/python tools/pronunciation_check.py --out ~/Desktop
+```
+
+Name words after the command to record just those. A word not on any list
+comes out as the voice's own guess, which tells you whether it needs an entry.
+
+### Your personal pronunciation list
+
+Fixes you make go in a personal list, `pronunciations.json` in your library
+folder ([where that is](#11-where-your-files-are)). It is yours: updates never
+change it, and it wins over the built-in list, so a word you fix is right from
+the next sentence on, with no restart. It can also switch off a built-in entry
+that is wrong.
+
+The built-in list is shared: it ships to everyone who installs or updates the
+app, and it keeps growing. Fixes that would help everyone belong there. To
+share yours, send your personal `pronunciations.json` to the app's maintainer
+(merica199 on GitHub); once they are added, they arrive in your next update
+and your personal copies are no longer needed.
 
 ### Your own rules (Rules tab)
 
@@ -357,16 +377,35 @@ Export dialog opens it). To back up everything that matters, copy the
 
 ## 12. Working with Claude
 
-This repository is set up for Claude Code. Open Claude Code in a copy of the
-repository (not in the installed app's own folder, which updates itself) and
-ask in plain words, for example: *write me a 90 minute sleep script about the
-cranial nerves, in the style of the sample.* The agent reads
-[CLAUDE.md](../CLAUDE.md) and the writing guides on its own. It will:
+The app comes set up for Claude Code. Claude can write sleep scripts, record
+them, check and fix pronunciations, and change settings for you, all from
+plain requests; you never need a terminal.
 
-- follow the rules for writing text the voice reads well,
-- time the script to the length you asked for,
-- check the technical words, and record any new ones for you to listen to,
-- keep personal scripts out of the repository, which is public.
+**Setting it up:** open Claude Code in the app's own folder:
+
+- **Windows:** `%LOCALAPPDATA%\Programs\LocalReader Pro` (paste it into the
+  folder picker; Windows fills in the rest)
+- **Mac:** `/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro`
+
+Claude reads its instructions from [CLAUDE.md](../CLAUDE.md) in that folder,
+including how to work there without changing the app, so updates keep
+working. Keep LocalReader Pro open while Claude records anything.
+
+**Things you can ask:**
+
+| Ask | What happens |
+|---|---|
+| "Write me a 90 minute sleep script about the cranial nerves." | Claude writes it in the style of the sample, times it to the length, checks every technical word, and saves it in `Documents/Sleep scripts` |
+| "Here are my lecture notes, make a sleep script from them." | The same, following what your course emphasizes |
+| "Record it." | It adds the script to your library and makes the sleep recording with your voice and settings, then tells you where the file is. A 90 minute recording takes about 45 minutes to make |
+| "Make a one-minute preview first." | Just the first minute, to try a voice or setting |
+| "Make me a pronunciation check." | A recording of every built-in word, to listen to ([why](#check-them-by-ear)) |
+| "Renin sounded wrong, it should be REE-nin." | It fixes the word in your personal list and records it for you to check |
+| "Make the recordings slower and sleepier." | It changes the sleep settings for you |
+| "Something's not working." | It looks into it and writes up the problem for you to send |
+
+Scripts and recordings stay on your computer, outside the app's folder. The
+app's repository is public, so Claude never puts your scripts in it.
 
 ## 13. Troubleshooting and known issues
 

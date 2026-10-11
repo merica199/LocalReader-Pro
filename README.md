@@ -209,7 +209,7 @@ LocalReader-Pro/
 ├── sample-scripts/              # A sleep script to try
 ├── docs/                        # User guide, settings reference, writing guides
 ├── tests/                       # Pronunciation list checks
-├── tools/                       # Sleep script length estimate
+├── tools/                       # Record a script, time it, check and share pronunciations
 ├── CLAUDE.md                    # Notes for a Claude agent working here
 ├── README.md
 │
@@ -388,6 +388,16 @@ and is not in the original.
   the entries each sentence uses, so changing an entry regenerates only the
   sentences that say that word. Also found: the PDF cleanup joins spaced single
   letters, so "A T P" was read as "aptee".
+- **Personal pronunciations, and Claude doing the work.** Each user has a
+  personal pronunciation list in their library folder, which wins over the
+  built-in one, applies without a restart and survives updates, so a word heard
+  wrong is fixed at once without changing the app (which would block its
+  updates). `tools/promote_pronunciations.py` merges such fixes into the
+  built-in list for everyone. `tools/make_sleep_recording.py` records a script
+  through the running app with the user's own voice and settings, and
+  `CLAUDE.md` gives a Claude agent step-by-step procedures for the requests a
+  non-programmer makes, so writing, recording and fixing words all happen from
+  plain requests.
 - **Writing guides and notes for Claude.** `docs/writing-for-read-aloud.md` and
   `docs/writing-sleep-scripts.md` hold what testing showed about writing for the
   voice (numbers, units, acronyms, pronunciation, and how a sleep script is

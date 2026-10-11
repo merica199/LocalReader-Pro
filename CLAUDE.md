@@ -9,69 +9,232 @@ including slow "sleep mode" recordings with background sound. A FastAPI server
 [docs/settings-reference.md](docs/settings-reference.md) every setting, both
 taken from the code. Read them before answering how something works.
 
-## Writing scripts for it
+## Who you are probably working for
 
-Most requests will be to write something for the app to read, often a sleep
-script on a subject being studied. Read these first; they hold what was
-learned by testing, and the voice gets several obvious-looking things wrong:
+Most people using this repository with Claude are not programmers. They use
+the app to make sleep recordings, often about what they are studying, and they
+talk to you in plain words: "write me an hour on the cranial nerves", "the
+word 'renin' sounded wrong", "make the recording". So:
 
-- [docs/writing-for-read-aloud.md](docs/writing-for-read-aloud.md): numbers,
-  units, symbols, acronyms and pronunciation, for any text.
-- [docs/writing-sleep-scripts.md](docs/writing-sleep-scripts.md): markup,
-  length, shape, style and accuracy for sleep scripts.
+- **Do the work yourself.** Never ask them to run a command, open a terminal,
+  or edit a file. Every procedure below is something you carry out.
+- **Speak plainly.** Say what you did and where the result is, with the full
+  path to any file. No jargon without a plain explanation.
+- **Ask only what you need.** A topic is enough to start a script; use the
+  defaults below for anything they did not say.
+- **Tell them before anything slow.** A long recording takes a while to make
+  (see "Make the recording"); say roughly how long, and run it in the
+  background.
 
-Check a script's length with `tools/estimate_sleep_script.py`. Scripts about
-real people, or written for one person, are personal: this repository is
-public, so keep them in a folder outside it.
+## Where things are
 
-## Pronunciation
+| | Windows | Mac |
+|---|---|---|
+| The installed app (a git clone) | `%LOCALAPPDATA%\Programs\LocalReader Pro` | `/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro` |
+| The app's Python | `<app>\venv\Scripts\python.exe` | `<app>/venv/bin/python` |
+| Library, settings, recordings | `%APPDATA%\LocalReader Pro\userdata` | `~/Library/Application Support/LocalReader Pro/userdata` |
+| Personal pronunciations | `<userdata>\pronunciations.json` | `<userdata>/pronunciations.json` |
+| Scripts and finished recordings | `Documents\Sleep scripts` (create it) | `~/Documents/Sleep scripts` (create it) |
 
-`dist/app/logic/pronunciations.json` is a built-in list of science words the
-voice mispronounces, each with its exact sounds. Add to it when a word comes
-out wrong (`dist/app/logic/pronunciations.py` explains how), then run
-`tests/test_pronunciations.py`.
+Inside the installed app, `dist/userdata` is a link to the userdata folder.
+On Windows, Claude Code's shell is usually Git Bash: write paths with forward
+slashes, for example `"$LOCALAPPDATA/Programs/LocalReader Pro/venv/Scripts/python.exe"`.
+Every command below is shown from the app's folder; quote paths, since they
+contain spaces.
 
-**You cannot hear the voice, so every pronunciation you add or change needs a
-person's ears.** You can read the sounds the engine produces, and that catches
-a lot, but not everything. After adding or changing entries, or before
-recording a script full of technical words:
+Below, `python` means the app's Python, never another Python on the computer:
+only the app's has the voice and its libraries.
 
-1. Record them: `venv/bin/python tools/pronunciation_check.py --out <folder>`
-   (all entries), or name the words to record just those.
-2. Tell the user, plainly and before anything else: "Please listen to
-   pronunciation-check.mp3 in <folder>. It's <N> minutes, and
+## Requests and exactly how to handle them
+
+### "Write me a sleep script about ..."
+
+1. Read [docs/writing-sleep-scripts.md](docs/writing-sleep-scripts.md) and
+   [docs/writing-for-read-aloud.md](docs/writing-for-read-aloud.md) first,
+   every time. They hold what testing showed; the voice gets several
+   obvious-looking things wrong.
+2. Defaults when they did not say: **about 90 minutes**, one gentle story
+   thread through the topic, the shape and style in the sleep guide, and
+   [sample-scripts/skin-histology.txt](sample-scripts/skin-histology.txt) as
+   the model for tone.
+3. If they give lecture notes, slides or a reading list, read them and follow
+   their emphasis and terminology: the script should match what is being
+   taught. Ask for them if the topic is one course's material and none were
+   given; otherwise write from your own knowledge.
+4. **Accuracy is not optional.** The listener may be studying this. Check
+   every fact and number; prefer a rounded number that is certainly right;
+   leave out anything uncertain.
+5. Write it in parts (one per chapter) and time it as you go:
+   `python tools/estimate_sleep_script.py part1.txt part2.txt ...`
+   (several files are timed as one recording). Adjust until it is within a
+   few minutes of the length asked for, then join the parts into one `.txt`.
+6. **Check every technical word** before calling the script done (see
+   "Check how words are said"). Fix the ones that come out wrong in the
+   personal list, and record the new fixes for the person to hear.
+7. Save the script in the scripts folder, named for the topic
+   (`cranial-nerves.txt`). Never in this repository: it is public.
+8. Tell them where it is and how long it runs, and offer to record it.
+
+### "Make the recording" / "Record it"
+
+The app must be open (the green dot showing). Then:
+
+```bash
+python tools/make_sleep_recording.py "<script.txt>" --copy-to "<scripts folder>"
+```
+
+It adds the script to the app's library (replacing an earlier version of the
+same file instead of adding a copy), records it with their chosen voice,
+pronunciation rules and saved sleep settings, and copies the finished file to
+the scripts folder. Add `--preview` to make only the first minute, for
+trying a new voice or setting.
+
+- **How long it takes:** voicing runs at about twice real time on a recent
+  computer, so a 90-minute script takes roughly 45 minutes, plus a couple of
+  minutes to mix. Sentences already voiced for an earlier version are reused,
+  so a re-recording after small edits is quick. The tool prints an estimate
+  before it starts. Run it in the background and tell them.
+- **If it says the app is not running**, ask them to open LocalReader Pro and
+  wait for the green dot.
+- **If it says FFmpeg is missing**, ask them to click Export Audio in the app
+  once; it offers the download.
+- They can also do all of this themselves in the app (Export Audio, then Sleep
+  mode); the [user guide](docs/user-guide.md#8-sleep-recordings) explains it.
+
+### "Check how words are said" / "Make me a pronunciation check"
+
+You can read how the voice will say a word, but **you cannot hear it**. Both
+matter.
+
+1. To see what the voice will say, read the sounds it produces (IPA, the
+   International Phonetic Alphabet, stress mark `ˈ` before the stressed
+   vowel):
+
+   ```bash
+   python -c "import sys; sys.path.insert(0, 'dist/app'); from logic import pronunciations as p; from kokoro_onnx.tokenizer import Tokenizer; t = Tokenizer(); w = 'renin'; print(p.lookup(w) or t.phonemize(w, 'en-us'))"
+   ```
+
+   An entry from the lists comes first; otherwise this is the engine's own
+   guess. Compare it with the correct pronunciation.
+2. Record words for a person to hear, with a list of each word's time in the
+   recording:
+
+   ```bash
+   python tools/pronunciation_check.py renin kinase --out "<Desktop>"
+   ```
+
+   With no words named it records every entry, built-in and personal (about
+   six minutes).
+3. **Then tell them, plainly and before anything else:** "Please listen to
+   pronunciation-check.mp3 on your Desktop. It's <N> minutes, and
    pronunciation-check.txt gives each word's time in the recording. I wrote
    every pronunciation from my own knowledge, checked against the engine's
-   phonetic output, but I can't hear the result. <Whoever knows the field
-   best, a medical student for medical terms> is the better judge than
-   either of us. Anything wrong is a one-line fix."
-3. Fix whatever they flag, and record those words again.
+   phonetic output, but I can't hear the result. You're the better judge of
+   how these words should sound. Anything wrong is a one-line fix." For
+   medical terms, a medical student's ear beats your reading every time.
 
-## The installed app is a git clone: do not edit it
+### "The word X sounded wrong" / fixing a pronunciation
 
-The installers put the app in its own git clone, which the app updates itself
-from GitHub (Help > Check for Updates):
+Fixes go in the **personal list**, `<userdata>/pronunciations.json`, never in
+the app's own files: editing the installed app makes its updater refuse to
+update. The personal list wins over the built-in one, takes effect
+immediately (no restart), and survives updates.
 
-- Mac: `/Applications/LocalReader Pro.app/Contents/Resources/LocalReader-Pro`
-- Windows: `%LOCALAPPDATA%\Programs\LocalReader Pro`
+1. Ask how it should sound if you are not sure ("glo-MER-yu-lus"). Their ear
+   and their course are the authority.
+2. Work out the IPA in the engine's own style: phonemize a rhyming word or
+   the parts, and copy how it writes those sounds.
+3. Add it to the personal list, creating the file if needed:
 
-If the folder you are working in is one of those, it is the live app. Editing
-its files makes the updater refuse to update, so change code in a separate
-clone or a git worktree instead. The library and settings live outside the
-app (`~/Library/Application Support/LocalReader Pro`, or
-`%APPDATA%\LocalReader Pro` on Windows), reached through the links
-`dist/userdata` and `dist/app/models`. Never delete through those links.
+   ```json
+   {
+     "words": { "renin": "ɹˈiːnɪn" },
+     "acronyms": { "GLUT4": "ɡlˈuːt fˈɔːɹ" }
+   }
+   ```
 
-## Running and testing
+   `words` match any capitalization; `acronyms` only as written. An empty
+   value (`"ROS": ""`) switches a built-in entry off, for when the built-in
+   one is wrong.
+4. Check it uses only sounds the voice knows and reads back as intended (step
+   1 of the previous section), then record it (step 2) and ask them to listen.
+5. Words that need it everywhere should reach the shared list: see "Share
+   pronunciation fixes".
 
-- The app's Python is `venv/bin/python` (Mac) or `venv\Scripts\python.exe`
-  (Windows), inside the installed app or the clone that has a `venv`.
-- The UI is hard-coded to port 8000, which the running app holds. To test a
-  change, start a separate copy on another port from the clone's `dist`
-  folder: `python -m uvicorn app.server:app --host 127.0.0.1 --port 8771`.
-  Give it an empty `dist/userdata` of its own, never the real library.
-- The server refuses requests from other websites, so test requests need
-  `Origin: http://127.0.0.1:<port>`.
+Rules in the app's Rules tab are the other way to change pronunciation:
+replacing a word with a respelling. Use them for names and abbreviations
+(spelling something out); use the personal list for science words, since a
+respelling cannot control where the stress goes.
+
+### "Share pronunciation fixes" / sending them to everyone
+
+The built-in list, `dist/app/logic/pronunciations.json`, ships with the app to
+everyone who installs or updates it, and is meant to keep growing. A user's
+personal fixes reach it like this:
+
+1. They send their personal list (`<userdata>/pronunciations.json`) to the
+   repository's owner (merica199 on GitHub). Offer to find the file for them.
+2. In a clone of the repository (not an installed app), the owner's agent
+   runs `python tools/promote_pronunciations.py <their file>`, which adds,
+   updates or removes entries and prints every change; then
+   `python tests/test_pronunciations.py`, a listening check of the changed
+   words, and a commit.
+3. After their next update, those entries are in the built-in list, and the
+   personal copies can be cleared.
+
+### "Change the voice" / "Make it slower" / other settings
+
+- **Voice, and reading speed:** Voice & Audio in the app (the upper round
+  button on the right edge). Sleep recordings use the voice chosen there.
+- **Sleep recording options** (speed, pauses, background sound, fades, file
+  format): the Export dialog's Sleep mode, where they are saved. You can also
+  change them for the person: `GET /api/export/sleep/settings`, change the
+  fields, `POST /api/export/sleep/settings` with the whole `settings` object
+  (the app must be running; send `Origin: http://127.0.0.1:8000`). Every
+  option and its range is in [the settings reference](docs/settings-reference.md#sleep-mode).
+- Slower and sleepier: sleep Speed 0.8, longer pauses after sentences
+  (1.2 to 1.5 seconds) and paragraphs (3 to 4).
+
+### "How do I get it on my phone?"
+
+See [Getting it onto your phone](docs/user-guide.md#getting-it-onto-your-phone).
+Known so far: AirPlay to an older Apple TV (third generation and earlier)
+works through Apple's own players (Music, Photos, YouTube's) but not VLC's
+audio; a recording of an hour or more is too big to email.
+
+### "Update the app"
+
+Help > Check for Updates in the app, or the Updates box at the bottom of the
+left panel. Never update it with git yourself: the updater also installs the
+libraries a new version needs.
+
+### "Something isn't working"
+
+1. Look before changing anything. The [user guide's known issues](docs/user-guide.md#known-issues)
+   and the GitHub issues for this repository list problems already known.
+2. On a Mac, the app's output is logged to `~/Library/Logs/LocalReader-Pro.log`.
+   On Windows the app runs without a console and keeps no log; ask what the
+   screen showed, and check `<userdata>/update.log` for update problems.
+3. Do not edit the installed app to fix it. Write a short, plain description
+   (what they did, what happened, what they expected, any error text) for
+   them to send to the repository's owner.
+
+## Working on the app itself
+
+Changes to the app are made in a separate clone, never in an installed copy,
+and reach users as updates.
+
+- **The installed app is a git clone that updates itself.** Editing its files
+  makes the updater refuse to update. Running its tools is fine.
+- The library and settings live outside the app (the userdata folder), reached
+  through the links `dist/userdata` and `dist/app/models`. Never delete through
+  those links.
+- **Testing:** the UI is hard-coded to port 8000, which the running app holds.
+  Start a separate copy on another port from the clone's `dist` folder:
+  `python -m uvicorn app.server:app --host 127.0.0.1 --port 8771`, with an
+  empty `dist/userdata` of its own, never the real library. The server
+  refuses requests from other websites, so test requests need
+  `Origin: http://127.0.0.1:<port>`. The tools take `--port` for this.
 - The voice engine is not thread-safe: every call into it goes through
   `state.engine_lock`.
 - Tests: `tests/test_pronunciations.py`, and
@@ -85,11 +248,12 @@ app (`~/Library/Application Support/LocalReader Pro`, or
   reference in the same change, and the user guide's Known issues list when a
   bug is fixed or found. They describe what the app does, not what it should
   do.
-
 - Sleep mode is a separate mode of the Export dialog. Sleep features stay
   inside it, and normal reading and normal MP3 export keep working as they do.
 - Everything runs locally. The app goes online only to download the voice
   model and FFmpeg, and to check for updates when asked.
+- Scripts and recordings about real people, or for one person, are personal.
+  This repository is public: keep them out of it.
 - espeak-ng cuts its data path at about 160 bytes, so the installers refuse
   install folders that would make it longer.
 - `installers/windows/install.ps1` runs on Windows PowerShell 5.1, which
