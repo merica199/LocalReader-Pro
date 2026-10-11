@@ -28,6 +28,22 @@ voice mispronounces, each with its exact sounds. Add to it when a word comes
 out wrong (`dist/app/logic/pronunciations.py` explains how), then run
 `tests/test_pronunciations.py`.
 
+**You cannot hear the voice, so every pronunciation you add or change needs a
+person's ears.** You can read the sounds the engine produces, and that catches
+a lot, but not everything. After adding or changing entries, or before
+recording a script full of technical words:
+
+1. Record them: `venv/bin/python tools/pronunciation_check.py --out <folder>`
+   (all entries), or name the words to record just those.
+2. Tell the user, plainly and before anything else: "Please listen to
+   pronunciation-check.mp3 in <folder>. It's <N> minutes, and
+   pronunciation-check.txt gives each word's time in the recording. I wrote
+   every pronunciation from my own knowledge, checked against the engine's
+   phonetic output, but I can't hear the result. <Whoever knows the field
+   best, a medical student for medical terms> is the better judge than
+   either of us. Anything wrong is a one-line fix."
+3. Fix whatever they flag, and record those words again.
+
 ## The installed app is a git clone: do not edit it
 
 The installers put the app in its own git clone, which the app updates itself

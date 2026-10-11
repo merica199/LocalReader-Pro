@@ -65,7 +65,21 @@ and read the sounds (IPA, the International Phonetic Alphabet):
 venv/bin/python -c "from kokoro_onnx.tokenizer import Tokenizer; print(Tokenizer().phonemize('glomerulus', 'en-us'))"
 ```
 
-The stress mark `ˈ` comes right before the stressed vowel. Rewriting the word's
+The stress mark `ˈ` comes right before the stressed vowel.
+
+**Then listen.** Reading the sounds catches most mistakes but not all, and an
+AI agent cannot hear at all. Record the words the way the app will say them,
+with each word's time in the recording listed in a text file beside it:
+
+```bash
+venv/bin/python tools/pronunciation_check.py kinase diastole --out ~/Desktop
+```
+
+With no words named, it records every entry on the built-in list (about six
+minutes). Have the person who knows the field best listen; anything wrong is a
+one-line fix in the list.
+
+Rewriting the word's
 spelling in the text is not a reliable fix: the engine still guesses the
 stress. A user can also add a personal respelling in the app's Rules tab, which
 wins over the built-in list for that word.
