@@ -221,6 +221,10 @@ def main():
         # an .ico file: given the PNG it throws and the app exits before its
         # window opens. Elsewhere the PNG is used.
         icon_name = "icon.ico" if sys.platform == "win32" else "icon.png"
+        # Debug mode is what makes right-click > Inspect Element available, but
+        # pywebview also opens the developer tools window at every launch in
+        # debug mode unless told not to.
+        webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
         icon_path = base_dir.parent / "assets" / icon_name
         webview.start(
             debug=True,
