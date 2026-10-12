@@ -3,8 +3,9 @@
 # other websites, and applies an update (installers/tests/check_install.py).
 # On Windows it also installs from a folder like GitHub's Download ZIP.
 #
-# What this cannot check: the app's window opening. These machines have no
-# screen, so the first double-click on a real computer is still the test of that.
+# On Windows it also opens the app itself, as the Start menu shortcut does, and
+# checks it is still running with its window open after 25 seconds. The Mac
+# job cannot: macOS runners give an app no window server to draw on.
 
 name: Installers
 
@@ -72,6 +73,23 @@ jobs:
           $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
           & "$app\venv\Scripts\python.exe" "$app\installers\tests\check_install.py" $app --update
           if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Open the app, as the shortcut does
+        shell: powershell
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\LocalReader Pro'
+          $out = Join-Path $env:RUNNER_TEMP 'window-out.log'
+          $err = Join-Path $env:RUNNER_TEMP 'window-err.log'
+          $p = Start-Process -FilePath "$app\venv\Scripts\python.exe" -ArgumentList "`"$app\dist\main.py`"" -WorkingDirectory "$app\dist" -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 25
+          if ($p.HasExited) {
+            Get-Content $out, $err -ErrorAction SilentlyContinue
+            Write-Host "FAIL the app exited (code $($p.ExitCode)) before its window had been open 25 seconds"
+            exit 1
+          }
+          Get-Content $out -ErrorAction SilentlyContinue
+          Stop-Process -Id $p.Id -Force
+          Write-Host 'PASS the app opened its window and was still running 25 seconds later'
 
       - name: Install again (repairs, changes nothing)
         shell: cmd

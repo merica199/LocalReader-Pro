@@ -217,7 +217,11 @@ def main():
         # debug=True enables the WebKit inspector (right-click -> Inspect Element).
         # Needed because this window has no menu bar shortcut for it, so there is
         # otherwise no way to see console output when diagnosing UI behaviour.
-        icon_path = base_dir.parent / "assets" / "icon.png"
+        # WinForms builds the icon with System.Drawing.Icon, which only accepts
+        # an .ico file: given the PNG it throws and the app exits before its
+        # window opens. Elsewhere the PNG is used.
+        icon_name = "icon.ico" if sys.platform == "win32" else "icon.png"
+        icon_path = base_dir.parent / "assets" / icon_name
         webview.start(
             debug=True,
             storage_path=str(storage_path),
