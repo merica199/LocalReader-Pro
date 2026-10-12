@@ -356,9 +356,18 @@ finished sentences and can be resumed).
 
 ## 10. Updates
 
-The app checks for updates only when you ask: **Help > Check for Updates**, or
+The app checks for updates when you ask: **Help > Check for Updates**, or
 **Check for updates** in the Updates box at the bottom of the left panel. It
-lists what changed. **Update and restart** closes the app, installs the
+lists what changed.
+
+**To be told about updates instead,** tick **Check automatically** in the
+Updates box. The app then checks shortly after it opens and once a day while
+it stays open. When there is an update, a green **Update available** button
+appears at the top of the left panel (and a dot on its tab, if the panel is
+collapsed), with a message the first time. Click it to see what changed. It is
+off by default because it goes online without being asked: GitHub sees your
+computer's internet address, and nothing else is sent. Nothing ever installs
+until you click **Update and restart**. **Update and restart** closes the app, installs the
 update, and opens it again; your library and settings are untouched. If an
 update cannot be installed, the app is left as it was, and the next time it
 opens it tells you what went wrong.

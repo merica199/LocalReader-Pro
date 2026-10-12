@@ -112,8 +112,9 @@ uninstalling never touches them:
 ### Updating
 
 In the app: **Help > Check for Updates**, or the **Updates** panel at the bottom of the
-sidebar. It goes online only when you ask, shows what changed, and on your OK closes the
-app, installs the update and opens it again. An update that cannot install its libraries
+sidebar. It goes online when you ask (or, if you tick **Check automatically**, when the
+app opens and once a day, showing an **Update available** button when there is one),
+shows what changed, and on your OK closes the app, installs the update and opens it again. An update that cannot install its libraries
 leaves the app as it was. Running the installer again from a newer clone, or from any
 downloaded ZIP on Windows, also updates.
 
@@ -284,7 +285,8 @@ LocalReader-Pro/
   3. The voice model (~115 MB)
   4. FFmpeg (Windows: ~100 MB; Mac: from Homebrew)
 - **Updates:** only when you choose Check for Updates, which asks GitHub whether a
-  newer version exists
+  newer version exists, or, if you turn on **Check automatically** (off by default),
+  when the app opens and once a day
 - **Fully Offline:** After setup, works without internet indefinitely
 
 ### Analytics & Telemetry
@@ -392,6 +394,14 @@ and is not in the original.
   pronunciations for, 116 agree on stress and syllables, and the other two
   (microglia, oxaloacetate) have more than one accepted pronunciation. The
   rest are not on Wiktionary and await a listener.
+- **Automatic update checks, opt-in.** Ticking **Check automatically** in the Updates
+  panel checks GitHub shortly after launch and once a day, and an **Update available**
+  button appears at the top of the sidebar (with a dot on the collapsed sidebar's tab)
+  when there is one. Off by default, since it goes online unasked; installing still
+  waits for a click. The choice is kept in `userdata/update_settings.json`.
+- **Developer tools on demand.** The window runs in pywebview's debug mode so
+  right-click > Inspect Element works, and pywebview also opened the developer tools
+  window at every launch in that mode; it no longer does.
 - **Personal pronunciations, and Claude doing the work.** Each user has a
   personal pronunciation list in their library folder, which wins over the
   built-in one, applies without a restart and survives updates, so a word heard

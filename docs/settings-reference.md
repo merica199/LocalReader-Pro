@@ -19,6 +19,7 @@ settings in `userdata/sleep_settings.json`
 - [Normal export](#normal-export)
 - [Sleep mode](#sleep-mode)
 - [Sleep Timer](#sleep-timer)
+- [Updates](#updates)
 
 ## What affects what
 
@@ -315,3 +316,17 @@ The lower round button on the right edge.
 left, and **Stop Timer** cancels it. When it runs out it **closes the whole
 app**, including any export in progress. It is not saved: it ends if the app
 is closed.
+
+## Updates
+
+The Updates box at the bottom of the left panel.
+
+| Setting | Default | Effect |
+|---|---|---|
+| Check automatically | off | Checks GitHub for a newer version a few seconds after the app opens and once a day while it is open, and shows **Update available** when there is one |
+
+Saved in `userdata/update_settings.json`. A check only looks: it fetches the
+newest version's details from GitHub, so GitHub sees this computer's internet
+address. Installing always waits for **Update and restart**. With it off, the
+app goes online for updates only when **Check for updates** is clicked.
+

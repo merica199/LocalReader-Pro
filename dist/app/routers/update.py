@@ -3,7 +3,10 @@ Check for and apply updates to an installed copy.
 
 The installers make every installed copy a git clone that follows a branch on
 GitHub, so an update is a fast-forward to what that branch has. Checking goes
-online only when asked; nothing runs in the background.
+online only when asked, or, when the user turns on automatic checks (off by
+default), once when the app opens and once a day while it stays open. The
+check is the UI's (modules/updates.js); this file only stores the choice.
+Nothing is ever installed without the user clicking Update and restart.
 
 Applying needs the app closed (on Windows a running program's files cannot be
 replaced), so a separate process, installers/update.py, waits for this one to
@@ -32,6 +35,9 @@ router = APIRouter()
 REPO = base_dir.parent.parent
 RESULT_FILE = userdata_dir / "update_result.json"
 LOG_FILE = userdata_dir / "update.log"
+SETTINGS_FILE = userdata_dir / "update_settings.json"
+# Automatic checks go online without being asked, so they are opt-in.
+AUTO_CHECK_DEFAULT = False
 # On Windows the app runs without a console, and every git call would otherwise
 # flash a console window.
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -187,6 +193,32 @@ def apply_update():
 
     threading.Thread(target=close, daemon=True).start()
     return {"status": "restarting", "updating_to": status["latest"]}
+
+
+def _load_settings() -> Dict:
+    settings = {"auto_check": AUTO_CHECK_DEFAULT}
+    try:
+        saved = json.loads(SETTINGS_FILE.read_text())
+        if isinstance(saved.get("auto_check"), bool):
+            settings["auto_check"] = saved["auto_check"]
+    except Exception:
+        pass
+    return settings
+
+
+@router.get("/api/update/settings")
+def get_update_settings():
+    return _load_settings()
+
+
+@router.post("/api/update/settings")
+def save_update_settings(settings: Dict):
+    auto_check = settings.get("auto_check")
+    if not isinstance(auto_check, bool):
+        return JSONResponse({"error": "auto_check must be true or false"}, status_code=422)
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps({"auto_check": auto_check}))
+    return {"auto_check": auto_check}
 
 
 @router.get("/api/update/last")

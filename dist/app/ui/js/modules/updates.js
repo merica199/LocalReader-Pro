@@ -1,8 +1,16 @@
 import { fetchJSON } from './api.js';
 import { showToast } from './ui.js';
 
-// The Updates panel in the sidebar, and the Help > Check for Updates menu item
-// that opens it. Checking goes online only when asked (routers/update.py).
+// The Updates panel in the sidebar, the Help > Check for Updates menu item that
+// opens it, and the "Update available" button at the top of the sidebar.
+// Checking goes online when asked, or, if the user ticks "Check automatically"
+// (off by default), a few seconds after the app opens and once a day while it
+// stays open. A check only looks; installing always waits for a click.
+
+const FIRST_CHECK_DELAY = 15 * 1000; // let the voice finish loading first
+const DAY = 24 * 60 * 60 * 1000;
+let dailyCheck = null;
+let announced = null; // the newest version already announced this session
 
 function formatDate(iso) {
     if (!iso) return '';
@@ -25,6 +33,68 @@ async function showVersion() {
     }
 }
 
+// Show or hide the "Update available" button (and the dot on the collapsed
+// sidebar's tab), and announce a version once the first time it is seen.
+function showAvailable(status, announce) {
+    const available = Boolean(status && status.available);
+    show('updateAvailableBtn', available);
+    document.getElementById('sidebarExpandBtn')?.classList.toggle('has-update', available);
+    const latest = status && status.latest && status.latest.hash;
+    if (available && announce && latest && latest !== announced) {
+        const n = status.behind;
+        showToast(`An update is available (${n} change${n === 1 ? '' : 's'}). Click "Update available" at the top of the sidebar to see it.`);
+    }
+    if (latest) announced = latest;
+}
+
+// The automatic check: says nothing unless there is an update.
+async function quietCheck() {
+    try {
+        showAvailable(await fetchJSON(`/api/update/check?t=${Date.now()}`), true);
+    } catch (e) {
+        console.error(e); // offline, or GitHub did not answer: try again tomorrow
+    }
+}
+
+function startAutomaticChecks(firstDelay) {
+    clearInterval(dailyCheck);
+    setTimeout(quietCheck, firstDelay);
+    dailyCheck = setInterval(quietCheck, DAY);
+}
+
+function stopAutomaticChecks() {
+    clearInterval(dailyCheck);
+    dailyCheck = null;
+}
+
+async function setAutomatic(on) {
+    try {
+        await fetchJSON('/api/update/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ auto_check: on }),
+        });
+    } catch (e) {
+        showToast('Could not save the update setting: ' + e.message);
+        document.getElementById('autoUpdateCheck').checked = !on;
+        return;
+    }
+    if (on) startAutomaticChecks(0);
+    else stopAutomaticChecks();
+}
+
+async function initAutomaticChecks() {
+    const box = document.getElementById('autoUpdateCheck');
+    box.onchange = () => setAutomatic(box.checked);
+    try {
+        const { auto_check } = await fetchJSON('/api/update/settings');
+        box.checked = auto_check;
+        if (auto_check) startAutomaticChecks(FIRST_CHECK_DELAY);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 async function checkForUpdates() {
     const button = document.getElementById('checkUpdatesBtn');
     const result = document.getElementById('updateResult');
@@ -35,6 +105,7 @@ async function checkForUpdates() {
     show('updateList', false);
     try {
         const status = await fetchJSON(`/api/update/check?t=${Date.now()}`);
+        showAvailable(status, false);
         list.replaceChildren();
         if (status.available) {
             const n = status.behind;
@@ -116,7 +187,9 @@ async function reportLastUpdate() {
 export function initUpdates() {
     document.getElementById('checkUpdatesBtn').onclick = checkForUpdates;
     document.getElementById('applyUpdateBtn').onclick = applyUpdate;
+    document.getElementById('updateAvailableBtn').onclick = openUpdates;
     window.openUpdates = openUpdates;
     showVersion();
     reportLastUpdate();
+    initAutomaticChecks();
 }

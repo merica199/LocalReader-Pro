@@ -523,3 +523,15 @@
   text-align: center;
   padding: 2rem;
 }
+
+/* An update is available: a dot on the tab that reopens the collapsed sidebar. */
+.sidebar-expand-btn.has-update::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #34d399;
+}

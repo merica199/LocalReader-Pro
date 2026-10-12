@@ -229,6 +229,13 @@ Help > Check for Updates in the app, or the Updates box at the bottom of the
 left panel. Never update it with git yourself: the updater also installs the
 libraries a new version needs.
 
+To be told about updates, they can tick **Check automatically** in the
+Updates box (off by default, since it goes online unasked); an **Update
+available** button then appears at the top of the left panel when there is
+one. If they ask you to turn it on, `POST /api/update/settings` with
+`{"auto_check": true}` while the app is running (send
+`Origin: http://127.0.0.1:8000`).
+
 ### "Something isn't working"
 
 1. Look before changing anything. The [user guide's known issues](docs/user-guide.md#known-issues)
@@ -272,7 +279,9 @@ and reach users as updates.
 - Sleep mode is a separate mode of the Export dialog. Sleep features stay
   inside it, and normal reading and normal MP3 export keep working as they do.
 - Everything runs locally. The app goes online only to download the voice
-  model and FFmpeg, and to check for updates when asked.
+  model and FFmpeg, and to check for updates: when asked, or automatically if
+  the user turns that on (off by default). It never installs an update
+  without the user's click.
 - Scripts and recordings about real people, or for one person, are personal.
   This repository is public: keep them out of it.
 - espeak-ng cuts its data path at about 160 bytes, so the installers refuse

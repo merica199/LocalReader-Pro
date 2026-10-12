@@ -67,6 +67,16 @@
             </div>
           </div>
 
+          <!-- Shown when a check finds an update (modules/updates.js) -->
+          <button
+            id="updateAvailableBtn"
+            class="hidden w-full mb-4 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-600/40 rounded-lg text-sm font-semibold transition-all"
+            title="See what changed and update"
+          >
+            <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
+            <span>Update available</span>
+          </button>
+
           <div id="setupArea" class="mb-4" style="display: none">
             <button
               id="setupBtn"
@@ -255,7 +265,7 @@
             </p>
           </div>
 
-          <!-- Updates: checks GitHub only when asked -->
+          <!-- Updates: checks GitHub when asked, or automatically if turned on -->
           <div id="updatesPanel" class="p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg">
             <label
               class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 block flex items-center gap-2"
@@ -278,6 +288,13 @@
             >
               Update and restart
             </button>
+            <label class="flex items-start gap-2 mt-3 text-[11px] text-zinc-300 cursor-pointer">
+              <input type="checkbox" id="autoUpdateCheck" class="mt-0.5 accent-blue-600" />
+              <span>
+                Check automatically
+                <span class="block text-zinc-500">When the app opens and once a day. GitHub sees this computer's internet address; nothing else is sent, and nothing installs without your click.</span>
+              </span>
+            </label>
           </div>
         </div>
       </aside>
