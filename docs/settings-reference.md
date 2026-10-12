@@ -117,7 +117,7 @@ All in steps of 50.
 
 ## Processing Mode
 
-Bottom of the left panel.
+The Settings tab of the left panel.
 
 | Option | Model file | Size |
 |---|---|---|
@@ -319,7 +319,7 @@ is closed.
 
 ## Updates
 
-The Updates box at the bottom of the left panel.
+The Updates box on the Settings tab of the left panel.
 
 | Setting | Default | Effect |
 |---|---|---|

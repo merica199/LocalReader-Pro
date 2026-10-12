@@ -147,7 +147,7 @@
         <div class="flex border-b border-border">
           <button
             id="tabLibrary"
-            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 border-blue-600 text-blue-500 bg-white/5"
+            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-blue-600 text-blue-500 bg-white/5"
             data-i18n-title="tabs.library"
             title="Library"
           >
@@ -158,7 +158,7 @@
           </button>
           <button
             id="tabRules"
-            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
+            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
             data-i18n-title="tabs.rules"
             title="Pronunciation Rules"
           >
@@ -167,12 +167,21 @@
           </button>
           <button
             id="tabIgnore"
-            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
+            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
             data-i18n-title="tabs.ignore"
             title="Ignore List"
           >
             <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
             <span class="hidden sm:inline" data-i18n="tabs.ignore">Ignore</span>
+          </button>
+          <button
+            id="tabSettings"
+            class="flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
+            data-i18n-title="tabs.settings"
+            title="Settings"
+          >
+            <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline" data-i18n="tabs.settings">Settings</span>
           </button>
         </div>
 
@@ -222,81 +231,83 @@
             </div>
             <div id="ignoreListUI" class="space-y-2"></div>
           </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="p-6 border-t border-border bg-black/20 space-y-4">
-          <!-- Processing Mode (v1.9 - Dual-Engine) -->
-          <div class="p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg">
-            <label
-              class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 block flex items-center gap-2"
-            >
-              <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-              <span data-i18n="settings.processing_mode">Processing Mode</span>
-            </label>
-            <select
-              id="engineMode"
-              class="w-full bg-zinc-900 text-xs font-medium border border-zinc-800 rounded px-2 py-1.5 outline-none text-zinc-300 focus:border-blue-500 mb-2"
-            >
-              <option value="gpu" data-i18n="settings.gpu_mode">
-                High Quality (GPU) - ~309MB
-              </option>
-              <option value="cpu" data-i18n="settings.cpu_mode">
-                High Performance (CPU) - ~87MB
-              </option>
-            </select>
-            <div
-              id="modelStatus"
-              class="text-[9px] text-zinc-400 flex items-center gap-2"
-            >
-              <span id="gpuStatus"
-                >GPU: <span class="text-zinc-600">?</span></span
+          <div
+            id="settingsPanel"
+            class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 hidden"
+          >
+            <!-- Processing Mode (v1.9 - Dual-Engine) -->
+            <div class="p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg">
+              <label
+                class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 block flex items-center gap-2"
               >
-              <span class="text-zinc-700">|</span>
-              <span id="cpuStatus"
-                >CPU: <span class="text-zinc-600">?</span></span
+                <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                <span data-i18n="settings.processing_mode">Processing Mode</span>
+              </label>
+              <select
+                id="engineMode"
+                class="w-full bg-zinc-900 text-xs font-medium border border-zinc-800 rounded px-2 py-1.5 outline-none text-zinc-300 focus:border-blue-500 mb-2"
               >
+                <option value="gpu" data-i18n="settings.gpu_mode">
+                  High Quality (GPU) - ~309MB
+                </option>
+                <option value="cpu" data-i18n="settings.cpu_mode">
+                  High Performance (CPU) - ~87MB
+                </option>
+              </select>
+              <div
+                id="modelStatus"
+                class="text-[9px] text-zinc-400 flex items-center gap-2"
+              >
+                <span id="gpuStatus"
+                  >GPU: <span class="text-zinc-600">?</span></span
+                >
+                <span class="text-zinc-700">|</span>
+                <span id="cpuStatus"
+                  >CPU: <span class="text-zinc-600">?</span></span
+                >
+              </div>
+              <p
+                class="text-[9px] text-zinc-500 mt-2"
+                data-i18n="settings.mode_help"
+              >
+                GPU: Best quality | CPU: Faster, low RAM
+              </p>
             </div>
-            <p
-              class="text-[9px] text-zinc-500 mt-2"
-              data-i18n="settings.mode_help"
-            >
-              GPU: Best quality | CPU: Faster, low RAM
-            </p>
-          </div>
 
-          <!-- Updates: checks GitHub when asked, or automatically if turned on -->
-          <div id="updatesPanel" class="p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg">
-            <label
-              class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 block flex items-center gap-2"
-            >
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-              <span>Updates</span>
-            </label>
-            <div id="updateVersion" class="text-[10px] text-zinc-500 mb-2"></div>
-            <button
-              id="checkUpdatesBtn"
-              class="w-full px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded text-xs font-medium text-zinc-200 transition-colors"
-            >
-              Check for updates
-            </button>
-            <div id="updateResult" class="hidden text-[11px] text-zinc-400 mt-2"></div>
-            <ul id="updateList" class="hidden text-[11px] text-zinc-400 mt-1 space-y-0.5 list-disc pl-4"></ul>
-            <button
-              id="applyUpdateBtn"
-              class="hidden w-full mt-2 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs font-semibold text-white transition-colors"
-            >
-              Update and restart
-            </button>
-            <label class="flex items-start gap-2 mt-3 text-[11px] text-zinc-300 cursor-pointer">
-              <input type="checkbox" id="autoUpdateCheck" class="mt-0.5 accent-blue-600" />
-              <span>
-                Check automatically
-                <span class="block text-zinc-500">When the app opens and once a day. GitHub sees this computer's internet address; nothing else is sent, and nothing installs without your click.</span>
-              </span>
-            </label>
+            <!-- Updates: checks GitHub when asked, or automatically if turned on -->
+            <div id="updatesPanel" class="p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+              <label
+                class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 block flex items-center gap-2"
+              >
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Updates</span>
+              </label>
+              <div id="updateVersion" class="text-[10px] text-zinc-500 mb-2"></div>
+              <button
+                id="checkUpdatesBtn"
+                class="w-full px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded text-xs font-medium text-zinc-200 transition-colors"
+              >
+                Check for updates
+              </button>
+              <div id="updateResult" class="hidden text-[11px] text-zinc-400 mt-2"></div>
+              <ul id="updateList" class="hidden text-[11px] text-zinc-400 mt-1 space-y-0.5 list-disc pl-4"></ul>
+              <button
+                id="applyUpdateBtn"
+                class="hidden w-full mt-2 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs font-semibold text-white transition-colors"
+              >
+                Update and restart
+              </button>
+              <label class="flex items-start gap-2 mt-3 text-[11px] text-zinc-300 cursor-pointer">
+                <input type="checkbox" id="autoUpdateCheck" class="mt-0.5 accent-blue-600" />
+                <span>
+                  Check automatically
+                  <span class="block text-zinc-500">When the app opens and once a day. GitHub sees this computer's internet address; nothing else is sent, and nothing installs without your click.</span>
+                </span>
+              </label>
+            </div>
           </div>
         </div>
+
       </aside>
 
       <main class="content-area">

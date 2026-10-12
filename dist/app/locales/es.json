@@ -141,7 +141,7 @@
   "tabs": {
     "library": "BIBLIOTECA",
     "rules": "REGLAS",
-    "ignore": "IGNORAR"
+    "ignore": "IGNORAR",
+    "settings": "AJUSTES"
   }
 }
-

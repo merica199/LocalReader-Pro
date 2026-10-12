@@ -54,8 +54,8 @@ away. If you see **Setup Voice Engine**, click it: it downloads the voice
 ## 2. The window at a glance
 
 - **Left panel (sidebar):** the upload button, text size, the Export Audio
-  button, three tabs (Library, Rules, Ignore), and at the bottom Processing
-  Mode and Updates. The panel icon at its top collapses it; a small tab on the
+  button, and four tabs: Library, Rules, Ignore, and Settings (Processing
+  Mode and Updates). The panel icon at its top collapses it; a small tab on the
   left edge brings it back. Drag its edge to make it wider or narrower.
 - **Reader (middle):** the open document, a page at a time, with the page
   controls and search at the top.
@@ -164,7 +164,7 @@ The upper round button on the right edge opens **Voice & Audio**:
 Changing the voice stops reading; press play to continue with the new one.
 Every option is explained in the [settings reference](settings-reference.md#voice--audio).
 
-**Processing Mode** (bottom of the left panel) chooses between two versions of
+**Processing Mode** (the Settings tab in the left panel) chooses between two versions of
 the voice: "High Performance (CPU)", smaller and faster and the default, and
 "High Quality (GPU)", larger. Despite the labels, both run on your computer's
 processor. See the [settings reference](settings-reference.md#processing-mode).
@@ -357,7 +357,8 @@ finished sentences and can be resumed).
 ## 10. Updates
 
 The app checks for updates when you ask: **Help > Check for Updates**, or
-**Check for updates** in the Updates box at the bottom of the left panel. It
+**Check for updates** in the Updates box on the Settings tab of the left
+panel. It
 lists what changed.
 
 **To be told about updates instead,** tick **Check automatically** in the

@@ -141,6 +141,7 @@
   "tabs": {
     "library": "书库",
     "rules": "规则",
-    "ignore": "忽略"
+    "ignore": "忽略",
+    "settings": "设置"
   }
 }

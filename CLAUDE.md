@@ -225,8 +225,8 @@ audio; a recording of an hour or more is too big to email.
 
 ### "Update the app"
 
-Help > Check for Updates in the app, or the Updates box at the bottom of the
-left panel. Never update it with git yourself: the updater also installs the
+Help > Check for Updates in the app, or the Updates box on the left panel's
+Settings tab. Never update it with git yourself: the updater also installs the
 libraries a new version needs.
 
 To be told about updates, they can tick **Check automatically** in the

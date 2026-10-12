@@ -32,10 +32,10 @@ export function showToast(msg) {
 
 // --- Tabs ---
 export function switchTab(activeTab, activePanel) {
-    const tabs = [document.getElementById('tabLibrary'), document.getElementById('tabRules'), document.getElementById('tabIgnore')];
-    const panels = [document.getElementById('libraryPanel'), document.getElementById('rulesPanel'), document.getElementById('ignorePanel')];
-    const activeClass = "flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 border-blue-600 text-blue-500 bg-white/5";
-    const inactiveClass = "flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent text-zinc-500 hover:text-zinc-300";
+    const tabs = ['tabLibrary', 'tabRules', 'tabIgnore', 'tabSettings'].map(id => document.getElementById(id));
+    const panels = ['libraryPanel', 'rulesPanel', 'ignorePanel', 'settingsPanel'].map(id => document.getElementById(id));
+    const activeClass = "flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-blue-600 text-blue-500 bg-white/5";
+    const inactiveClass = "flex-1 py-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-500 hover:text-zinc-300";
 
     tabs.forEach(tab => {
         if (tab) tab.className = tab === activeTab ? activeClass : inactiveClass;

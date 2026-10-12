@@ -336,6 +336,11 @@ document.getElementById("tabIgnore").onclick = () =>
     document.getElementById("tabIgnore"),
     document.getElementById("ignorePanel"),
   );
+document.getElementById("tabSettings").onclick = () =>
+  switchTab(
+    document.getElementById("tabSettings"),
+    document.getElementById("settingsPanel"),
+  );
 
 // Settings
 async function saveSettings() {

@@ -111,8 +111,8 @@ uninstalling never touches them:
 
 ### Updating
 
-In the app: **Help > Check for Updates**, or the **Updates** panel at the bottom of the
-sidebar. It goes online when you ask (or, if you tick **Check automatically**, when the
+In the app: **Help > Check for Updates**, or the **Updates** box on the sidebar's
+**Settings** tab. It goes online when you ask (or, if you tick **Check automatically**, when the
 app opens and once a day, showing an **Update available** button when there is one),
 shows what changed, and on your OK closes the app, installs the update and opens it again. An update that cannot install its libraries
 leaves the app as it was. Running the installer again from a newer clone, or from any
@@ -394,6 +394,10 @@ and is not in the original.
   pronunciations for, 116 agree on stress and syllables, and the other two
   (microglia, oxaloacetate) have more than one accepted pronunciation. The
   rest are not on Wiktionary and await a listener.
+- **A Settings tab.** Processing Mode and Updates moved from the bottom of the sidebar,
+  where they left the library a few lines of room, into a fourth sidebar tab beside
+  Library, Rules and Ignore. Help > Check for Updates and the Update available button
+  switch to it.
 - **Automatic update checks, opt-in.** Ticking **Check automatically** in the Updates
   panel checks GitHub shortly after launch and once a day, and an **Update available**
   button appears at the top of the sidebar (with a dot on the collapsed sidebar's tab)
