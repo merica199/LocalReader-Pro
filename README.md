@@ -111,8 +111,8 @@ uninstalling never touches them:
 
 ### Updating
 
-In the app: **Help > Check for Updates**, or the **Updates** box on the sidebar's
-**Settings** tab. It goes online when you ask (or, if you tick **Check automatically**, when the
+In the app: **Check for Updates** in the menus (the **LocalReader Pro** menu on a Mac,
+**Help** on Windows), or **Settings > Updates**. It goes online when you ask (or, if you tick **Check automatically**, when the
 app opens and once a day, showing an **Update available** button when there is one),
 shows what changed, and on your OK closes the app, installs the update and opens it again. An update that cannot install its libraries
 leaves the app as it was. Running the installer again from a newer clone, or from any
@@ -394,7 +394,14 @@ and is not in the original.
   pronunciations for, 116 agree on stress and syllables, and the other two
   (microglia, oxaloacetate) have more than one accepted pronunciation. The
   rest are not on Wiktionary and await a listener.
-- **A Settings tab.** Processing Mode and Updates moved from the bottom of the sidebar,
+- **Settings in the menus, as in other apps.** Settings is a full-window page (Voice &
+  Audio, Processing Mode, Updates) opened from **LocalReader Pro > Settings...** on a Mac
+  or **File > Settings** on Windows, or with Cmd+comma / Ctrl+comma; Esc closes it. It
+  replaces the sidebar's Settings tab and the round Voice & Audio button. Check for
+  Updates moved to the LocalReader Pro menu on a Mac (Help on Windows), and Windows
+  gained File > Exit. Settings meant for one platform can be marked `only-windows` or
+  `only-mac` in the page.
+- **A Settings tab** (since replaced by the Settings page above). Processing Mode and Updates moved from the bottom of the sidebar,
   where they left the library a few lines of room, into a fourth sidebar tab beside
   Library, Rules and Ignore. Help > Check for Updates and the Update available button
   switch to it.

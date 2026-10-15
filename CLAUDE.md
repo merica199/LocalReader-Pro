@@ -205,8 +205,9 @@ personal fixes reach it like this:
 
 ### "Change the voice" / "Make it slower" / other settings
 
-- **Voice, and reading speed:** Voice & Audio in the app (the upper round
-  button on the right edge). Sleep recordings use the voice chosen there.
+- **Voice, and reading speed:** Settings > Voice & Audio in the app (on a
+  Mac, the LocalReader Pro menu > Settings... or Cmd+comma; on Windows,
+  File > Settings or Ctrl+comma). Sleep recordings use the voice chosen there.
 - **Sleep recording options** (speed, pauses, background sound, fades, file
   format): the Export dialog's Sleep mode, where they are saved. You can also
   change them for the person: `GET /api/export/sleep/settings`, change the
@@ -225,12 +226,12 @@ audio; a recording of an hour or more is too big to email.
 
 ### "Update the app"
 
-Help > Check for Updates in the app, or the Updates box on the left panel's
-Settings tab. Never update it with git yourself: the updater also installs the
-libraries a new version needs.
+Check for Updates in the app's menus (the LocalReader Pro menu on a Mac, Help
+on Windows), or Settings > Updates. Never update it with git yourself: the
+updater also installs the libraries a new version needs.
 
-To be told about updates, they can tick **Check automatically** in the
-Updates box (off by default, since it goes online unasked); an **Update
+To be told about updates, they can tick **Check automatically** in
+Settings > Updates (off by default, since it goes online unasked); an **Update
 available** button then appears at the top of the left panel when there is
 one. If they ask you to turn it on, `POST /api/update/settings` with
 `{"auto_check": true}` while the app is running (send

@@ -188,30 +188,55 @@ def main():
             except Exception as e:
                 print(f"[WARNING] Opening updates failed: {e}")
 
-        app_menu = [
-            Menu(
-                "Playback",
-                [
-                    MenuAction("Play / Pause", _click("playBtn")),
-                    MenuSeparator(),
-                    MenuAction("Previous Sentence", _click("skipBack")),
-                    MenuAction("Next Sentence", _click("skipForward")),
-                ],
-            ),
-            Menu(
-                "Document",
-                [
-                    MenuAction("Previous Page", _click("prevPage")),
-                    MenuAction("Next Page", _click("nextPage")),
-                    MenuSeparator(),
-                    MenuAction("Reload Interface", _reload),
-                ],
-            ),
-            Menu(
-                "Help",
-                [MenuAction("Check for Updates...", _check_updates)],
-            ),
-        ]
+        def _open_settings():
+            try:
+                window.evaluate_js("window.openSettings && window.openSettings()")
+            except Exception as e:
+                print(f"[WARNING] Opening settings failed: {e}")
+
+        settings_item = MenuAction("Settings...", _open_settings)
+        updates_item = MenuAction("Check for Updates...", _check_updates)
+        playback_menu = Menu(
+            "Playback",
+            [
+                MenuAction("Play / Pause", _click("playBtn")),
+                MenuSeparator(),
+                MenuAction("Previous Sentence", _click("skipBack")),
+                MenuAction("Next Sentence", _click("skipForward")),
+            ],
+        )
+        document_menu = Menu(
+            "Document",
+            [
+                MenuAction("Previous Page", _click("prevPage")),
+                MenuAction("Next Page", _click("nextPage")),
+                MenuSeparator(),
+                MenuAction("Reload Interface", _reload),
+            ],
+        )
+        # Each platform's usual places. On a Mac, Settings and Check for
+        # Updates belong in the application menu (the one named after the app,
+        # beside the Apple menu); pywebview puts the items of a menu titled
+        # "__app__" there, after About. Elsewhere, Settings goes in File, as in
+        # VS Code, and updates in Help. pywebview cannot attach keyboard
+        # shortcuts to menu items, so Cmd/Ctrl+comma is handled by the page
+        # (ui/js/modules/settings.js) and the menu shows no shortcut beside it.
+        if sys.platform == "darwin":
+            app_menu = [
+                Menu("__app__", [settings_item, updates_item]),
+                playback_menu,
+                document_menu,
+            ]
+        else:
+            app_menu = [
+                Menu(
+                    "File",
+                    [settings_item, MenuSeparator(), MenuAction("Exit", window.destroy)],
+                ),
+                playback_menu,
+                document_menu,
+                Menu("Help", [updates_item]),
+            ]
 
         # 4. Start the UI event loop (blocks until window closes)
         # debug=True enables the WebKit inspector (right-click -> Inspect Element).

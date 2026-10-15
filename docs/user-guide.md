@@ -54,16 +54,18 @@ away. If you see **Setup Voice Engine**, click it: it downloads the voice
 ## 2. The window at a glance
 
 - **Left panel (sidebar):** the upload button, text size, the Export Audio
-  button, and four tabs: Library, Rules, Ignore, and Settings (Processing
-  Mode and Updates). The panel icon at its top collapses it; a small tab on the
+  button, and three tabs: Library, Rules and Ignore. The panel icon at its top collapses it; a small tab on the
   left edge brings it back. Drag its edge to make it wider or narrower.
 - **Reader (middle):** the open document, a page at a time, with the page
   controls and search at the top.
 - **Player bar (bottom):** play and pause, skip, and the sentence being read.
-- **Two round buttons on the right edge:** the upper one opens **Voice &
-  Audio**, the lower one the **Sleep Timer**.
-- **Menus:** Playback, Document and Help (Mac menu bar, or the window's menu
-  on Windows).
+- **A round button on the right edge:** opens the **Sleep Timer**.
+- **Settings:** a full-window page with three sections: **Voice & Audio**,
+  **Processing Mode** and **Updates**. Open it from the menus (on a Mac,
+  **LocalReader Pro > Settings...**; on Windows, **File > Settings**) or with
+  Cmd+comma on a Mac, Ctrl+comma on Windows. Esc or the X closes it.
+- **Menus:** on a Mac, the menu bar at the top of the screen; on Windows, the
+  menu along the top of the window.
 
 ## 3. Your library
 
@@ -134,23 +136,28 @@ it does not move your reading place.
 | Space | Play / pause |
 | Left / Right arrow | Previous / next sentence |
 | Ctrl+F or Cmd+F | Search |
+| Cmd+comma (Mac) or Ctrl+comma (Windows) | Open or close Settings |
+| Esc | Close Settings |
 
 Keys do nothing while you are typing in a box. After dragging a slider, click
 somewhere in the reader before using them, or they move the slider instead.
 
 The **Playback** menu has Play / Pause and the sentence skips; **Document** has
 the page arrows and **Reload Interface** (refreshes the window if something
-looks stuck); **Help** has **Check for Updates**.
+looks stuck). **Settings** and **Check for Updates** are where each system
+keeps them: on a Mac, both in the **LocalReader Pro** menu; on Windows,
+**Settings** in **File** (with **Exit**) and **Check for Updates** in **Help**.
+The menus show no shortcut beside Settings, but Cmd+comma or Ctrl+comma works.
 
 ### Page headers and footers
 
 PDFs often repeat a title or page number at the top or bottom of every page.
-**Header & Footer Mode** in Voice & Audio can hide them or dim them so they are
+**Header & Footer Mode** in Settings, Voice & Audio, can hide them or dim them so they are
 not read. See the [settings reference](settings-reference.md#header--footer-mode).
 
 ## 5. Voice and audio
 
-The upper round button on the right edge opens **Voice & Audio**:
+**Voice & Audio** is the first section of Settings:
 
 - **Voice Selection:** about fifty voices, grouped by language, each labelled
   with its accent and gender. The play button beside the list plays a short
@@ -159,12 +166,12 @@ The upper round button on the right edge opens **Voice & Audio**:
   export. Sleep recordings have their own speed.
 - **Header & Footer Mode:** see above.
 - **Pause Settings:** how long the voice pauses at commas, sentence ends,
-  paragraphs and so on, while reading.
+  paragraphs and so on, while reading. Shown open; the header folds them away.
 
 Changing the voice stops reading; press play to continue with the new one.
 Every option is explained in the [settings reference](settings-reference.md#voice--audio).
 
-**Processing Mode** (the Settings tab in the left panel) chooses between two versions of
+**Processing Mode** (the second section of Settings) chooses between two versions of
 the voice: "High Performance (CPU)", smaller and faster and the default, and
 "High Quality (GPU)", larger. Despite the labels, both run on your computer's
 processor. See the [settings reference](settings-reference.md#processing-mode).
@@ -356,13 +363,13 @@ finished sentences and can be resumed).
 
 ## 10. Updates
 
-The app checks for updates when you ask: **Help > Check for Updates**, or
-**Check for updates** in the Updates box on the Settings tab of the left
-panel. It
-lists what changed.
+The app checks for updates when you ask: **Check for Updates** in the menus
+(the **LocalReader Pro** menu on a Mac, **Help** on Windows), which opens
+Settings at **Updates** and checks, or **Check for updates** in that section.
+It lists what changed.
 
-**To be told about updates instead,** tick **Check automatically** in the
-Updates box. The app then checks shortly after it opens and once a day while
+**To be told about updates instead,** tick **Check automatically** in
+Settings > Updates. The app then checks shortly after it opens and once a day while
 it stays open. When there is an update, a green **Update available** button
 appears at the top of the left panel (and a dot on its tab, if the panel is
 collapsed), with a message the first time. Click it to see what changed. It is

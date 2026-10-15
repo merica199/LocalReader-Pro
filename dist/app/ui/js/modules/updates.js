@@ -159,15 +159,10 @@ async function applyUpdate() {
     }
 }
 
-// Help > Check for Updates, and the Update available button: bring the panel
-// (in the sidebar's Settings tab) into view and check.
+// Check for Updates in the menu bar, and the Update available button: open
+// Settings at its Updates section and check.
 function openUpdates() {
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar && sidebar.classList.contains('collapsed')) {
-        document.getElementById('sidebarExpandBtn')?.click();
-    }
-    document.getElementById('tabSettings')?.click();
-    document.getElementById('updatesPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.openSettings?.('updates');
     checkForUpdates();
 }
 

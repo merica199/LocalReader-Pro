@@ -40,7 +40,8 @@ of them:
 
 ## Voice & Audio
 
-Opened with the upper round button on the right edge of the window.
+The first section of Settings (on a Mac, **LocalReader Pro > Settings...** or
+Cmd+comma; on Windows, **File > Settings** or Ctrl+comma).
 
 ### Voice Selection
 
@@ -117,7 +118,7 @@ All in steps of 50.
 
 ## Processing Mode
 
-The Settings tab of the left panel.
+The second section of Settings.
 
 | Option | Model file | Size |
 |---|---|---|
@@ -319,7 +320,8 @@ is closed.
 
 ## Updates
 
-The Updates box on the Settings tab of the left panel.
+The third section of Settings. **Check for Updates** in the menus opens it and
+checks.
 
 | Setting | Default | Effect |
 |---|---|---|

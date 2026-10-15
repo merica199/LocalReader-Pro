@@ -40,6 +40,7 @@ import {
 } from "./modules/export.js";
 import { initTimer } from "./modules/timer.js";
 import { initUpdates } from "./modules/updates.js";
+import { initSettings, isSettingsOpen } from "./modules/settings.js";
 
 // Global access for debugging
 window.state = state;
@@ -153,6 +154,7 @@ async function init() {
   startStatusPolling();
   initTimer();
   initUpdates();
+  initSettings();
 }
 
 document.addEventListener("DOMContentLoaded", init);
@@ -189,6 +191,9 @@ document.getElementById("skipForward").onclick = async () => {
 
 // Keyboard Shortcuts
 window.addEventListener("keydown", (e) => {
+  // Settings has its own keys (modules/settings.js); Space there must not
+  // start playback behind it.
+  if (isSettingsOpen()) return;
   if (
     e.target.tagName === "INPUT" ||
     e.target.tagName === "TEXTAREA" ||
@@ -336,11 +341,6 @@ document.getElementById("tabIgnore").onclick = () =>
     document.getElementById("tabIgnore"),
     document.getElementById("ignorePanel"),
   );
-document.getElementById("tabSettings").onclick = () =>
-  switchTab(
-    document.getElementById("tabSettings"),
-    document.getElementById("settingsPanel"),
-  );
 
 // Settings
 async function saveSettings() {
@@ -425,21 +425,7 @@ document.getElementById("setupBtn").onclick = async () => {
   }
 };
 
-// Drawer & Sidebar Resize
-const toggleDrawer = (open) => {
-  const d = document.getElementById("voiceSettingsDrawer");
-  const o = document.getElementById("drawerOverlay");
-  if (open) {
-    d.classList.add("open");
-    o.classList.add("active");
-  } else {
-    d.classList.remove("open");
-    o.classList.remove("active");
-  }
-};
-document.getElementById("voiceSettingsBtn").onclick = () => toggleDrawer(true);
-document.getElementById("closeDrawerBtn").onclick = () => toggleDrawer(false);
-document.getElementById("drawerOverlay").onclick = () => toggleDrawer(false);
+// Sidebar Resize
 
 const sidebar = document.querySelector(".sidebar");
 const dragHandle = document.getElementById("sidebarDragHandle");
