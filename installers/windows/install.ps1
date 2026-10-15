@@ -285,19 +285,26 @@ if ($espeakLen -ge 150) { Fail "the app's folder path is too long for the speech
 $appCode = Join-Path $AppDir 'dist\app'
 Step 'Voice model'
 $models = Join-Path $DataDir 'models'
-if ((Test-Path -LiteralPath (Join-Path $models 'kokoro.int8.onnx')) -and (Test-Path -LiteralPath (Join-Path $models 'voices.bin'))) {
-    Note 'Already downloaded.'
-} else {
-    Note 'Downloading (about 115 MB)...'
-    Push-Location $appCode
-    try {
-        # Python's own quotes are single quotes (doubled inside this PowerShell
-        # string): Windows PowerShell 5.1 strips double quotes from arguments
-        # it passes to a program, which turned "cpu" into a bare name.
-        Run $vpy -c 'from logic.downloader import download_kokoro_model; download_kokoro_model(''cpu'')'
+# The model that suits this processor (dist\app\logic\engine_choice.py): full
+# precision on Intel and AMD, where it voiced 4 to 5 times faster than the
+# compressed one. Neither Python command uses a double quote: Windows
+# PowerShell 5.1 strips them from arguments it passes to a program. The mode
+# goes in as an argument (sys.argv) instead of inside the code.
+Push-Location $appCode
+try {
+    $mode = Run $vpy -c 'from logic.downloader import default_engine_mode; print(default_engine_mode())' | Select-Object -Last 1
+    Check 'Choosing the voice model'
+    $mode = "$mode".Trim()
+    if ($mode -eq 'gpu') { $modelFile = 'kokoro.onnx'; $modelSize = 'about 340 MB' }
+    else { $modelFile = 'kokoro.int8.onnx'; $modelSize = 'about 115 MB' }
+    if ((Test-Path -LiteralPath (Join-Path $models $modelFile)) -and (Test-Path -LiteralPath (Join-Path $models 'voices.bin'))) {
+        Note 'Already downloaded.'
+    } else {
+        Note "Downloading ($modelSize)..."
+        Run $vpy -c 'import sys; from logic.downloader import download_kokoro_model; download_kokoro_model(sys.argv[1])' $mode
         Check 'Downloading the voice model'
-    } finally { Pop-Location }
-}
+    }
+} finally { Pop-Location }
 
 Step 'FFmpeg (for MP3 export)'
 if (Test-Path -LiteralPath (Join-Path $AppDir 'dist\bin\ffmpeg.exe')) {

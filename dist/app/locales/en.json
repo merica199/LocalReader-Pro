@@ -50,7 +50,7 @@
     "processing_mode": "Processing Mode",
     "gpu_mode": "Full precision (309 MB)",
     "cpu_mode": "Standard (compressed, 87 MB)",
-    "mode_help": "Both run on this computer's processor; neither uses a graphics card. Standard is the default: about as fast, a quarter of the size. Full precision is the uncompressed model, and may be faster on some Intel and AMD processors.",
+    "mode_help": "Both run on this computer's processor; neither uses a graphics card. Which one is faster depends on the processor: the box below says which suits this computer.",
     "pause_settings": "Pause Settings",
     "comma_pause": "Comma Pause",
     "period_pause": "Period Pause",

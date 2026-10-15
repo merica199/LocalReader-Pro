@@ -49,7 +49,7 @@
     "processing_mode": "Modo de Procesamiento",
     "gpu_mode": "Precisión completa (309 MB)",
     "cpu_mode": "Estándar (comprimido, 87 MB)",
-    "mode_help": "Ambos se ejecutan en el procesador de este equipo; ninguno usa la tarjeta gráfica. Estándar es el predeterminado: casi igual de rápido y una cuarta parte del tamaño. Precisión completa es el modelo sin comprimir y puede ser más rápido en algunos procesadores Intel y AMD.",
+    "mode_help": "Ambos se ejecutan en el procesador de este equipo; ninguno usa la tarjeta gráfica. Cuál es más rápido depende del procesador: el recuadro de abajo indica cuál conviene a este equipo.",
     "pause_settings": "Configuración de Pausas",
     "comma_pause": "Pausa de Coma",
     "period_pause": "Pausa de Punto",

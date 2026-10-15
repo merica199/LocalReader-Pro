@@ -49,7 +49,8 @@ voice engine's state:
 
 The installers download the voice for you, so you normally see green straight
 away. If you see **Setup Voice Engine**, click it: it downloads the voice
-(about 115 MB) and the upload button appears when it is done.
+(about 115 MB on a Mac with an Apple processor, about 340 MB on an Intel or
+AMD computer) and the upload button appears when it is done.
 
 ## 2. The window at a glance
 
@@ -174,7 +175,10 @@ Every option is explained in the [settings reference](settings-reference.md#voic
 **Processing Mode** (the second section of Settings) chooses between two versions of
 the voice: **Standard**, compressed to a quarter of the size and the default, and
 **Full precision**, uncompressed. Both run on your computer's processor; neither
-uses a graphics card. See the [settings reference](settings-reference.md#processing-mode).
+uses a graphics card. Which is faster depends on the processor, so the app picks
+for you: Standard on Apple processors, Full precision on Intel and AMD, where it
+is several times faster. The green box under the choice says which suits this
+computer, with a button to switch to it. See the [settings reference](settings-reference.md#processing-mode).
 
 ## 6. Pronunciation
 

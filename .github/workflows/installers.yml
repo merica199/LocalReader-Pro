@@ -50,7 +50,7 @@ jobs:
           $data = Join-Path $env:APPDATA 'LocalReader Pro'
           $bad = @()
           foreach ($p in @("$app\venv\Scripts\pythonw.exe", "$app\dist\main.py", "$app\dist\bin\ffmpeg.exe",
-                           "$data\models\kokoro.int8.onnx", "$data\models\voices.bin",
+                           "$data\models\kokoro.onnx", "$data\models\voices.bin",
                            (Join-Path ([Environment]::GetFolderPath('Programs')) 'LocalReader Pro.lnk'),
                            (Join-Path ([Environment]::GetFolderPath('Desktop')) 'LocalReader Pro.lnk'),
                            'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalReaderPro')) {
@@ -90,6 +90,12 @@ jobs:
           Get-Content $out -ErrorAction SilentlyContinue
           Stop-Process -Id $p.Id -Force
           Write-Host 'PASS the app opened its window and was still running 25 seconds later'
+          # dist/main.py asks Windows not to throttle it (slow cores, low clocks)
+          if (-not (Select-String -LiteralPath $out -SimpleMatch 'Opted out of Windows power throttling' -Quiet)) {
+            Write-Host 'FAIL the app did not report opting out of Windows power throttling'
+            exit 1
+          }
+          Write-Host 'PASS the app opted out of Windows power throttling'
 
       - name: Install again (repairs, changes nothing)
         shell: cmd

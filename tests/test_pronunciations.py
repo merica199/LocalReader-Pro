@@ -167,8 +167,12 @@ candidates = [
     Path.home() / "Library" / "Application Support" / "LocalReader Pro" / "models",
     Path.home() / "AppData" / "Roaming" / "LocalReader Pro" / "models",
 ]
-models = next((m for m in candidates if (m / "kokoro.int8.onnx").exists()), candidates[0])
-model, voices = models / "kokoro.int8.onnx", models / "voices.bin"
+# Either model will do; an Intel or AMD install may have only kokoro.onnx.
+model = next(
+    (m / name for m in candidates for name in ("kokoro.int8.onnx", "kokoro.onnx") if (m / name).exists()),
+    candidates[0] / "kokoro.int8.onnx",
+)
+voices = model.parent / "voices.bin"
 if model.exists() and voices.exists():
     from kokoro_onnx import Kokoro
 

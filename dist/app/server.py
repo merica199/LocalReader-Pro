@@ -16,6 +16,7 @@ from .config import (
     library_file,
 )
 from .utils import safe_save_json, safe_init_json
+from .logic.engine_choice import default_engine_mode
 import app.state as state_module
 from .routers import settings, library, tts, system, export, timer, update
 from .utils import safe_init_json
@@ -39,9 +40,9 @@ async def lifespan(app: FastAPI):
             "ignoreList": [],
             "voice_id": "af_bella",
             "speed": 1.0,
-            # The quantized model: what the installers download, about a
-            # quarter of the size, and no slower on a CPU (README).
-            "engine_mode": "cpu",
+            # The model that suits this processor (logic/engine_choice.py),
+            # which is also the one the installers download.
+            "engine_mode": default_engine_mode(),
             "ui_language": "en",
         },
     )

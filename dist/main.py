@@ -105,11 +105,68 @@ def run_server():
         print(f"[ERROR] Server error: {e}")
         sys.exit(1)
 
+def opt_out_of_power_throttling():
+    """Ask Windows not to slow this process down to save power.
+
+    Windows decides which programs count as background work and runs them on
+    the slow efficiency cores at lower clock speeds ("power throttling"). The
+    app runs windowless (pythonw) and is often working while another window
+    is in front, so voicing landed there: on an Intel Core Ultra 7 155U under
+    the Balanced power plan it kept the processor 15 to 22% busy, against about
+    75% under Best performance (October 2026). A process may opt out with
+    SetProcessInformation(ProcessPowerThrottling) and the execution-speed bit
+    in ControlMask but not in StateMask, which is what this does. Windows 10
+    1709 and later; on anything older the call fails and nothing changes.
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    class PROCESS_POWER_THROTTLING_STATE(ctypes.Structure):
+        _fields_ = [
+            ("Version", wintypes.ULONG),
+            ("ControlMask", wintypes.ULONG),
+            ("StateMask", wintypes.ULONG),
+        ]
+
+    PROCESS_POWER_THROTTLING_CURRENT_VERSION = 1
+    PROCESS_POWER_THROTTLING_EXECUTION_SPEED = 0x1
+    ProcessPowerThrottling = 4  # PROCESS_INFORMATION_CLASS
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.SetProcessInformation.argtypes = [
+        wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD
+    ]
+    kernel32.SetProcessInformation.restype = wintypes.BOOL
+
+    state = PROCESS_POWER_THROTTLING_STATE(
+        PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+        PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+        0,
+    )
+    ok = kernel32.SetProcessInformation(
+        kernel32.GetCurrentProcess(),
+        ProcessPowerThrottling,
+        ctypes.byref(state),
+        ctypes.sizeof(state),
+    )
+    if ok:
+        print("[POWER] Opted out of Windows power throttling", flush=True)
+    else:
+        print(f"[POWER] Could not opt out of power throttling (error {ctypes.get_last_error()})", flush=True)
+
+
 def main():
     print("=" * 50)
     print("  LocalReader Pro - Starting")
     print("=" * 50)
     print(f"Project root: {base_dir}")
+
+    if sys.platform == "win32":
+        try:
+            opt_out_of_power_throttling()
+        except Exception as e:
+            print(f"[WARNING] Power throttling opt-out failed: {e}")
     
     # 1. Start backend server in daemon thread
     print("\n[INIT] Starting FastAPI server...")

@@ -10,6 +10,7 @@ import {
   highlightSearchTerm,
   escapeRegex,
   updateTranslations,
+  renderModelRecommendation,
 } from "./modules/ui.js";
 import {
   loadLibrary,
@@ -93,6 +94,7 @@ async function init() {
     if (headerSelect) headerSelect.value = state.headerFooterMode;
     const engineSelect = document.getElementById("engineMode");
     if (engineSelect) engineSelect.value = state.engineMode;
+    renderModelRecommendation();
 
     // Pause Settings UI
     [
@@ -412,7 +414,13 @@ document.getElementById("headerFooterMode").onchange = async (e) => {
 };
 document.getElementById("engineMode").onchange = async (e) => {
   state.engineMode = e.target.value;
+  renderModelRecommendation();
   await saveSettings();
+};
+document.getElementById("useRecommendedModelBtn").onclick = (e) => {
+  const select = document.getElementById("engineMode");
+  select.value = e.currentTarget.dataset.mode;
+  select.dispatchEvent(new Event("change"));
 };
 document.getElementById("setupBtn").onclick = async () => {
   try {

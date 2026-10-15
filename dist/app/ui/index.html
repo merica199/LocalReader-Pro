@@ -722,11 +722,25 @@
                 <div id="cpuStatus">Standard: <span class="text-zinc-600">?</span></div>
                 <div id="gpuStatus">Full precision: <span class="text-zinc-600">?</span></div>
               </div>
+              <!-- Which model suits this computer (modules/ui.js, renderModelRecommendation) -->
+              <div
+                id="modelRecommendation"
+                class="hidden mt-3 p-3 rounded-lg border border-emerald-700/40 bg-emerald-900/20 text-xs text-emerald-100"
+              >
+                <div id="modelRecommendationText"></div>
+                <button
+                  id="useRecommendedModelBtn"
+                  type="button"
+                  class="hidden mt-2 w-full px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 rounded text-xs font-semibold text-white transition-colors"
+                >
+                  Use the recommended model
+                </button>
+              </div>
               <p
                 class="text-[11px] text-zinc-500 mt-2"
                 data-i18n="settings.mode_help"
               >
-                Both run on this computer&#39;s processor; neither uses a graphics card. Standard is the default: about as fast, a quarter of the size. Full precision is the uncompressed model, and may be faster on some Intel and AMD processors.
+                Both run on this computer&#39;s processor; neither uses a graphics card. Which one is faster depends on the processor: the box below says which suits this computer.
               </p>
             </div>
 

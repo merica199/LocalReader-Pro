@@ -26,7 +26,7 @@
 
 - **Multi-Format Support:** PDF, EPUB, Markdown and plain text files
 - **Multilingual UI:** Full interface translation (**English, French, Spanish, Chinese**)
-- **Dual-Model Architecture:** Choose between the quantized model (88 MB) and the full FP32 model (~309 MB). Note that the UI labels these "CPU" and "GPU", but the label refers to the *model file*, not the hardware: `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed, so both run on the CPU
+- **Dual-Model Architecture:** Choose between the quantized model (88 MB, shown as Standard) and the full FP32 model (~309 MB, Full precision). Both run on the CPU: `kokoro_onnx` pins `CPUExecutionProvider` unless the Windows/Linux-only `onnxruntime-gpu` package is installed. The default follows the processor: quantized on Apple Silicon, where both run at about the same speed, and FP32 on Intel and AMD (4 to 5 times faster on the one Intel laptop timed, a Core Ultra 7 155U; older Intel chips are untested but are, if anything, weaker at the quantized model's 8-bit math)
 - **Fast TTS Engine:** Kokoro-82M v1.0. Synthesis speed is hardware-dependent, measured at ~2.3x real-time with the quantized model on an Apple Silicon Mac
 - **Auto-Save Progress:** Resume exactly where you left off
 - **Sentence-Level Control:** Click any sentence to start reading from there
@@ -99,7 +99,8 @@ git clone https://github.com/merica199/LocalReader-Pro.git
 ```
 
 The installer sets up everything the app needs: Python 3.12, the app's libraries in a
-private environment, FFmpeg for MP3 export, and the voice model (about 115 MB). A first
+private environment, FFmpeg for MP3 export, and the voice model that suits the computer
+(about 115 MB on Apple processors, about 340 MB on Intel and AMD). A first
 install takes several minutes, mostly downloads. Afterwards the downloaded folder is no
 longer needed and can be deleted.
 
@@ -282,7 +283,7 @@ LocalReader-Pro/
 - **Setup Only:** Internet required for:
   1. Python 3.12 (Windows: from python.org, ~27 MB; Mac: from Homebrew)
   2. The Python libraries (~450 MB installed)
-  3. The voice model (~115 MB)
+  3. The voice model (~115 MB on Apple processors, ~340 MB on Intel and AMD)
   4. FFmpeg (Windows: ~100 MB; Mac: from Homebrew)
 - **Updates:** only when you choose Check for Updates, which asks GitHub whether a
   newer version exists, or, if you turn on **Check automatically** (off by default),
@@ -406,6 +407,17 @@ and is not in the original.
   (309 MB)**, since both always ran on the processor; the line under it says which model
   files are downloaded ("Downloaded" / "Not downloaded") instead of ✓ and ✗ that read as
   if they showed the choice.
+- **The voice model follows the processor.** On an Intel Core Ultra 7 155U (Windows) the
+  full-precision model voiced 4 to 5 times faster than the compressed one, which is about
+  as fast as full precision on an Apple M4. New settings and the installers now pick full
+  precision on Intel and AMD processors and the compressed model on Apple's
+  (`dist/app/logic/engine_choice.py`), and Settings shows which suits the computer with a
+  button to switch. An existing choice is left alone. The pronunciation tools use
+  whichever model is downloaded.
+- **Windows no longer throttles the app.** Windows ran the windowless app as background
+  work on slow cores: under the Balanced power plan the same laptop's processor sat 15 to
+  22% busy while voicing, against about 75% under Best performance. The app now opts out
+  of power throttling at startup, and the Windows install test checks that it did.
 - **A Settings tab** (since replaced by the Settings page above). Processing Mode and Updates moved from the bottom of the sidebar,
   where they left the library a few lines of room, into a fourth sidebar tab beside
   Library, Rules and Ignore. Help > Check for Updates and the Update available button

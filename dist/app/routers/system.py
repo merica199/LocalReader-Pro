@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from ..state import audio_cache, kokoro, system_status
 from ..utils import safe_save_json
 from ..config import base_dir, settings_file, get_app_anchored_path
+from ..logic.engine_choice import default_engine_mode, processor_kind
 import json
 import sys
 from pathlib import Path
@@ -51,9 +52,9 @@ def load_engine_logic(requested_mode=None):
         try:
             with open(settings_file, "r") as f:
                 settings = json.load(f)
-            requested_mode = settings.get("engine_mode", "cpu")
+            requested_mode = settings.get("engine_mode") or default_engine_mode()
         except Exception:
-            requested_mode = "cpu"
+            requested_mode = default_engine_mode()
 
     models_dir = base_dir / "models"
     voices_path = models_dir / "voices.bin"
@@ -142,9 +143,9 @@ async def get_status():
     try:
         with open(settings_file, "r") as f:
             settings = json.load(f)
-        current_engine_mode = settings.get("engine_mode", "cpu")
+        current_engine_mode = settings.get("engine_mode") or default_engine_mode()
     except Exception:
-        current_engine_mode = "cpu"
+        current_engine_mode = default_engine_mode()
 
     models_dir = base_dir / "models"
     available_models = {
@@ -163,6 +164,10 @@ async def get_status():
         "voices": state_module.kokoro.get_voices() if state_module.kokoro else [],
         "engine_mode": current_engine_mode,
         "available_models": available_models,
+        # Which model suits this computer, for the recommendation shown under
+        # the choice in Settings (logic/engine_choice.py).
+        "recommended_mode": default_engine_mode(),
+        "processor": processor_kind(),
     }
 
 
@@ -180,12 +185,12 @@ async def run_setup(background_tasks: BackgroundTasks, model_type: str = None):
                 try:
                     with open(settings_file, "r") as f:
                         settings = json.load(f)
-                    target_model = settings.get("engine_mode", "cpu")
+                    target_model = settings.get("engine_mode") or default_engine_mode()
                 except:
-                    target_model = "cpu"
+                    target_model = default_engine_mode()
 
             if target_model not in ["gpu", "cpu"]:
-                target_model = "cpu"
+                target_model = default_engine_mode()
 
             print(f"[SETUP] Starting download for {target_model} model...")
             download_kokoro_model(target_model)

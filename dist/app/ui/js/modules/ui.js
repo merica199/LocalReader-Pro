@@ -239,6 +239,8 @@ export function updateEngineStatusUI(status, selectedModelExists) {
     const cpuStatusEl = document.getElementById('cpuStatus');
     if (gpuStatusEl) gpuStatusEl.innerHTML = modelState('Full precision', status.available_models?.gpu);
     if (cpuStatusEl) cpuStatusEl.innerHTML = modelState('Standard', status.available_models?.cpu);
+    lastEngineStatus = status;
+    renderModelRecommendation();
 
     if (status.is_downloading) {
         engineStatusDot.className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";
@@ -272,4 +274,34 @@ export function updateEngineStatusUI(status, selectedModelExists) {
         }
         renderIcons();
     }
+}
+
+// --- Model recommendation (Settings > Processing Mode) ---
+// Which model suits this computer comes from the server
+// (logic/engine_choice.py): full precision on Intel and AMD processors, where
+// it measured 4 to 5 times faster, and the compressed Standard model on Apple
+// processors, where both run at about the same speed.
+let lastEngineStatus = null;
+const MODEL_NAMES = { cpu: 'Standard', gpu: 'Full precision' };
+const RECOMMENDATION_WHY = {
+    x86: 'This computer has an Intel or AMD processor. Recommended: <b>Full precision</b>. On the Intel laptop it was timed on, it voiced 4 to 5 times faster than Standard.',
+    apple: 'This computer has an Apple processor. Recommended: <b>Standard</b>. Here both run at about the same speed, and Standard is a quarter of the size.',
+    other: 'Recommended: <b>Standard</b>, the smaller model. Neither has been timed on this kind of processor.',
+};
+
+export function renderModelRecommendation() {
+    const box = document.getElementById('modelRecommendation');
+    const status = lastEngineStatus;
+    if (!box || !status || !status.recommended_mode) return;
+    const recommended = status.recommended_mode;
+    const usingIt = state.engineMode === recommended;
+    const why = RECOMMENDATION_WHY[status.processor] || RECOMMENDATION_WHY.other;
+    document.getElementById('modelRecommendationText').innerHTML = usingIt
+        ? `${why}<div class="mt-1 text-emerald-300">You are using it.</div>`
+        : why;
+    const btn = document.getElementById('useRecommendedModelBtn');
+    btn.classList.toggle('hidden', usingIt);
+    btn.textContent = `Use ${MODEL_NAMES[recommended]}`;
+    btn.dataset.mode = recommended;
+    box.classList.remove('hidden');
 }

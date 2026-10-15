@@ -120,16 +120,24 @@ All in steps of 50.
 
 The second section of Settings.
 
-| Option | Model file | Size |
-|---|---|---|
-| Standard (compressed, 87 MB), the default | `kokoro.int8.onnx`, compressed to 8-bit numbers | about 87 MB |
-| Full precision (309 MB) | `kokoro.onnx`, uncompressed | about 309 MB |
+| Option | Model file | Size | Default on |
+|---|---|---|---|
+| Standard (compressed, 87 MB) | `kokoro.int8.onnx`, compressed to 8-bit numbers | about 87 MB | Apple processors, and anything else |
+| Full precision (309 MB) | `kokoro.onnx`, uncompressed | about 309 MB | Intel and AMD processors |
 
 - **Both run on the processor;** neither uses a graphics card. (They were
   labelled "High Performance (CPU)" and "High Quality (GPU)" before; the saved
-  values are still `cpu` and `gpu`.) On an Apple M4 they run at about the same
-  speed. The full-precision model may be faster on some Intel and AMD
-  processors, and can in principle sound slightly smoother.
+  values are still `cpu` and `gpu`.)
+- **Which is faster depends on the processor.** On an Apple M4 they run at
+  about the same speed, so the smaller one is the default there. On an Intel
+  Core Ultra 7 155U (Windows) full precision voiced 4 to 5 times faster, so it
+  is the default on Intel and AMD processors. That is the only Intel chip timed
+  so far; other Intel and AMD processors are assumed to behave the same. The installers download the one
+  that suits the computer, and a green box under the choice names it, with a
+  button to switch when another one is chosen
+  (`dist/app/logic/engine_choice.py`). An existing choice is never changed.
+- Full precision can in principle sound slightly smoother; no side-by-side
+  listening test has been done.
 - **"Model files on this computer"** below the choice says which of the two
   files are downloaded, not which one is in use.
 - **Switching** to a model that is downloaded takes effect the next time the

@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
 
+from .logic.engine_choice import default_engine_mode
+
 
 class LibraryItem(BaseModel):
     id: str
@@ -32,7 +34,7 @@ class AppSettings(BaseModel):
     speed: Optional[float] = 1.0
     font_size: Optional[int] = 16
     header_footer_mode: Optional[str] = "off"
-    engine_mode: Optional[str] = "cpu"
+    engine_mode: Optional[str] = Field(default_factory=default_engine_mode)
     ui_language: Optional[str] = "en"
     pause_settings: Optional[Dict[str, int]] = {
         "comma": 300,

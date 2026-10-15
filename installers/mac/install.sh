@@ -191,11 +191,22 @@ ESPEAK_DATA_LEN="$("$VENV/bin/python" -c 'import espeakng_loader; print(len(str(
 
 # --- 5. Voice model -------------------------------------------------------------
 step "Voice model"
-if [ -f "$DATA/models/kokoro.int8.onnx" ] && [ -f "$DATA/models/voices.bin" ]; then
+# The model that suits this processor (dist/app/logic/engine_choice.py): the
+# compressed one on Apple processors, full precision on Intel.
+MODE="$(cd "$REPO/dist/app" && "$VENV/bin/python" -c 'from logic.downloader import default_engine_mode; print(default_engine_mode())')" ||
+	fail "could not tell which voice model suits this computer."
+if [ "$MODE" = gpu ]; then
+	MODEL_FILE=kokoro.onnx
+	MODEL_SIZE="about 340 MB"
+else
+	MODEL_FILE=kokoro.int8.onnx
+	MODEL_SIZE="about 115 MB"
+fi
+if [ -f "$DATA/models/$MODEL_FILE" ] && [ -f "$DATA/models/voices.bin" ]; then
 	note "Already downloaded."
 else
-	note "Downloading (about 115 MB)..."
-	(cd "$REPO/dist/app" && "$VENV/bin/python" -c 'from logic.downloader import download_kokoro_model; download_kokoro_model("cpu")') ||
+	note "Downloading ($MODEL_SIZE)..."
+	(cd "$REPO/dist/app" && "$VENV/bin/python" -c 'import sys; from logic.downloader import download_kokoro_model; download_kokoro_model(sys.argv[1])' "$MODE") ||
 		fail "the voice model did not download. Check the internet connection and run this again."
 fi
 

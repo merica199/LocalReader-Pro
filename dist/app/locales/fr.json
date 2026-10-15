@@ -49,7 +49,7 @@
     "processing_mode": "Mode de Traitement",
     "gpu_mode": "Pleine précision (309 Mo)",
     "cpu_mode": "Standard (compressé, 87 Mo)",
-    "mode_help": "Les deux s'exécutent sur le processeur de cet ordinateur ; aucun n'utilise la carte graphique. Standard est le réglage par défaut : à peu près aussi rapide, quatre fois plus petit. Pleine précision est le modèle non compressé ; il peut être plus rapide sur certains processeurs Intel et AMD.",
+    "mode_help": "Les deux s'exécutent sur le processeur de cet ordinateur ; aucun n'utilise la carte graphique. Le plus rapide dépend du processeur : l'encadré ci-dessous indique lequel convient à cet ordinateur.",
     "pause_settings": "Paramètres de Pause",
     "comma_pause": "Pause Virgule",
     "period_pause": "Pause Point",

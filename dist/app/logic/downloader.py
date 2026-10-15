@@ -4,6 +4,9 @@ import requests
 from huggingface_hub import hf_hub_download
 from typing import Literal
 
+# Re-exported for the installers, which import from this module.
+from .engine_choice import default_engine_mode, processor_kind  # noqa: F401
+
 def download_kokoro_model(model_type: Literal["gpu", "cpu"] = "gpu") -> None:
     """
     Download the specified TTS model (Standard or Quantized).

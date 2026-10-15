@@ -49,11 +49,16 @@ candidates = [
     Path.home() / "Library" / "Application Support" / "LocalReader Pro" / "models",
     Path.home() / "AppData" / "Roaming" / "LocalReader Pro" / "models",
 ]
-models = next((m for m in candidates if (m / "kokoro.int8.onnx").exists()), None)
-if models is None:
+# Either voice model will do (pronunciation is the same in both): an Intel or
+# AMD install may have only the full-precision kokoro.onnx.
+model = next(
+    (m / name for m in candidates for name in ("kokoro.int8.onnx", "kokoro.onnx") if (m / name).exists()),
+    None,
+)
+if model is None:
     sys.exit("The voice model is not downloaded yet. Open the app once, or run the installer.")
 
-kokoro = Kokoro(str(models / "kokoro.int8.onnx"), str(models / "voices.bin"))
+kokoro = Kokoro(str(model), str(model.parent / "voices.bin"))
 pronunciations.install(kokoro)
 
 table = pronunciations._table()  # the built-in list plus any personal entries
