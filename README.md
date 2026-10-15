@@ -401,6 +401,11 @@ and is not in the original.
   Updates moved to the LocalReader Pro menu on a Mac (Help on Windows), and Windows
   gained File > Exit. Settings meant for one platform can be marked `only-windows` or
   `only-mac` in the page.
+- **Honest names for the two voice models.** Processing Mode's "High Performance (CPU)"
+  and "High Quality (GPU)" are now **Standard (compressed, 87 MB)** and **Full precision
+  (309 MB)**, since both always ran on the processor; the line under it says which model
+  files are downloaded ("Downloaded" / "Not downloaded") instead of ✓ and ✗ that read as
+  if they showed the choice.
 - **A Settings tab** (since replaced by the Settings page above). Processing Mode and Updates moved from the bottom of the sidebar,
   where they left the library a few lines of room, into a fourth sidebar tab beside
   Library, Rules and Ignore. Help > Check for Updates and the Update available button

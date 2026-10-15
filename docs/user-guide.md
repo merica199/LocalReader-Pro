@@ -172,9 +172,9 @@ Changing the voice stops reading; press play to continue with the new one.
 Every option is explained in the [settings reference](settings-reference.md#voice--audio).
 
 **Processing Mode** (the second section of Settings) chooses between two versions of
-the voice: "High Performance (CPU)", smaller and faster and the default, and
-"High Quality (GPU)", larger. Despite the labels, both run on your computer's
-processor. See the [settings reference](settings-reference.md#processing-mode).
+the voice: **Standard**, compressed to a quarter of the size and the default, and
+**Full precision**, uncompressed. Both run on your computer's processor; neither
+uses a graphics card. See the [settings reference](settings-reference.md#processing-mode).
 
 ## 6. Pronunciation
 

@@ -230,19 +230,15 @@ export function updateEngineStatusUI(status, selectedModelExists) {
     const exportArea = document.getElementById('exportArea');
     const textSizeArea = document.getElementById('textSizeArea');
 
-    // Update model status text (GPU/CPU)
+    // Whether each model file is downloaded (not which one is chosen): the
+    // value names are the original "cpu" (compressed) and "gpu" (full
+    // precision), though both run on the processor.
+    const modelState = (label, ready) =>
+        `${label}: <span class="${ready ? 'text-green-400' : 'text-zinc-500'}">${ready ? 'Downloaded' : 'Not downloaded'}</span>`;
     const gpuStatusEl = document.getElementById('gpuStatus');
     const cpuStatusEl = document.getElementById('cpuStatus');
-
-    if (gpuStatusEl) {
-        const isGpuReady = status.available_models?.gpu;
-        gpuStatusEl.innerHTML = `GPU: <span class="${isGpuReady ? 'text-green-400' : 'text-zinc-600'}">${isGpuReady ? '✓' : '✗'}</span>`;
-    }
-
-    if (cpuStatusEl) {
-        const isCpuReady = status.available_models?.cpu;
-        cpuStatusEl.innerHTML = `CPU: <span class="${isCpuReady ? 'text-green-400' : 'text-zinc-600'}">${isCpuReady ? '✓' : '✗'}</span>`;
-    }
+    if (gpuStatusEl) gpuStatusEl.innerHTML = modelState('Full precision', status.available_models?.gpu);
+    if (cpuStatusEl) cpuStatusEl.innerHTML = modelState('Standard', status.available_models?.cpu);
 
     if (status.is_downloading) {
         engineStatusDot.className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";

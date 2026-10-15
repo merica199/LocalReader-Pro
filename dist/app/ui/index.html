@@ -707,30 +707,26 @@
                 id="engineMode"
                 class="w-full bg-zinc-900 text-xs font-medium border border-zinc-800 rounded px-2 py-1.5 outline-none text-zinc-300 focus:border-blue-500 mb-2"
               >
-                <option value="gpu" data-i18n="settings.gpu_mode">
-                  High Quality (GPU) - ~309MB
-                </option>
                 <option value="cpu" data-i18n="settings.cpu_mode">
-                  High Performance (CPU) - ~87MB
+                  Standard (compressed, 87 MB)
+                </option>
+                <option value="gpu" data-i18n="settings.gpu_mode">
+                  Full precision (309 MB)
                 </option>
               </select>
               <div
                 id="modelStatus"
-                class="text-[9px] text-zinc-400 flex items-center gap-2"
+                class="text-[11px] text-zinc-400 space-y-0.5"
               >
-                <span id="gpuStatus"
-                  >GPU: <span class="text-zinc-600">?</span></span
-                >
-                <span class="text-zinc-700">|</span>
-                <span id="cpuStatus"
-                  >CPU: <span class="text-zinc-600">?</span></span
-                >
+                <div class="text-zinc-500">Model files on this computer:</div>
+                <div id="cpuStatus">Standard: <span class="text-zinc-600">?</span></div>
+                <div id="gpuStatus">Full precision: <span class="text-zinc-600">?</span></div>
               </div>
               <p
-                class="text-[9px] text-zinc-500 mt-2"
+                class="text-[11px] text-zinc-500 mt-2"
                 data-i18n="settings.mode_help"
               >
-                GPU: Best quality | CPU: Faster, low RAM
+                Both run on this computer&#39;s processor; neither uses a graphics card. Standard is the default: about as fast, a quarter of the size. Full precision is the uncompressed model, and may be faster on some Intel and AMD processors.
               </p>
             </div>
 

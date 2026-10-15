@@ -122,14 +122,16 @@ The second section of Settings.
 
 | Option | Model file | Size |
 |---|---|---|
-| High Performance (CPU), the default | `kokoro.int8.onnx`, compressed | about 87 MB |
-| High Quality (GPU) | `kokoro.onnx`, full precision | about 309 MB |
+| Standard (compressed, 87 MB), the default | `kokoro.int8.onnx`, compressed to 8-bit numbers | about 87 MB |
+| Full precision (309 MB) | `kokoro.onnx`, uncompressed | about 309 MB |
 
-- **Both run on the processor.** The labels are historical: neither uses a
-  graphics card. The larger model can sound slightly different; the smaller one
-  is faster and uses less memory.
-- **The ✓ and ✗ marks below it** show which model files are downloaded, not
-  which one is in use.
+- **Both run on the processor;** neither uses a graphics card. (They were
+  labelled "High Performance (CPU)" and "High Quality (GPU)" before; the saved
+  values are still `cpu` and `gpu`.) On an Apple M4 they run at about the same
+  speed. The full-precision model may be faster on some Intel and AMD
+  processors, and can in principle sound slightly smoother.
+- **"Model files on this computer"** below the choice says which of the two
+  files are downloaded, not which one is in use.
 - **Switching** to a model that is downloaded takes effect the next time the
   app opens. Switching to one that is not shows **Setup Voice Engine**, which
   downloads it and switches straight away.
