@@ -37,6 +37,11 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+# On Windows, Python writes to a pipe in the old code page (usually
+# Windows-1252), which has none of the phonetic symbols printed here: an
+# agent reading the output would get a crash at the first one.
+sys.stdout.reconfigure(encoding="utf-8")
+
 APP = Path(__file__).resolve().parent.parent / "dist" / "app"
 sys.path.insert(0, str(APP))
 

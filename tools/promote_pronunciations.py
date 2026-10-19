@@ -19,6 +19,12 @@ import json
 import sys
 from pathlib import Path
 
+# On Windows, Python writes to a pipe in the old code page (usually
+# Windows-1252), which has none of the phonetic symbols printed here: an
+# agent would get a crash after the list was already written, with no record
+# of what changed.
+sys.stdout.reconfigure(encoding="utf-8")
+
 BUILTIN = Path(__file__).resolve().parent.parent / "dist" / "app" / "logic" / "pronunciations.json"
 
 if len(sys.argv) != 2:
