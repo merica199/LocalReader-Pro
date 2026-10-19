@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { fetchJSON, fetchBlob, API_URL } from "./api.js";
-import { showToast, stripHTML, renderIcons } from "./ui.js";
+import { showToast, stripHTML, displayText, renderIcons } from "./ui.js";
 import { renderPage, getSentencesForPage, endsParagraph } from "./library.js";
 
 // The output device can change out from under a live AudioContext: the machine
@@ -213,7 +213,7 @@ export async function playNext() {
     "currentSentencePreview",
   );
   if (currentSentencePreview)
-    currentSentencePreview.textContent = stripHTML(text);
+    currentSentencePreview.textContent = stripHTML(displayText(text));
 
   saveProgress();
 
@@ -543,7 +543,7 @@ const END_MARK_PAUSE = {
 function paragraphPauseAfter(pageIndex, sentenceIndex, text) {
   if (!endsParagraph(pageIndex, sentenceIndex)) return 0;
   const wanted = state.pauseSettings.paragraph ?? DEFAULT_PARAGRAPH_PAUSE_MS;
-  const mark = stripHTML(text).replace(/["'\u201d\u2019)\]\s]+$/, "").slice(-1);
+  const mark = stripHTML(displayText(text)).replace(/["'\u201d\u2019)\]\s]+$/, "").slice(-1);
   const already = state.pauseSettings[END_MARK_PAUSE[mark]] || 0;
   return Math.max(0, wanted - already) / 1000;
 }

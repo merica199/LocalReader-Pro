@@ -147,6 +147,106 @@ personal.unlink()
 check("with no personal list, the built-in one applies", spoken("ATP") == ACRONYMS["ATP"])
 
 
+# A pronunciation written into the text, [word](/sounds/), for words spelled
+# the same but said two ways.
+from logic.pronunciations import plain as shown_as  # noqa: E402
+from logic.sleep_script import Pacing, estimate_seconds, plan_text  # noqa: E402
+
+out = spoken("Red blood cells [live](/lˈɪv/) for about four months.")
+check(
+    "a written pronunciation replaces the engine's guess",
+    "lˈɪv" in out and "lˈaɪv" not in out and "[" not in out,
+    out,
+)
+check(
+    "without one, the engine guesses this live wrong (why the markup exists)",
+    "lˈaɪv" in spoken("Red blood cells live for about four months."),
+)
+out = spoken("The [vagus](/vˈɑːɡəs/) nerve.")
+check("a written pronunciation wins over a list entry", "vˈɑːɡəs" in out and WORDS["vagus"] not in out, out)
+out = spoken("Cells [live](/lˈɪv/), then die.")
+check("punctuation after a written pronunciation stays attached to it", "lˈɪv," in out and " ," not in out, out)
+check(
+    "it is displayed and counted as just the word",
+    shown_as("Cells [live](/lˈɪv/) and [Lead](/lˈɛd/).") == "Cells live and Lead.",
+)
+check(
+    "another language reads the plain word, not the markup",
+    spoken("le [live](/lˈɪv/)", "fr-fr") == plain("le live", "fr-fr"),
+)
+check(
+    "markup with a space inside is left alone",
+    spoken("[live](/l ɪv/)") == plain("[live](/l ɪv/)"),
+)
+check("used() leaves written pronunciations out of cache keys", pronunciations.used("[vagus](/vˈɑːɡəs/)") == [])
+
+events = plan_text("Cells [live](/lˈɪv/) for weeks (about four), [then](/ðˈɛn/) die.\n\nPlatelets [live](/lˈɪv/).")
+said = [v for k, v in events if k == "say"]
+check(
+    "a sleep recording keeps written pronunciations while its brackets become pauses",
+    said == ["Cells [live](/lˈɪv/) for weeks, about four, [then](/ðˈɛn/) die.", "Platelets [live](/lˈɪv/)."],
+    said,
+)
+check(
+    "a sleep recording's length counts a written pronunciation as its word",
+    estimate_seconds(plan_text("Cells [live](/lˈɪv/) long."), Pacing(), 18.0)
+    == estimate_seconds(plan_text("Cells live long."), Pacing(), 18.0),
+)
+
+# The heteronym list behind tools/check_heteronyms.py, and the tool itself.
+TOOLS = APP.parent.parent / "tools"
+heteronyms = {
+    w: r
+    for w, r in json.loads((TOOLS / "heteronyms.json").read_text(encoding="utf-8")).items()
+    if not w.startswith("_")
+}
+bad = {
+    w: sorted(set(r["sounds"]) - set(tokenizer.vocab))
+    for w, readings in heteronyms.items()
+    for r in readings
+    if set(r["sounds"]) - set(tokenizer.vocab)
+}
+check(f"all {len(heteronyms)} heteronyms' readings use only sounds the voice model knows", not bad, bad)
+check(
+    "every heteronym has two different readings, each with its stress marked",
+    all(
+        len(r) >= 2 and len({x["sounds"] for x in r}) == len(r) and all("ˈ" in x["sounds"] for x in r)
+        for r in heteronyms.values()
+    ),
+)
+
+import subprocess  # noqa: E402
+
+script = Path(tempfile.mkdtemp()) / "script.txt"
+script.write_text(
+    "# How cells live is a comment.\n"
+    "Red blood cells live for about four months. These cells live in the marrow.\n\n"
+    "The red cells read it. Platelets [live](/lˈɪv/) ten days, and lead poisoning hurts.\n",
+    encoding="utf-8",
+)
+run = subprocess.run([sys.executable, str(TOOLS / "check_heteronyms.py"), str(script)], capture_output=True, text=True)
+report = run.stdout
+check(
+    "the heteronym check reports each reading the voice will use, with its line",
+    run.returncode == 0
+    and "line 2  live: the voice says lˈaɪv" in report
+    and "line 2  live: the voice says lˈɪv" in report
+    and "line 4  read: the voice says ɹˈiːd" in report
+    and "line 4  live: written [live](/lˈɪv/)" in report
+    and "line 4  lead: the voice says lˈiːd" in report
+    and "write [lead](/lˈɛd/)" in report
+    and "5 heteronyms, 1 written out, 4 left to the voice" in report,
+    report or run.stderr,
+)
+script.write_text("Cells [live](/lˈɪvж/) long, and [live](lɪv) too.\n", encoding="utf-8")
+run = subprocess.run([sys.executable, str(TOOLS / "check_heteronyms.py"), str(script)], capture_output=True, text=True)
+check(
+    "the heteronym check fails on sounds the model lacks and on broken markup",
+    run.returncode == 1 and "does not have: ж" in run.stdout and "is not read as a pronunciation" in run.stdout,
+    run.stdout or run.stderr,
+)
+
+
 class FakeEngine:
     tokenizer = Tokenizer()
 
@@ -182,6 +282,8 @@ if model.exists() and voices.exists():
         "Vagus nerve, diastole, and A T P: the glomerulus filters, and NADH carries electrons.", "af_bella", 1.0, "en-us"
     )
     check("the real engine speaks a sentence full of listed words", len(samples) > rate, f"{len(samples)} samples")
+    samples, rate = kokoro.create("Red blood cells [live](/lˈɪv/) for about four months.", "af_bella", 1.0, "en-us")
+    check("the real engine speaks a sentence with a written pronunciation", len(samples) > rate, f"{len(samples)} samples")
 else:
     print("SKIP the real engine (no voice model downloaded)")
 

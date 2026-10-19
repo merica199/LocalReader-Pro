@@ -237,6 +237,27 @@ share yours, send your personal `pronunciations.json` to the app's maintainer
 (merica199 on GitHub); once they are added, they arrive in your next update
 and your personal copies are no longer needed.
 
+### Words said two ways
+
+Some words are spelled the same but said differently depending on what they
+mean: "cells **live** for weeks" and "a **live** vaccine", "**lead**
+poisoning" and "this can **lead** to swelling", "a **contract**" and "muscles
+**contract**". The voice picks one reading from the words around it and is
+often wrong: it reads "red blood cells live for about four months" like "a
+live concert". A pronunciation list cannot fix these, since it would say the
+word one way everywhere.
+
+Instead, a `.txt` file can say how a single occurrence is read:
+`[live](/lˈɪv/)`, the word followed by its sounds between slashes. The app
+says it with those sounds and shows just the word.
+
+**The easy way: ask Claude.** When it writes a sleep script, Claude checks
+every one of these words before recording. If you hear one wrong, tell it
+("'live' sounded like 'live concert'") and it fixes that spot in the script
+and records it again. With a terminal, the check is
+`venv/bin/python tools/check_heteronyms.py my-script.txt`
+([details](writing-for-read-aloud.md#words-spelled-the-same-but-said-two-ways)).
+
 ### Your own rules (Rules tab)
 
 The **Rules** tab replaces words with something easier to say before the voice
@@ -298,6 +319,7 @@ A sleep script is a plain `.txt` file with a little markup:
 | `...` | a soft pause in the middle of a thought |
 | `[pause 6]` | exactly that many seconds of silence |
 | a line starting with `#` | skipped (notes to yourself) |
+| `[live](/lˈɪv/)` | that word said with those sounds ([why](#words-said-two-ways)) |
 
 [Writing sleep scripts](writing-sleep-scripts.md) explains how to write one
 that works (length, shape, style and accuracy), and
@@ -423,6 +445,7 @@ working. Keep LocalReader Pro open while Claude records anything.
 | "Make a one-minute preview first." | Just the first minute, to try a voice or setting |
 | "Make me a pronunciation check." | A recording of every built-in word, to listen to ([why](#check-them-by-ear)) |
 | "Renin sounded wrong, it should be REE-nin." | It fixes the word in your personal list and records it for you to check |
+| "'Live' sounded like 'live concert'." | It fixes each wrong one in the script and records it again ([why](#words-said-two-ways)) |
 | "Make the recordings slower and sleepier." | It changes the sleep settings for you |
 | "Something's not working." | It looks into it and writes up the problem for you to send |
 
@@ -461,6 +484,9 @@ These are how the app behaves today; they are on the list to fix.
   their blank lines are lost.
 - **Period Pause** pauses at every period, including in "3.5" and "Dr.".
 - **Ignore list** entries are removed even inside longer words.
+- **Words said two ways** ("live", "lead", "contract", "increases") are often
+  read with the wrong meaning. Text files can mark the right reading
+  ([how](#words-said-two-ways)); PDFs, EPUBs and Markdown cannot.
 - **Normal export** names the file with "pdf" stuck to the title
   ("Bookpdf_af_bella.mp3"), replaces an earlier export of the same document
   without asking, and is always MP3 at 128 kbps.

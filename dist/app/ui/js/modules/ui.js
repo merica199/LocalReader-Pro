@@ -19,6 +19,13 @@ export function stripHTML(text) {
     return text.trim();
 }
 
+// A pronunciation written into the text, [live](/lˈɪv/), is shown as its word.
+// The text sent to the voice keeps it (dist/app/logic/pronunciations.py).
+export function displayText(text) {
+    if (!text) return '';
+    return text.replace(/\[([^\[\]\s]+)\]\(\/[^\/\s()]+\/\)/g, '$1');
+}
+
 // --- Toast ---
 export function showToast(msg) {
     const toast = document.getElementById('toast');

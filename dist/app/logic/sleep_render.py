@@ -82,6 +82,8 @@ def level(audio: np.ndarray, target_db: float = LEVEL_DB) -> np.ndarray:
 
 def plausible(audio: np.ndarray, text: str, chars_per_second: float) -> Tuple[bool, str]:
     """Does this look like the text spoken once, at roughly the expected length?"""
+    # Counted as displayed: a written pronunciation is one word, not its markup.
+    text = pronunciations.plain(text)
     duration, expected = audio.size / SAMPLE_RATE, len(text) / chars_per_second
     if audio.size == 0:
         # Kokoro returns a tenth of a second of silence when synthesis throws,
@@ -121,7 +123,7 @@ def speak(text: str, synth: Synth, chars_per_second: float, clause_pause: float)
             return joined, problem
         attempts.append(joined)
 
-    expected = len(text) / chars_per_second
+    expected = len(pronunciations.plain(text)) / chars_per_second
     best = min(attempts, key=lambda a: abs(a.size / SAMPLE_RATE - expected))
     return best, problem
 

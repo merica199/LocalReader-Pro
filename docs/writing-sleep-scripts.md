@@ -11,7 +11,7 @@ nine-minute example that uses every kind of markup.
 
 ## The markup
 
-Write plain text, saved as a `.txt` file (UTF-8). Sleep mode reads four kinds
+Write plain text, saved as a `.txt` file (UTF-8). Sleep mode reads five kinds
 of markup:
 
 | Markup | Effect |
@@ -20,12 +20,14 @@ of markup:
 | `...` | a soft pause in the middle of a thought, 1.1 seconds |
 | `[pause 6]` | exactly that many seconds of silence |
 | a line starting with `#` | skipped; use it for notes and a header |
+| `[live](/lˈɪv/)` | that word said with those sounds, shown as just the word ([why](writing-for-read-aloud.md#words-spelled-the-same-but-said-two-ways)) |
 
 Each sentence end adds a 1 second pause. Every default can be changed in the
 Export dialog's Pauses section.
 
 Upload scripts as `.txt` or `.md`, not PDF. A PDF loses the blank lines, and
-with them every paragraph pause.
+with them every paragraph pause. Written pronunciations work only in `.txt`:
+Markdown reads them as links.
 
 ## Length
 
@@ -98,6 +100,12 @@ about 230 common science words, and anything else can be checked in a few
 seconds; [writing-for-read-aloud.md](writing-for-read-aloud.md#pronunciation)
 shows how. Add the words it gets wrong to the list, so every later script gets
 them right too.
+
+Then check the words spelled the same but said two ways, such as "live",
+"lead", "contract" and "increases". The voice often picks the wrong reading,
+and a list cannot fix them. `tools/check_heteronyms.py` lists each one with
+the reading the voice will use, and the wrong ones are fixed in the script
+itself ([how](writing-for-read-aloud.md#words-spelled-the-same-but-said-two-ways)).
 
 ## Recording it
 

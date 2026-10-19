@@ -72,9 +72,18 @@ only the app's has the voice and its libraries.
    "Check how words are said"): run them all through
    `tools/lookup_pronunciation.py`, and fix every one the engine gets wrong in
    the personal list. Record the new fixes for the person to hear.
-7. Save the script in the scripts folder, named for the topic
+7. **Check the words spelled the same but said two ways** ("cells live" and
+   "a live vaccine", "lead poisoning" and "lead to", "muscles contract"):
+   `python tools/check_heteronyms.py <script.txt>`. For each one it leaves to
+   the voice, decide which meaning the sentence has. Where the voice's
+   reading is wrong, replace the word in the script with the markup the tool
+   prints, such as `[live](/lˈɪv/)`: the app says it with those sounds and
+   shows just the word. Run it again until every reading fits its sentence.
+   Never put these words in the personal list, which would say them one way
+   everywhere.
+8. Save the script in the scripts folder, named for the topic
    (`cranial-nerves.txt`). Never in this repository: it is public.
-8. Tell them where it is and how long it runs, and offer to record it.
+9. Tell them where it is and how long it runs, and offer to record it.
 
 ### "Make the recording" / "Record it"
 
@@ -152,7 +161,12 @@ voice**, so a person listening is always the last step.
 
 ### "The word X sounded wrong" / fixing a pronunciation
 
-Fixes go in the **personal list**, `<userdata>/pronunciations.json`, never in
+If the word is one spelled the same but said two ways ("live" sounding like
+"a live concert" where it means "they live"), it is not a list fix: write its
+pronunciation into the script where it is wrong, as in step 7 of "Write me a
+sleep script", and record again. Only the changed sentences are voiced again.
+
+Every other fix goes in the **personal list**, `<userdata>/pronunciations.json`, never in
 the app's own files: editing the installed app makes its updater refuse to
 update. The personal list wins over the built-in one, takes effect
 immediately (no restart), and survives updates.

@@ -4,6 +4,7 @@ import {
   showToast,
   renderIcons,
   stripHTML,
+  displayText,
   highlightSearchTerm,
 } from "./ui.js";
 
@@ -167,7 +168,7 @@ export async function renderPage() {
     }`;
 
     // Fix broken DIM tags caused by sentence splitting
-    let cleanS = s;
+    let cleanS = displayText(s);
     if (cleanS.includes("[DIM]") && !cleanS.includes("[/DIM]"))
       cleanS += "[/DIM]";
     if (!cleanS.includes("[DIM]") && cleanS.includes("[/DIM]"))
@@ -232,7 +233,7 @@ function appendDimmedText(parent, text) {
 function currentReadingSentencePreviewText(currentReadingSentence, currentSentencePreview) {
   currentSentencePreview.textContent =
     currentReadingSentence && typeof currentReadingSentence === "string"
-      ? stripHTML(currentReadingSentence)
+      ? stripHTML(displayText(currentReadingSentence))
       : "Ready";
 }
 

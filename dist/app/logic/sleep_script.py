@@ -14,12 +14,18 @@ Scripts written for sleep recordings can mark up their pacing:
                     soft pause in the middle of a thought
     [pause 6]       exactly that many seconds of silence
     # comment       the whole line is skipped
+    [live](/lˈɪv/)  this word said with these sounds (logic/pronunciations.py)
 
 The ideas, and the default pause lengths, come from docs/reference/sleepcast.py.
 """
 import re
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple, Union
+
+try:
+    from logic.pronunciations import OVERRIDE_RE, plain
+except ImportError:
+    from pronunciations import OVERRIDE_RE, plain
 
 
 @dataclass(frozen=True)
@@ -64,6 +70,14 @@ ABBREVIATIONS = {
 
 def normalize(text: str) -> str:
     """Rewrite the punctuation a voice model reads badly into commas it reads well."""
+    # Written pronunciations are set aside first: their brackets are not pauses.
+    kept: List[str] = []
+
+    def keep(m) -> str:
+        kept.append(m.group(0))
+        return f"\x00{len(kept) - 1}\x00"
+
+    text = OVERRIDE_RE.sub(keep, text)
     text = text.replace("…", "...")
     # Quotation marks have no sound; read aloud they only disturb the rhythm.
     text = re.sub(r"[“”„\"]", "", text)
@@ -77,6 +91,7 @@ def normalize(text: str) -> str:
     text = re.sub(r",(\s*,)+", ",", text)
     text = re.sub(r",\s*([.!?;:])", r"\1", text)
     text = re.sub(r"^[,;:\s]+", "", text)
+    text = re.sub("\x00(\\d+)\x00", lambda m: kept[int(m.group(1))], text)
     return text.strip()
 
 
@@ -206,7 +221,7 @@ def join_pages(pages: List[str], keeps_paragraphs: bool) -> str:
 
 
 def estimate_seconds(events: List[Event], pacing: Pacing, chars_per_second: float) -> float:
-    speech = sum(len(v) for k, v in events if k == "say") / chars_per_second
+    speech = sum(len(plain(v)) for k, v in events if k == "say") / chars_per_second
     silence = sum(v for k, v in events if k == "pause")
     return pacing.lead_in + speech + silence + pacing.tail
 
@@ -219,7 +234,7 @@ def take_seconds(events: List[Event], seconds: float, chars_per_second: float) -
         if elapsed >= seconds:
             break
         taken.append((kind, value))
-        elapsed += value if kind == "pause" else len(value) / chars_per_second
+        elapsed += value if kind == "pause" else len(plain(value)) / chars_per_second
     while taken and taken[-1][0] == "pause":
         taken.pop()
     return taken

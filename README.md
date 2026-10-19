@@ -440,6 +440,16 @@ and is not in the original.
   `CLAUDE.md` gives a Claude agent step-by-step procedures for the requests a
   non-programmer makes, so writing, recording and fixing words all happen from
   plain requests.
+- **Words said two ways.** The voice picks a reading for words like "live",
+  "lead" and "contract" from the words around them, and often picks wrong:
+  "red blood cells live for about four months" came out like "a live
+  concert". A text can now say how one occurrence is read, `[live](/lˈɪv/)`,
+  which every mode reads with those sounds and displays as just the word (the
+  sleep planner keeps it instead of turning its brackets into pauses).
+  `tools/check_heteronyms.py` lists every such word in a script with the
+  reading the voice will use and the markup for the other one, from a list of
+  48 in `tools/heteronyms.json`; `CLAUDE.md` makes it a step in writing a
+  sleep script.
 - **Writing guides and notes for Claude.** `docs/writing-for-read-aloud.md` and
   `docs/writing-sleep-scripts.md` hold what testing showed about writing for the
   voice (numbers, units, acronyms, pronunciation, and how a sleep script is

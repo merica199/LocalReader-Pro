@@ -33,6 +33,13 @@ the engine writes them, then add the entry and
 run tests/test_pronunciations.py, which checks every entry uses only sounds the
 voice model knows. Then record it with tools/pronunciation_check.py and have a
 person listen.
+
+A list entry says a word one way everywhere, which is wrong for a word spelled
+the same but said two ways: "cells live for weeks" and "a live vaccine". For
+those, the text itself can say how one occurrence is read, written
+[live](/lˈɪv/): the word as displayed, then its sounds between slashes, in the
+engine's alphabet. It wins over both lists and is shown as just the word.
+tools/check_heteronyms.py finds the words that need one.
 """
 import functools
 import json
@@ -58,6 +65,17 @@ def _read(path: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
 # The built-in list, as shipped.
 WORDS, ACRONYMS = _read(BUILTIN_FILE)
 
+# A pronunciation written into the text for one occurrence: [live](/lˈɪv/).
+# Neither part may contain spaces, so the sleep planner's splitting at
+# whitespace can never cut one in half.
+OVERRIDE = r"\[(?P<shown>[^\[\]\s]+)\]\(/(?P<sounds>[^/\s()]+)/\)"
+OVERRIDE_RE = re.compile(OVERRIDE)
+
+
+def plain(text: str) -> str:
+    """The text as displayed and counted: each written pronunciation becomes its word."""
+    return OVERRIDE_RE.sub(lambda m: m["shown"], text)
+
 
 def _alternation(words) -> str:
     if not words:
@@ -70,13 +88,18 @@ class _Table:
     def __init__(self, words: Dict[str, str], acronyms: Dict[str, str]):
         self.words = {k: v for k, v in words.items() if v}
         self.acronyms = {k: v for k, v in acronyms.items() if v}
+        # A written pronunciation comes first, so a listed word inside one is
+        # not matched on its own.
         self.pattern = re.compile(
-            r"(?<![\w'])(?:(?P<acronym>" + _alternation(self.acronyms) + r")"
+            r"(?P<override>" + OVERRIDE + r")"
+            r"|(?<![\w'])(?:(?P<acronym>" + _alternation(self.acronyms) + r")"
             r"|(?i:(?P<word>" + _alternation(self.words) + r")))"
             r"(?P<possessive>['’]s)?(?![\w'’])"
         )
 
     def ipa(self, match) -> str:
+        if match["override"]:
+            return match["sounds"]
         if match["acronym"]:
             return self.acronyms[match["acronym"]]
         return self.words[match["word"].lower()]
@@ -128,9 +151,13 @@ def _possessive(ipa: str) -> str:
 
 
 def phonemize_with(phonemize: Callable[..., str], text: str, lang: str = "en-us", *args, **kwargs) -> str:
-    """phonemize(text, lang), with every listed word replaced by its entry."""
+    """
+    phonemize(text, lang), with every listed word replaced by its entry and
+    every written pronunciation by its sounds.
+    """
     if not str(lang).startswith("en"):
-        return phonemize(text, lang, *args, **kwargs)
+        # The sounds are English ones; another language reads the plain word.
+        return phonemize(plain(text), lang, *args, **kwargs)
     table = _table()
     pieces: List[str] = []
     last = 0
@@ -166,6 +193,9 @@ def used(text: str) -> List[List[str]]:
     table = _table()
     found = set()
     for m in table.pattern.finditer(text):
+        # A written pronunciation is part of the text, which every key holds.
+        if m["override"]:
+            continue
         found.add((m["acronym"] or m["word"].lower(), table.ipa(m)))
     return [list(entry) for entry in sorted(found)]
 

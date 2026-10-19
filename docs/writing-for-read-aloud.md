@@ -104,6 +104,58 @@ spelling in the text is not a reliable fix: the engine still guesses the
 stress. A user can also add a personal respelling in the app's Rules tab, which
 wins over the built-in list for that word.
 
+## Words spelled the same but said two ways
+
+Some words change their sound with their meaning: they are called
+heteronyms. The voice picks a reading from the words around it, and in
+science writing it is often wrong. Tested on the app's engine:
+
+| Text | The voice says | Meant |
+|---|---|---|
+| Red blood cells live for about four months. | lyve, as in "a live concert" | liv |
+| The cell lives for a week. | lyves, as in "nine lives" | livs |
+| Lead poisoning damages nerves. | leed | led |
+| When the heart contracts, | CON-tracts, the noun | con-TRACTS |
+| Pressure increases with depth. | IN-creases, the noun | in-CREASE-es |
+| The patient presents with fever. | PREZ-ents, gifts | pre-ZENTS |
+| The body uses glucose. | YOO-siz, the noun | YOO-ziz |
+| A minute amount of hormone. | MIN-it | my-NOOT |
+| The tear in the ligament. | teer, from the eye | tare |
+
+It gets them right when the clue is strong ("these cells live in the
+marrow", "where do they live?"), so the same word can be right in one
+sentence and wrong in the next.
+
+A list entry cannot fix these: it would say the word one way everywhere, and
+"a live vaccine" would come out wrong instead. A respelling ("liv", "led")
+works for one-syllable words but cannot move the stress. So the text says how
+each occurrence is read:
+
+```text
+Red blood cells [live](/lˈɪv/) for about four months.
+```
+
+The word as it should be shown, then its sounds between slashes, in the
+engine's own alphabet, with no spaces in either part. The app reads it with
+those sounds in every mode, and shows and counts it as just the word. It wins
+over both pronunciation lists. It works in `.txt` files; in Markdown the
+same text is a link and is read as the plain word.
+
+To find them in a script, and to get the exact markup to write:
+
+```bash
+venv/bin/python tools/check_heteronyms.py my-script.txt
+```
+
+For each heteronym it prints the line, the sentence as the voice receives it,
+the reading the voice will use, and the markup for the other reading. Whoever
+knows what each sentence means decides which ones are wrong. It also reports
+markup the voice cannot say, as an error. Run it again after fixing: a fixed
+word shows as written out. The words it knows are in
+[tools/heteronyms.json](../tools/heteronyms.json); to add one, take each
+reading's sounds from the engine's own output for a sentence that uses it
+("to contract", "a contract").
+
 ## Punctuation
 
 - Keep sentences short, under about 200 characters. A longer one is split at a

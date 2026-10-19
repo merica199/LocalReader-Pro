@@ -1,0 +1,195 @@
+{
+  "_about": "Words spelled the same but said differently by meaning, for tools/check_heteronyms.py. Each reading's sounds are in the engine's alphabet, taken from the engine's own output where it produces them (see the tool's docstring). American English.",
+  "live": [
+    {"sounds": "lˈɪv", "meaning": "verb: they live, cells live for weeks"},
+    {"sounds": "lˈaɪv", "meaning": "adjective: a live concert, a live vaccine"}
+  ],
+  "lives": [
+    {"sounds": "lˈɪvz", "meaning": "verb: she lives, the cell lives for a week"},
+    {"sounds": "lˈaɪvz", "meaning": "noun, plural of life: it saves lives"}
+  ],
+  "lead": [
+    {"sounds": "lˈiːd", "meaning": "verb: these changes lead to swelling"},
+    {"sounds": "lˈɛd", "meaning": "the metal: lead poisoning"}
+  ],
+  "tear": [
+    {"sounds": "tˈɪɹ", "meaning": "from the eye: a tear rolled down"},
+    {"sounds": "tˈɛɹ", "meaning": "a rip: a tear in the ligament, to tear"}
+  ],
+  "tears": [
+    {"sounds": "tˈɪɹz", "meaning": "from the eye: tears ran down"},
+    {"sounds": "tˈɛɹz", "meaning": "rips: tears in the tendon, it tears"}
+  ],
+  "wound": [
+    {"sounds": "wˈuːnd", "meaning": "an injury: the wound healed"},
+    {"sounds": "wˈaʊnd", "meaning": "past of wind: he wound the clock"}
+  ],
+  "wind": [
+    {"sounds": "wˈɪnd", "meaning": "moving air: the wind blew"},
+    {"sounds": "wˈaɪnd", "meaning": "to turn or coil: wind the clock"}
+  ],
+  "winds": [
+    {"sounds": "wˈɪndz", "meaning": "moving air: the winds"},
+    {"sounds": "wˈaɪndz", "meaning": "turns or coils: the path winds"}
+  ],
+  "minute": [
+    {"sounds": "mˈɪnɪt", "meaning": "sixty seconds: wait a minute"},
+    {"sounds": "maɪnˈuːt", "meaning": "tiny: a minute amount"}
+  ],
+  "close": [
+    {"sounds": "klˈoʊs", "meaning": "near: close to the heart"},
+    {"sounds": "klˈoʊz", "meaning": "to shut: the valves close"}
+  ],
+  "use": [
+    {"sounds": "jˈuːs", "meaning": "noun: the use of oxygen"},
+    {"sounds": "jˈuːz", "meaning": "verb: cells use oxygen"}
+  ],
+  "uses": [
+    {"sounds": "jˈuːsᵻz", "meaning": "noun: its uses are many"},
+    {"sounds": "jˈuːzᵻz", "meaning": "verb: the body uses glucose"}
+  ],
+  "contract": [
+    {"sounds": "kˈɑːntɹækt", "meaning": "noun: a contract"},
+    {"sounds": "kəntɹˈækt", "meaning": "verb: muscles contract"}
+  ],
+  "contracts": [
+    {"sounds": "kˈɑːntɹækts", "meaning": "noun: the contracts"},
+    {"sounds": "kəntɹˈækts", "meaning": "verb: the heart contracts"}
+  ],
+  "record": [
+    {"sounds": "ɹˈɛkɚd", "meaning": "noun: a medical record"},
+    {"sounds": "ɹᵻkˈɔːɹd", "meaning": "verb: we record it"}
+  ],
+  "records": [
+    {"sounds": "ɹˈɛkɚdz", "meaning": "noun: medical records"},
+    {"sounds": "ɹᵻkˈɔːɹdz", "meaning": "verb: it records the signal"}
+  ],
+  "present": [
+    {"sounds": "pɹˈɛzənt", "meaning": "noun or adjective: a present, present in the blood"},
+    {"sounds": "pɹɪzˈɛnt", "meaning": "verb: patients present with fever"}
+  ],
+  "presents": [
+    {"sounds": "pɹˈɛzənts", "meaning": "noun: birthday presents"},
+    {"sounds": "pɹɪzˈɛnts", "meaning": "verb: the patient presents with fever"}
+  ],
+  "produce": [
+    {"sounds": "pɹˈoʊduːs", "meaning": "noun: fresh produce"},
+    {"sounds": "pɹədˈuːs", "meaning": "verb: cells produce insulin"}
+  ],
+  "conduct": [
+    {"sounds": "kˈɑːndʌkt", "meaning": "noun: his conduct"},
+    {"sounds": "kəndˈʌkt", "meaning": "verb: nerves conduct signals"}
+  ],
+  "conducts": [
+    {"sounds": "kˈɑːndʌkts", "meaning": "noun, rare in the plural: conducts"},
+    {"sounds": "kəndˈʌkts", "meaning": "verb: the axon conducts the signal"}
+  ],
+  "content": [
+    {"sounds": "kˈɑːntɛnt", "meaning": "noun: the water content"},
+    {"sounds": "kəntˈɛnt", "meaning": "adjective: content, satisfied"}
+  ],
+  "object": [
+    {"sounds": "ˈɑːbdʒɛkt", "meaning": "noun: an object"},
+    {"sounds": "ɑːbdʒˈɛkt", "meaning": "verb: I object"}
+  ],
+  "project": [
+    {"sounds": "pɹˈɑːdʒɛkt", "meaning": "noun: a project"},
+    {"sounds": "pɹədʒˈɛkt", "meaning": "verb: fibers project to the cortex"}
+  ],
+  "subject": [
+    {"sounds": "sˈʌbdʒɛkt", "meaning": "noun or adjective: the subject, subject to"},
+    {"sounds": "səbdʒˈɛkt", "meaning": "verb: we subject it to heat"}
+  ],
+  "permit": [
+    {"sounds": "pˈɜːmɪt", "meaning": "noun: a permit"},
+    {"sounds": "pɚmˈɪt", "meaning": "verb: we permit it"}
+  ],
+  "increase": [
+    {"sounds": "ˈɪŋkɹiːs", "meaning": "noun: an increase in pressure"},
+    {"sounds": "ɪŋkɹˈiːs", "meaning": "verb: pressures increase"}
+  ],
+  "increases": [
+    {"sounds": "ˈɪŋkɹiːsᵻz", "meaning": "noun: small increases"},
+    {"sounds": "ɪŋkɹˈiːsᵻz", "meaning": "verb: pressure increases with depth"}
+  ],
+  "decrease": [
+    {"sounds": "dˈiːkɹiːs", "meaning": "noun: a decrease in flow"},
+    {"sounds": "dᵻkɹˈiːs", "meaning": "verb: levels decrease"}
+  ],
+  "decreases": [
+    {"sounds": "dˈiːkɹiːsᵻz", "meaning": "noun: small decreases"},
+    {"sounds": "dᵻkɹˈiːsᵻz", "meaning": "verb: blood flow decreases"}
+  ],
+  "progress": [
+    {"sounds": "pɹˈɑːɡɹɛs", "meaning": "noun: good progress"},
+    {"sounds": "pɹəɡɹˈɛs", "meaning": "verb: diseases progress"}
+  ],
+  "insert": [
+    {"sounds": "ˈɪnsɜːt", "meaning": "noun: an insert"},
+    {"sounds": "ɪnsˈɜːt", "meaning": "verb: insert the needle, the muscles insert on the bone"}
+  ],
+  "extract": [
+    {"sounds": "ˈɛkstɹækt", "meaning": "noun: plant extract"},
+    {"sounds": "ɛkstɹˈækt", "meaning": "verb: extract the tooth"}
+  ],
+  "contrast": [
+    {"sounds": "kˈɑːntɹæst", "meaning": "noun: in contrast, contrast dye"},
+    {"sounds": "kəntɹˈæst", "meaning": "verb: contrast them"}
+  ],
+  "digest": [
+    {"sounds": "dˈaɪdʒɛst", "meaning": "noun: a digest"},
+    {"sounds": "daɪdʒˈɛst", "meaning": "verb: enzymes digest food"}
+  ],
+  "compound": [
+    {"sounds": "kˈɑːmpaʊnd", "meaning": "noun or adjective: a compound, a compound fracture"},
+    {"sounds": "kɑːmpˈaʊnd", "meaning": "verb: it will compound the problem"}
+  ],
+  "separate": [
+    {"sounds": "sˈɛpɹət", "meaning": "adjective: two separate layers"},
+    {"sounds": "sˈɛpɚɹˌeɪt", "meaning": "verb: they separate the cells"}
+  ],
+  "approximate": [
+    {"sounds": "ɐpɹˈɑːksɪmət", "meaning": "adjective: an approximate value"},
+    {"sounds": "ɐpɹˈɑːksɪmˌeɪt", "meaning": "verb: they approximate it"}
+  ],
+  "estimate": [
+    {"sounds": "ˈɛstᵻmət", "meaning": "noun: an estimate"},
+    {"sounds": "ˈɛstᵻmˌeɪt", "meaning": "verb: we estimate it"}
+  ],
+  "articulate": [
+    {"sounds": "ɑːɹtˈɪkjʊlət", "meaning": "adjective: she is articulate"},
+    {"sounds": "ɑːɹtˈɪkjʊlˌeɪt", "meaning": "verb: the bones articulate with the skull"}
+  ],
+  "excise": [
+    {"sounds": "ˈɛksaɪz", "meaning": "noun: an excise tax"},
+    {"sounds": "ɛksˈaɪz", "meaning": "verb: surgeons excise the tumor"}
+  ],
+  "invalid": [
+    {"sounds": "ɪnvˈælɪd", "meaning": "adjective: an invalid result"},
+    {"sounds": "ˈɪnvəlɪd", "meaning": "noun: a person disabled by illness"}
+  ],
+  "axes": [
+    {"sounds": "ˈæksiːz", "meaning": "plural of axis: the body's three axes"},
+    {"sounds": "ˈæksᵻz", "meaning": "plural of ax: two sharp axes"}
+  ],
+  "bases": [
+    {"sounds": "bˈeɪsᵻz", "meaning": "plural of base: nitrogenous bases"},
+    {"sounds": "bˈeɪsiːz", "meaning": "plural of basis: the bases of the theory"}
+  ],
+  "abstract": [
+    {"sounds": "ˈæbstɹækt", "meaning": "noun or adjective: an abstract, an abstract idea"},
+    {"sounds": "ɐbstɹˈækt", "meaning": "verb: abstract the data"}
+  ],
+  "read": [
+    {"sounds": "ɹˈiːd", "meaning": "present tense: I read every night"},
+    {"sounds": "ɹˈɛd", "meaning": "past tense: I read it yesterday"}
+  ],
+  "bow": [
+    {"sounds": "bˈaʊ", "meaning": "to bend, or the front of a ship: take a bow"},
+    {"sounds": "bˈoʊ", "meaning": "a knot, or for arrows: a bow and arrow"}
+  ],
+  "bows": [
+    {"sounds": "bˈaʊz", "meaning": "bends: she bows"},
+    {"sounds": "bˈoʊz", "meaning": "knots, or for arrows: bows and arrows"}
+  ]
+}

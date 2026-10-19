@@ -16,6 +16,7 @@ from pathlib import Path
 APP = Path(__file__).resolve().parent.parent / "dist" / "app"
 sys.path.insert(0, str(APP))
 
+from logic.pronunciations import plain  # noqa: E402
 from logic.sleep_script import Pacing, plan_text, estimate_seconds  # noqa: E402
 from logic.sleep_render import CHARS_PER_SECOND_AT_1X  # noqa: E402
 
@@ -37,6 +38,6 @@ for name in sys.argv[1:]:
     events = plan_text(Path(name).read_text(encoding="utf-8"), pacing)
     seconds = estimate_seconds(events, pacing, chars_per_second) - pacing.lead_in - pacing.tail
     total += seconds
-    spoken = sum(len(text) for kind, text in events if kind == "say")
+    spoken = sum(len(plain(text)) for kind, text in events if kind == "say")
     print(f"{Path(name).name}: {seconds / 60:.1f} min ({spoken:,} spoken characters)")
 print(f"Total: {total / 60:.1f} min, using {source} (speed {speed}).")
