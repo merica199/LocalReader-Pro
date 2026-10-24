@@ -275,7 +275,9 @@ LocalReader-Pro/
 ### Data Storage
 
 - **100% Local:** All documents, settings, and exports stored on your machine
-- **No Cloud:** Zero data sent to external servers
+- **No Cloud by default:** Zero data sent to external servers, unless you choose
+  an Azure voice for exports ([Azure voices](docs/azure-voices.md)): then the
+  text of those exports goes to your own Azure Speech resource
 - **No Accounts:** No login, no sign-up, no user tracking
 
 ### Network Usage
@@ -288,7 +290,10 @@ LocalReader-Pro/
 - **Updates:** only when you choose Check for Updates, which asks GitHub whether a
   newer version exists, or, if you turn on **Check automatically** (off by default),
   when the app opens and once a day
-- **Fully Offline:** After setup, works without internet indefinitely
+- **Azure voices (optional):** exports in an Azure voice need the internet and
+  send their text to Azure; reading aloud never does
+- **Fully Offline:** After setup, works without internet indefinitely (with the
+  voice on this computer)
 
 ### Analytics & Telemetry
 
@@ -475,6 +480,20 @@ and is not in the original.
   two sentences; for text and Markdown the last sentence on a page counts too.
   The pause is added to the clip itself rather than timed, which keeps it inside
   the playback chain's race guards.
+- **Azure voices for exports.** Settings > Azure voices takes the key and region
+  of the user's own Azure Speech resource; exports (normal and sleep) can then
+  use one of Azure's neural voices, chosen in the Export dialog, while reading
+  aloud stays on the local voice. Each sentence is sent as SSML and comes back as
+  24 kHz audio, so pauses, the sentence cache and sleep finishing are unchanged
+  (`logic/azure_tts.py`, `routers/azure.py`). The free tier's 20 requests a
+  minute are paced for, the month's characters are counted on this computer and
+  shown before each export, and voice samples are made on first play and kept.
+  Pronunciation: written `[word](/sounds/)` markup is rewritten into Azure's IPA,
+  and an `azure` section in the pronunciation lists holds Azure-only fixes.
+  `tools/pronunciation_check.py --azure` records a script's hard words in the
+  voice, and `tools/make_sleep_recording.py` refuses a full Azure recording until
+  that check is approved. Guide: [docs/azure-voices.md](docs/azure-voices.md);
+  voices: [docs/azure-voice-list.md](docs/azure-voice-list.md).
 
 ### Fixed
 

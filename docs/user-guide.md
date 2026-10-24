@@ -2,7 +2,9 @@
 
 LocalReader Pro reads your documents aloud in a natural voice that runs
 entirely on your computer, and turns them into audio files: ordinary MP3s at
-reading pace, or slow, calm sleep recordings with background sound.
+reading pace, or slow, calm sleep recordings with background sound. For
+exports you can also choose one of Microsoft Azure's more natural voices,
+under your own Azure account ([Azure voices](azure-voices.md)).
 
 This guide covers every feature and how to use it. Every setting, with its
 default, its range and exactly what it affects, is in the
@@ -172,6 +174,10 @@ not read. See the [settings reference](settings-reference.md#header--footer-mode
 Changing the voice stops reading; press play to continue with the new one.
 Every option is explained in the [settings reference](settings-reference.md#voice--audio).
 
+**Azure voices** (a section of Settings) sets up a more natural voice from
+Microsoft Azure for exports only; reading aloud keeps the voice on this
+computer. See [Azure voices](azure-voices.md).
+
 **Processing Mode** (the second section of Settings) chooses between two versions of
 the voice: **Standard**, compressed to a quarter of the size and the default, and
 **Full precision**, uncompressed. Both run on your computer's processor; neither
@@ -284,7 +290,11 @@ phrases.
 
 ## 7. Exporting audio
 
-Click **Export Audio** (left panel, once a document is open) and choose a mode:
+Click **Export Audio** (left panel, once a document is open). The **Voice**
+menu at the top chooses the voice on this computer or, once it is set up, your
+Azure voice ([Azure voices](azure-voices.md)); with Azure, the dialog says how
+many characters of the month's free allowance the export will use. Then choose
+a mode:
 
 - **Normal:** the whole document as an MP3 at reading pace, in the current
   voice and Playback Speed.
@@ -357,6 +367,11 @@ is finished. Closing the dialog with the X asks whether to stop. Stopping loses
 nothing: every finished sentence is saved, so exporting again picks up where it
 stopped.
 
+**In an Azure voice,** the recording works the same way and takes about as
+long; Azure's free tier allows about eight 90-minute recordings a month. Have
+the script's hard words checked in that voice first: see
+[Azure voices](azure-voices.md#pronunciation).
+
 **Making changes is quick.** Each spoken sentence is saved as it is made.
 Exporting again after changing the pauses or the sound only re-mixes the
 recording. Editing a few sentences of the script re-voices only those. Changing
@@ -415,7 +430,8 @@ app, so updating or reinstalling never touches them:
 - **Windows:** `%APPDATA%\LocalReader Pro\userdata`
 
 Exported recordings are saved directly in that folder (**Open Folder** in the
-Export dialog opens it). To back up everything that matters, copy the
+Export dialog opens it). Azure voice settings and samples are there too
+([which files](azure-voices.md#your-files)). To back up everything that matters, copy the
 `userdata` folder. Uninstalling is covered in the
 [README](../README.md#uninstalling).
 
@@ -447,6 +463,7 @@ working. Keep LocalReader Pro open while Claude records anything.
 | "Renin sounded wrong, it should be REE-nin." | It fixes the word in your personal list and records it for you to check |
 | "'Live' sounded like 'live concert'." | It fixes each wrong one in the script and records it again ([why](#words-said-two-ways)) |
 | "Make the recordings slower and sleepier." | It changes the sleep settings for you |
+| "Set up Azure voices." / "Record it in the Azure voice." | It walks you through the Azure side and fills in the app's settings; before an Azure recording it checks the hard words in that voice with you, so the free allowance is not spent on a wrong word ([Azure voices](azure-voices.md)) |
 | "Something's not working." | It looks into it and writes up the problem for you to send |
 
 Scripts and recordings stay on your computer, outside the app's folder. The

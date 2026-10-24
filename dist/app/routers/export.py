@@ -9,6 +9,8 @@ from ..config import (
     sleep_work_dir,
     sleep_sounds_dir,
     sleep_settings_file,
+    azure_settings_file,
+    azure_usage_file,
 )
 from ..models import ExportRequest, SleepExportRequest, SleepSettings
 from ..utils import get_language_from_voice, safe_save_json
@@ -36,6 +38,7 @@ if str(base_dir_parent) not in sys.path:
 
 try:
     from logic.dependency_manager import FFMPEGInstaller, configure_pydub, get_ffmpeg_path
+    from logic import azure_tts
     from logic.smart_content_detector import filter_text_for_tts
     from logic.text_normalizer import apply_custom_pronunciations
     from logic.sleep_script import Pacing, plan_text, join_pages, estimate_seconds, take_seconds
@@ -58,6 +61,7 @@ try:
 except ImportError:
     sys.path.append(str(base_dir_parent / "logic"))
     from dependency_manager import FFMPEGInstaller, configure_pydub, get_ffmpeg_path
+    import azure_tts
     from smart_content_detector import filter_text_for_tts
     from text_normalizer import apply_custom_pronunciations
     from sleep_script import Pacing, plan_text, join_pages, estimate_seconds, take_seconds
@@ -80,6 +84,23 @@ except ImportError:
 
 router = APIRouter()
 ffmpeg_installer = None
+
+
+def _azure_settings() -> dict:
+    """The saved Azure key and region, or a clear refusal when there are none."""
+    settings = azure_tts.load_settings(azure_settings_file)
+    if not azure_tts.configured(settings):
+        raise HTTPException(
+            status_code=400,
+            detail="Azure voices are not set up: add the key and region in Settings > Azure voices.",
+        )
+    return settings
+
+
+def _chars_per_second(request) -> float:
+    """How fast the chosen voice reads, for estimates and the length check."""
+    base = azure_tts.CHARS_PER_SECOND_AT_1X if request.provider == "azure" else CHARS_PER_SECOND_AT_1X
+    return base * request.speed
 
 
 @router.get("/api/ffmpeg/status")
@@ -149,7 +170,8 @@ async def export_audio(request: ExportRequest, background_tasks: BackgroundTasks
     # Access kokoro from state module
     import app.state as state_module
 
-    if state_module.kokoro is None:
+    azure_settings = _azure_settings() if request.provider == "azure" else None
+    if azure_settings is None and state_module.kokoro is None:
         raise HTTPException(status_code=503, detail="TTS Engine not initialized.")
 
     if not ffmpeg_status["is_installed"]:
@@ -231,16 +253,25 @@ async def export_audio(request: ExportRequest, background_tasks: BackgroundTasks
                         filtered_text, rules_data, request.ignore_list
                     )
 
-                    lang = get_language_from_voice(request.voice)
-
-                    # Use state_module.kokoro
-                    with state_module.engine_lock:
-                        samples, sample_rate = state_module.kokoro.create(
+                    if azure_settings is not None:
+                        samples = azure_tts.synthesize(
+                            azure_settings,
                             processed_text,
-                            voice=request.voice,
-                            speed=float(request.speed),
-                            lang=lang,
+                            request.voice,
+                            float(request.speed),
+                            usage_file=azure_usage_file,
+                            cancelled=lambda: not export_status["is_exporting"],
                         )
+                        sample_rate = azure_tts.SAMPLE_RATE
+                    else:
+                        lang = get_language_from_voice(request.voice)
+                        with state_module.engine_lock:
+                            samples, sample_rate = state_module.kokoro.create(
+                                processed_text,
+                                voice=request.voice,
+                                speed=float(request.speed),
+                                lang=lang,
+                            )
 
                     buffer = io.BytesIO()
                     sf.write(
@@ -255,6 +286,12 @@ async def export_audio(request: ExportRequest, background_tasks: BackgroundTasks
                     audio_segments.append(audio_segment)
                     audio_segments.append(AudioSegment.silent(duration=300))
 
+                except azure_tts.AzureError as e:
+                    # A refused key or a used-up allowance fails every chunk
+                    # alike: stop, rather than export silence.
+                    export_status["error"] = str(e)
+                    export_status["is_exporting"] = False
+                    return
                 except Exception as e:
                     print(f"Warning: Failed to process chunk {i}: {e}")
 
@@ -269,7 +306,7 @@ async def export_audio(request: ExportRequest, background_tasks: BackgroundTasks
             safe_filename = re.sub(
                 r"[^\w\s-]", "", doc_item.get("fileName", "export")
             ).replace(" ", "_")
-            output_filename = f"{safe_filename}_{request.voice}.mp3"
+            output_filename = f"{safe_filename}_{request.voice}.mp3".replace(":", "_")
             output_path = userdata_dir / output_filename
 
             final_audio.export(str(output_path), format="mp3", bitrate="128k")
@@ -339,9 +376,14 @@ def _require_engine():
 
 def _sleep_plan(request: SleepExportRequest):
     """Load a document and turn it into a sleep-recording plan."""
-    state_module = _require_engine()
-    if request.voice not in state_module.kokoro.get_voices():
-        raise HTTPException(status_code=400, detail=f"Unknown voice: {request.voice}")
+    if request.provider == "azure":
+        import app.state as state_module
+
+        _azure_settings()
+    else:
+        state_module = _require_engine()
+        if request.voice not in state_module.kokoro.get_voices():
+            raise HTTPException(status_code=400, detail=f"Unknown voice: {request.voice}")
 
     content_file = content_dir / f"{request.doc_id}.json"
     if not content_file.exists():
@@ -359,8 +401,10 @@ def _sleep_plan(request: SleepExportRequest):
     text = filter_text_for_tts(join_pages(pages, keeps_paragraphs))
     pacing = Pacing(
         **request.pacing.model_dump(),
-        # Within the model's phoneme limit too, which matters for CJK text.
-        max_chars=min(Pacing().max_chars, phoneme_char_budget(text)),
+        # Within Kokoro's phoneme limit too, which matters for CJK text.
+        max_chars=Pacing().max_chars
+        if request.provider == "azure"
+        else min(Pacing().max_chars, phoneme_char_budget(text)),
     )
     rules_data = [r.model_dump() for r in request.rules]
     events = plan_text(
@@ -407,6 +451,12 @@ def _sleep_ffmpeg(sound: Sound) -> Optional[str]:
 
 
 def _sleep_cache(state_module, request: SleepExportRequest) -> SentenceCache:
+    if request.provider == "azure":
+        return SentenceCache(
+            sleep_cache_dir,
+            ["azure", request.voice, round(request.speed, 3)],
+            section="azure",
+        )
     lang = get_language_from_voice(request.voice)
     return SentenceCache(
         sleep_cache_dir,
@@ -424,6 +474,8 @@ def _empty(directory: Path) -> None:
 # Seconds of speech generated per second of rendering: measured at about 2 on an
 # Apple Silicon Mac with the int8 model. Only for the estimate shown beforehand.
 SLEEP_RENDER_SPEED = 2.0
+# Azure's free tier answers 20 requests a minute, one per sentence.
+AZURE_SECONDS_PER_PIECE = 60 / azure_tts.FREE_REQUESTS_PER_MINUTE
 
 
 @router.post("/api/export/sleep/plan")
@@ -432,21 +484,29 @@ def plan_sleep_recording(request: SleepExportRequest):
     state_module, _, events, pacing = _sleep_plan(request)
     sound = Sound(**request.sound.model_dump())
     cache = _sleep_cache(state_module, request)
-    chars_per_second = CHARS_PER_SECOND_AT_1X * request.speed
+    chars_per_second = _chars_per_second(request)
     says = [text for kind, text in events if kind == "say"]
     uncached = [text for text in says if not cache.path(text).exists()]
     seconds = estimate_seconds(events, pacing, chars_per_second)
-    return {
+    if request.provider == "azure":
+        voicing = len(uncached) * AZURE_SECONDS_PER_PIECE
+    else:
+        voicing = sum(len(t) for t in uncached) / chars_per_second / SLEEP_RENDER_SPEED
+    plan = {
+        "provider": request.provider,
         "pieces": len(says),
         "cached_pieces": len(says) - len(uncached),
         "estimated_seconds": round(seconds),
-        "estimated_render_seconds": round(
-            sum(len(t) for t in uncached) / chars_per_second / SLEEP_RENDER_SPEED
-            + finish_seconds(seconds, sound)
-        ),
+        "estimated_render_seconds": round(voicing + finish_seconds(seconds, sound)),
         "needs_ffmpeg": needs_finishing(sound),
         "ffmpeg_installed": bool(get_ffmpeg_path()),
     }
+    if request.provider == "azure":
+        # What this recording will take from the month's allowance: only the
+        # sentences not already voiced are sent.
+        plan["azure_characters"] = sum(azure_tts.billed_characters(t) for t in uncached)
+        plan["azure_usage"] = azure_tts.usage(azure_usage_file)
+    return plan
 
 
 def _start_sleep_render(
@@ -472,7 +532,7 @@ def _start_sleep_render(
         _sleep_render_lock.release()
         raise
 
-    chars_per_second = CHARS_PER_SECOND_AT_1X * request.speed
+    chars_per_second = _chars_per_second(request)
     if preview:
         # The opening minute, with the lead-in and fade-in as they will be (up
         # to 10 s, so a long lead-in does not make a preview of silence), and an
@@ -485,7 +545,9 @@ def _start_sleep_render(
     else:
         stem = Path(doc_item.get("fileName", "export")).stem
         safe_filename = re.sub(r"[^\w\s-]", "", stem).replace(" ", "_") or "export"
-        out_path = userdata_dir / f"{safe_filename}_{request.voice}_sleep.{sound.format}"
+        # Some Azure voice names contain a colon, which Windows forbids in a file name.
+        voice_name = request.voice.replace(":", "_")
+        out_path = userdata_dir / f"{safe_filename}_{voice_name}_sleep.{sound.format}"
         title = stem
 
     cache = _sleep_cache(state_module, request)
@@ -513,7 +575,18 @@ def _start_sleep_render(
     }
     export_status = status
 
+    azure_settings = _azure_settings() if request.provider == "azure" else None
+
     def synth(text: str) -> np.ndarray:
+        if azure_settings is not None:
+            return azure_tts.synthesize(
+                azure_settings,
+                text,
+                request.voice,
+                float(request.speed),
+                usage_file=azure_usage_file,
+                cancelled=lambda: not status["is_exporting"],
+            )
         if state_module.kokoro_model != model:
             raise RuntimeError("The voice model was changed during the render")
         with state_module.engine_lock:
@@ -572,6 +645,8 @@ def _start_sleep_render(
             status["output_file"] = out_path.name
         except Cancelled:
             status["error"] = "Export cancelled"
+        except azure_tts.AzureError as e:
+            status["error"] = "Export cancelled" if str(e) == "Cancelled" else str(e)
         except Exception as e:
             status["error"] = str(e)
         finally:

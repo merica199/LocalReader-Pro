@@ -230,5 +230,10 @@
     "vagus": "vˈeɪɡəs",
     "vasopressin": "vˌeɪzoʊpɹˈɛsɪn",
     "wernicke": "wˈɜːnɪki"
+  },
+  "azure": {
+    "_about": "For Azure voices only (logic/azure_tts.py), which read every other word their own way. Written in Azure's IPA for the voice's language (learn.microsoft.com, SSML phonetic alphabets): stress mark at the start of the syllable, no length marks for American English. Add a word only after hearing Azure get it wrong.",
+    "acronyms": {},
+    "words": {}
   }
 }

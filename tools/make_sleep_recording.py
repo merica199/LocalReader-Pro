@@ -18,6 +18,13 @@ It does what a person would do in the app:
    the sleep options last saved in the Export dialog.
 3. Waits, printing progress, and prints where the finished file is.
 
+If Azure voices are chosen for exports (Settings > Azure voices), the
+recording is made in that Azure voice. A full Azure recording needs an
+approved pronunciation check of this exact script first
+(tools/pronunciation_check.py --azure --script, then --approve), so a month's
+free allowance is never spent on words nobody has heard; a preview does not.
+--kokoro records in the voice on this computer instead.
+
 --preview makes only the first minute, like the dialog's Preview button.
 --copy-to also copies the finished file to a folder. Sentences already made
 for an earlier version are reused, so a re-recording after small edits is
@@ -38,12 +45,14 @@ USERDATA = APP.parent / "userdata"
 sys.path.insert(0, str(APP))
 
 from logic.text_reader import decode_text, text_to_pages  # noqa: E402
+from logic import azure_checks  # noqa: E402
 
 parser = argparse.ArgumentParser(description="Make a sleep recording through the running app.")
 parser.add_argument("script", help="the script, a .txt file")
 parser.add_argument("--preview", action="store_true", help="make only the first minute")
 parser.add_argument("--copy-to", help="also copy the finished file to this folder")
 parser.add_argument("--port", type=int, default=8000, help="the app's port (8000 unless testing)")
+parser.add_argument("--kokoro", action="store_true", help="use the voice on this computer even if Azure is chosen")
 args = parser.parse_args()
 
 BASE = f"http://127.0.0.1:{args.port}"
@@ -77,7 +86,21 @@ try:
     status = call("GET", "/api/system/status")
 except urllib.error.URLError:
     sys.exit("LocalReader Pro is not running. Open it, wait for the green dot, and try again.")
-if not status.get("model_loaded"):
+azure = call("GET", "/api/azure/settings")
+use_azure = azure.get("use_for_exports") and azure.get("configured") and not args.kokoro
+if use_azure and not args.preview:
+    why = azure_checks.problem(USERDATA / "azure_checks.json", script, azure["voice"])
+    if why:
+        approve = f"  python tools/pronunciation_check.py --approve \"{script}\""
+        if why.startswith("the check was recorded"):
+            sys.exit(f"Not recording in Azure yet: {why}.\nOnce someone has listened and every word is right:\n{approve}")
+        sys.exit(
+            f"Not recording in Azure yet: {why}.\n"
+            f"Check its pronunciations first:\n"
+            f"  python tools/pronunciation_check.py --azure --script \"{script}\" <its technical words>\n"
+            f"then, once someone has listened and every word is right:\n{approve}"
+        )
+if not use_azure and not status.get("model_loaded"):
     sys.exit("LocalReader Pro's voice is not ready yet. Wait for the green dot and try again.")
 
 # 1. Into the library, replacing a document of the same name.
@@ -102,7 +125,8 @@ sleep = call("GET", "/api/export/sleep/settings")["settings"]
 request = {
     **sleep,
     "doc_id": doc_id,
-    "voice": settings.get("voice_id") or "af_bella",
+    "provider": "azure" if use_azure else "kokoro",
+    "voice": azure["voice"] if use_azure else (settings.get("voice_id") or "af_bella"),
     "rules": settings.get("pronunciationRules", []),
     "ignore_list": settings.get("ignoreList", []),
 }
@@ -112,6 +136,15 @@ print(
     f"Voice {request['voice']}, speed {sleep['speed']}. About {length} long, "
     f"{plan['pieces']} pieces, {plan['cached_pieces']} already made."
 )
+if use_azure:
+    usage = plan["azure_usage"]
+    print(
+        f"Azure: sends about {plan['azure_characters']:,} characters; about {usage['characters']:,} "
+        f"of {usage['free_allowance']:,} used this month from this computer."
+    )
+    if plan["azure_characters"] + usage["characters"] > usage["free_allowance"]:
+        print("That is more than the free allowance has left: Azure will refuse the rest, and the "
+              "sentences made so far are kept, so it can be finished next month.")
 if plan.get("needs_ffmpeg") and not plan.get("ffmpeg_installed"):
     sys.exit("FFmpeg is needed for these sound options and is not installed. Open Export Audio in the app once; it offers it.")
 

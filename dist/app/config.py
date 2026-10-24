@@ -39,6 +39,14 @@ sleep_sounds_dir = userdata_dir / "sleep_sounds"
 # The sleep-recording options last used, so they survive a restart.
 sleep_settings_file = userdata_dir / "sleep_settings.json"
 
+# Azure voices (logic/azure_tts.py): the key and region, the voice list as
+# fetched, this computer's character count per month, and voice samples, each
+# made the first time it is played and kept.
+azure_settings_file = userdata_dir / "azure.json"
+azure_voices_file = userdata_dir / "azure_voices.json"
+azure_usage_file = userdata_dir / "azure_usage.json"
+azure_samples_dir = preview_cache_dir / "azure"
+
 # File paths
 settings_file = userdata_dir / "settings.json"
 library_file = userdata_dir / "library.json"

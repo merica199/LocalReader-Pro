@@ -41,6 +41,7 @@ import {
 } from "./modules/export.js";
 import { initTimer } from "./modules/timer.js";
 import { initUpdates } from "./modules/updates.js";
+import { initAzure } from "./modules/azure.js";
 import { initSettings, isSettingsOpen } from "./modules/settings.js";
 
 // Global access for debugging
@@ -156,6 +157,7 @@ async function init() {
   startStatusPolling();
   initTimer();
   initUpdates();
+  initAzure();
   initSettings();
 }
 

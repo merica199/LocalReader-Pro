@@ -137,13 +137,15 @@ class SentenceCache:
     (about 170 MB per hour of speech).
     """
 
-    def __init__(self, directory: Path, signature: List):
+    def __init__(self, directory: Path, signature: List, section: str = "kokoro"):
         self.directory = Path(directory)
         self.signature = [CACHE_VERSION, *signature]
+        # Which pronunciation lists the voice uses (pronunciations.py).
+        self.section = section
 
     def path(self, text: str) -> Path:
         # The built-in pronunciations this text uses change its sound too.
-        used = pronunciations.used(text)
+        used = pronunciations.used(text, self.section)
         parts = [self.signature, text, used] if used else [self.signature, text]
         key = hashlib.sha1(json.dumps(parts).encode("utf-8")).hexdigest()
         return self.directory / f"{key}.npy"

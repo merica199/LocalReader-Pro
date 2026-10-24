@@ -424,6 +424,10 @@
           <i data-lucide="cpu" class="w-4 h-4"></i>
           <span data-i18n="settings.processing_mode">Processing Mode</span>
         </button>
+        <button type="button" class="settings-nav-btn" data-settings-section="azure">
+          <i data-lucide="cloud" class="w-4 h-4"></i>
+          <span>Azure voices</span>
+        </button>
         <button type="button" class="settings-nav-btn" data-settings-section="updates">
           <i data-lucide="refresh-cw" class="w-4 h-4"></i>
           <span>Updates</span>
@@ -745,6 +749,64 @@
             </div>
 
         </section>
+        <!-- Azure voices for exports (modules/azure.js, routers/azure.py, docs/azure-voices.md) -->
+        <section class="settings-page space-y-4" data-settings-section="azure">
+          <h2 class="text-xl font-bold text-white mb-2">Azure voices</h2>
+          <p class="text-xs text-zinc-400">
+            More natural voices from Microsoft Azure, for exported MP3s and sleep recordings.
+            Reading aloud in the app still uses the voice on this computer. The text of an
+            export is sent to Azure, under your own Azure Speech resource; its free tier
+            gives 500,000 characters a month, about eight 90-minute sleep recordings.
+          </p>
+          <div class="p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg space-y-3">
+            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Your Speech resource</label>
+            <label class="block text-xs text-zinc-300">
+              Key
+              <input id="azureKey" type="password" autocomplete="off" spellcheck="false"
+                class="mt-1 w-full bg-zinc-900 text-sm border border-zinc-800 rounded px-2 py-1.5 outline-none text-zinc-200 focus:border-blue-500" />
+            </label>
+            <label class="block text-xs text-zinc-300">
+              Region
+              <input id="azureRegion" type="text" autocomplete="off" spellcheck="false" placeholder="for example eastus"
+                class="mt-1 w-full bg-zinc-900 text-sm border border-zinc-800 rounded px-2 py-1.5 outline-none text-zinc-200 focus:border-blue-500" />
+            </label>
+            <p class="text-[11px] text-zinc-500">
+              Both are on the resource's Keys and Endpoint page in the Azure portal. The key is kept
+              in this computer's library folder and never leaves it except to Azure.
+            </p>
+            <button id="azureSaveBtn" type="button"
+              class="w-full px-2 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs font-semibold text-white transition-colors">
+              Save and test
+            </button>
+            <div id="azureStatus" class="text-[11px] text-zinc-400"></div>
+          </div>
+
+          <div id="azureVoicePanel" class="p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg space-y-3 hidden">
+            <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Voice</label>
+            <div class="flex items-stretch gap-2">
+              <select id="azureVoiceSelect"
+                class="flex-1 min-w-0 bg-zinc-900 text-sm border border-zinc-800 rounded-lg px-3 py-2 outline-none text-zinc-300 focus:border-blue-500"></select>
+              <button id="azureSampleBtn" type="button" title="Hear a sample of this voice" aria-label="Hear a sample of this voice"
+                class="shrink-0 w-11 flex items-center justify-center bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 transition-colors hover:text-blue-400 hover:border-blue-500 disabled:opacity-40">
+                <i data-lucide="play" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <p id="azureVoiceInfo" class="text-[11px] text-zinc-500"></p>
+            <p class="text-[11px] text-zinc-500">
+              A voice's sample is made the first time you play it (about 150 characters of the
+              allowance) and kept, so playing it again is free.
+              <button id="azureRefreshVoicesBtn" type="button" class="text-blue-400 hover:underline">Refresh the voice list</button>
+            </p>
+            <label class="flex items-start gap-2 text-xs text-zinc-300 cursor-pointer">
+              <input type="checkbox" id="azureUseForExports" class="mt-0.5 accent-blue-600" />
+              <span>
+                Use this voice for exports
+                <span class="block text-zinc-500">Export Audio, both Normal and Sleep mode. It can also be switched in the Export dialog.</span>
+              </span>
+            </label>
+            <div id="azureUsage" class="text-[11px] text-zinc-400"></div>
+          </div>
+        </section>
         <section class="settings-page space-y-4" data-settings-section="updates">
           <h2 class="text-xl font-bold text-white mb-6">Updates</h2>
             <!-- Updates: checks GitHub when asked, or automatically if turned on -->
@@ -998,6 +1060,14 @@
 
         <!-- Chosen before anything starts -->
         <div id="exportOptions" class="space-y-4">
+          <label class="block text-xs text-zinc-400">
+            Voice
+            <select id="exportProvider"
+              class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500">
+              <option value="kokoro">On this computer (Kokoro)</option>
+              <option value="azure">Azure</option>
+            </select>
+          </label>
           <div class="grid grid-cols-2 gap-2">
             <button
               id="exportModeNormal"

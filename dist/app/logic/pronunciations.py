@@ -40,6 +40,15 @@ those, the text itself can say how one occurrence is read, written
 [live](/lˈɪv/): the word as displayed, then its sounds between slashes, in the
 engine's alphabet. It wins over both lists and is shown as just the word.
 tools/check_heteronyms.py finds the words that need one.
+
+Azure voices (logic/azure_tts.py) do not use these lists. They know far more
+words than espeak-ng does and are left to say them their own way, unless an
+entry in the lists' "azure" section says otherwise. Those entries are written
+in the IPA Azure documents for the voice's language (stress mark at the start
+of the syllable, no length marks for American English), not in the engine's
+style, because Azure reads them as they are. A written pronunciation in the
+text, [live](/lˈɪv/), applies to Azure too: azure_ipa() rewrites its sounds
+into Azure's style.
 """
 import functools
 import json
@@ -55,8 +64,10 @@ PERSONAL_FILE = Path(
 )
 
 
-def _read(path: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
+def _read(path: Path, section: str = "kokoro") -> Tuple[Dict[str, str], Dict[str, str]]:
     data = json.loads(path.read_text(encoding="utf-8"))
+    if section == "azure":
+        data = data.get("azure", {})
     words = {k.lower(): v for k, v in data.get("words", {}).items()}
     acronyms = dict(data.get("acronyms", {}))
     return words, acronyms
@@ -64,6 +75,8 @@ def _read(path: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
 
 # The built-in list, as shipped.
 WORDS, ACRONYMS = _read(BUILTIN_FILE)
+AZURE_WORDS, AZURE_ACRONYMS = _read(BUILTIN_FILE, "azure")
+BUILTIN = {"kokoro": (WORDS, ACRONYMS), "azure": (AZURE_WORDS, AZURE_ACRONYMS)}
 
 # A pronunciation written into the text for one occurrence: [live](/lˈɪv/).
 # Neither part may contain spaces, so the sleep planner's splitting at
@@ -105,34 +118,38 @@ class _Table:
         return self.words[match["word"].lower()]
 
 
-_cache = {"stamp": None, "table": _Table(WORDS, ACRONYMS), "warned": None}
+_cache = {
+    section: {"stamp": None, "table": _Table(*lists), "warned": None}
+    for section, lists in BUILTIN.items()
+}
 
 
-def _table() -> _Table:
+def _table(section: str = "kokoro") -> _Table:
     """The built-in list merged with the personal one, re-read when it changes."""
+    cache = _cache[section]
     try:
         st = PERSONAL_FILE.stat()
         stamp = (st.st_mtime_ns, st.st_size)
     except OSError:
         stamp = None
-    if stamp != _cache["stamp"]:
-        words, acronyms = dict(WORDS), dict(ACRONYMS)
+    if stamp != cache["stamp"]:
+        words, acronyms = (dict(d) for d in BUILTIN[section])
         if stamp is not None:
             try:
-                personal_words, personal_acronyms = _read(PERSONAL_FILE)
+                personal_words, personal_acronyms = _read(PERSONAL_FILE, section)
                 words.update(personal_words)
                 acronyms.update(personal_acronyms)
             except Exception as e:  # a broken personal file must not stop reading
-                if _cache["warned"] != stamp:
+                if cache["warned"] != stamp:
                     print(f"[PRONUNCIATIONS] Ignoring {PERSONAL_FILE}: {e}")
-                    _cache["warned"] = stamp
-        _cache.update(stamp=stamp, table=_Table(words, acronyms))
-    return _cache["table"]
+                    cache["warned"] = stamp
+        cache.update(stamp=stamp, table=_Table(words, acronyms))
+    return cache["table"]
 
 
-def lookup(word: str) -> Optional[str]:
-    """The pronunciation the app will use for a word, or None for the engine's guess."""
-    table = _table()
+def lookup(word: str, section: str = "kokoro") -> Optional[str]:
+    """The pronunciation the app will use for a word, or None for the voice's own reading."""
+    table = _table(section)
     return table.acronyms.get(word) or table.words.get(word.lower())
 
 
@@ -185,12 +202,12 @@ def phonemize_with(phonemize: Callable[..., str], text: str, lang: str = "en-us"
     return out
 
 
-def used(text: str) -> List[List[str]]:
+def used(text: str, section: str = "kokoro") -> List[List[str]]:
     """
     The entries a text uses, for audio cache keys: changing an entry then
     regenerates only the audio that says that word, instead of everything.
     """
-    table = _table()
+    table = _table(section)
     found = set()
     for m in table.pattern.finditer(text):
         # A written pronunciation is part of the text, which every key holds.
@@ -206,3 +223,109 @@ def install(engine) -> None:
     original = getattr(tokenizer, "_phonemize_without_pronunciations", tokenizer.phonemize)
     tokenizer._phonemize_without_pronunciations = original
     tokenizer.phonemize = functools.partial(phonemize_with, original)
+
+
+# --- Azure ---------------------------------------------------------------------
+#
+# Azure takes a word's sounds in an SSML <phoneme alphabet="ipa"> tag, in the
+# IPA set it documents per language (learn.microsoft.com, "SSML phonetic
+# alphabets"). The engine's alphabet differs in three ways that matter: it puts
+# the stress mark right before the stressed vowel where IPA puts it at the
+# start of the syllable; it writes American vowels with length marks Azure's
+# American set does not use; and it has a few sounds of its own (ᵻ, ɐ, the flap
+# ɾ). azure_ipa() rewrites all three. Entries in the "azure" sections are
+# already in Azure's style and pass through unchanged.
+
+_VOWELS = set("aeiouyæɑɒɐɔəɚɛɜɝɪʊʌᵻɨøœɵɘɤɯ")
+_STRESS = "ˈˌ"
+# Consonant pairs and triples that can start an English syllable, so a stress
+# mark moved back from its vowel takes the whole onset with it: "ˌæbstɹˈækt"
+# becomes "ˌæbˈstɹækt", not "ˌæbsˈtɹækt".
+_ONSETS = {
+    "spl", "spɹ", "stɹ", "skɹ", "skw", "spj", "skj",
+    "pl", "pɹ", "bl", "bɹ", "tɹ", "dɹ", "kl", "kɹ", "gl", "gɹ", "fl", "fɹ", "θɹ",
+    "ʃɹ", "sp", "st", "sk", "sm", "sn", "sl", "sw", "tw", "kw", "dw", "gw", "θw",
+    "pj", "bj", "kj", "gj", "mj", "nj", "fj", "vj", "hj", "lj",
+}
+_COMMON = [("ɡ", "g"), ("ᵻ", "ɪ"), ("ɨ", "ɪ"), ("ɾ", "t"), ("ʔ", "t"), ("r", "ɹ"),
+           ("n̩", "ən"), ("l̩", "əl"), ("ç", "h"), ("x", "k")]
+# American: no length marks, the r-coloured vowel of "bird" is ɝ, ɐ is ə.
+_AMERICAN = [("ɜːɹ", "ɝ"), ("ɜː", "ɝ"), ("ɜ", "ɝ"), ("ɐ", "ə"), ("ɒ", "ɑ"), ("ː", "")]
+_BRITISH = [("ɐ", "ʌ")]
+
+
+def _segments(ipa: str) -> List[str]:
+    """Sounds, with tʃ and dʒ (one consonant each) kept together."""
+    out: List[str] = []
+    i = 0
+    while i < len(ipa):
+        if ipa[i:i + 2] in ("tʃ", "dʒ"):
+            out.append(ipa[i:i + 2])
+            i += 2
+        else:
+            out.append(ipa[i])
+            i += 1
+    return out
+
+
+def _stress_to_syllable_start(ipa: str) -> str:
+    out: List[str] = []
+    for seg in _segments(ipa):
+        if seg in _STRESS:
+            out.append(seg)
+            continue
+        if out and out[-1] in _STRESS and seg[0] in _VOWELS:
+            mark = out.pop()
+            # The consonants since the last vowel, stress mark or space.
+            cluster: List[str] = []
+            while out and out[-1][0] not in _VOWELS and out[-1] not in _STRESS + " ː":
+                cluster.insert(0, out.pop())
+            onset = 0
+            for size in (3, 2):
+                if len(cluster) >= size and "".join(cluster[-size:]) in _ONSETS:
+                    onset = size
+                    break
+            else:
+                onset = min(1, len(cluster))
+            out += cluster[:len(cluster) - onset] + [mark] + cluster[len(cluster) - onset:]
+        out.append(seg)
+    return "".join(out)
+
+
+def azure_ipa(ipa: str, locale: str = "en-US") -> str:
+    """The engine's sounds for a word, written the way Azure reads IPA."""
+    # The engine's ɡ is a different character from Azure's g, and the onsets
+    # above are written with Azure's.
+    out = _stress_to_syllable_start(ipa.replace("ɡ", "g"))
+    for old, new in _COMMON + (_BRITISH if locale.lower() == "en-gb" else _AMERICAN):
+        out = out.replace(old, new)
+    return out
+
+
+def _xml(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def azure_ssml_text(text: str, locale: str = "en-US") -> str:
+    """
+    The text as SSML for an Azure voice: escaped, with every written
+    pronunciation and every entry in the Azure lists in a <phoneme> tag, and
+    everything else left for the voice to read its own way.
+    """
+    if not locale.lower().startswith("en"):
+        return _xml(plain(text))
+    table = _table("azure")
+    out: List[str] = []
+    last = 0
+    for m in table.pattern.finditer(text):
+        out.append(_xml(text[last:m.start()]))
+        if m["override"]:
+            ipa, shown = azure_ipa(m["sounds"], locale), m["shown"]
+        else:
+            ipa, shown = table.ipa(m), m["acronym"] or m["word"]
+        if m["possessive"]:
+            ipa, shown = azure_ipa(_possessive(ipa), locale), shown + m["possessive"]
+        out.append(f'<phoneme alphabet="ipa" ph="{_xml(ipa)}">{_xml(shown)}</phoneme>')
+        last = m.end()
+    out.append(_xml(text[last:]))
+    return "".join(out)

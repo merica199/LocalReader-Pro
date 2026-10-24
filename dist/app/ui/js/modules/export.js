@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { fetchJSON, fetchBlob, API_URL } from './api.js';
 import { showToast, renderIcons } from './ui.js';
+import { azureState, loadAzureSettings, setAzureForExports } from './azure.js';
 
 let exportPollInterval = null;
 let ffmpegPollInterval = null;
@@ -52,10 +53,46 @@ function formatDuration(seconds) {
     return `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// "kokoro" or "azure": which voice the export uses (Settings > Azure voices).
+function exportProvider() {
+    return document.getElementById('exportProvider').value;
+}
+
+// "Ava Multilingual (en-US)" for en-US-AvaMultilingualNeural.
+function azureVoiceName(name) {
+    const short = name.split('-').slice(2).join('-').replace(/Neural.*$/, '').replace(/Multilingual/, ' Multilingual');
+    return `${short || name} (${name.slice(0, 5)})`;
+}
+
+function renderProviderChoice() {
+    const select = document.getElementById('exportProvider');
+    const kokoro = select.querySelector('option[value="kokoro"]');
+    const azure = select.querySelector('option[value="azure"]');
+    kokoro.textContent = `On this computer: ${document.getElementById('voiceSelect').value}`;
+    azure.disabled = !azureState.configured;
+    azure.textContent = azureState.configured
+        ? `Azure: ${azureVoiceName(azureState.voice)}`
+        : 'Azure (set it up in Settings > Azure voices)';
+    select.value = azureState.configured && azureState.use_for_exports ? 'azure' : 'kokoro';
+}
+
+async function onProviderChange(event) {
+    try {
+        await setAzureForExports(event.target.value === 'azure');
+    } catch (e) {
+        showToast(e.message);
+        renderProviderChoice();
+    }
+    updateNormalEstimate();
+    if (exportMode === 'sleep') refreshSleepEstimate();
+}
+
 function exportRequestBody(speed) {
+    const azure = exportProvider() === 'azure';
     return {
         doc_id: state.currentDoc.id,
-        voice: document.getElementById('voiceSelect').value,
+        provider: azure ? 'azure' : 'kokoro',
+        voice: azure ? azureState.voice : document.getElementById('voiceSelect').value,
         speed,
         rules: state.rules,
         ignore_list: state.ignoreList
@@ -86,6 +123,7 @@ async function postJSON(endpoint, body) {
 }
 
 export function initExportDialog() {
+    document.getElementById('exportProvider').onchange = onProviderChange;
     document.getElementById('exportModeNormal').onclick = () => setExportMode('normal');
     document.getElementById('exportModeSleep').onclick = () => setExportMode('sleep');
     document.getElementById('startExportBtn').onclick = beginExport;
@@ -144,10 +182,9 @@ async function showOptions() {
     document.getElementById('exportOptions').classList.remove('hidden');
     document.getElementById('exportRunning').classList.add('hidden');
 
-    const totalChars = state.currentPages.join('').length;
-    const estimatedMins = Math.ceil(Math.ceil((totalChars / 1000) * 15) / 60);
-    document.getElementById('normalEstimate').textContent =
-        `The whole document at reading pace. Estimated time: ~${estimatedMins} minute${estimatedMins !== 1 ? 's' : ''}`;
+    await loadAzureSettings();
+    renderProviderChoice();
+    updateNormalEstimate();
     try {
         await loadSleepOptions();
     } catch (e) {
@@ -156,6 +193,24 @@ async function showOptions() {
     }
     setExportMode(exportMode);
     renderIcons();
+}
+
+// Azure counts characters against the month's allowance, so an Azure export
+// says how many it will use before it starts.
+async function updateNormalEstimate() {
+    const totalChars = state.currentPages.join('').length;
+    const estimatedMins = Math.ceil(Math.ceil((totalChars / 1000) * 15) / 60);
+    const line = document.getElementById('normalEstimate');
+    line.textContent =
+        `The whole document at reading pace. Estimated time: ~${estimatedMins} minute${estimatedMins !== 1 ? 's' : ''}`;
+    if (exportProvider() !== 'azure') return;
+    try {
+        const u = await fetchJSON(`/api/azure/usage?t=${Date.now()}`);
+        line.textContent += `. Sends about ${totalChars.toLocaleString()} characters to Azure; ` +
+            `about ${u.characters.toLocaleString()} of ${u.free_allowance.toLocaleString()} used this month from this computer.`;
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function setExportMode(mode) {
@@ -367,11 +422,17 @@ async function refreshSleepEstimate() {
         const cached = plan.cached_pieces ? ` (${plan.cached_pieces} already rendered)` : '';
         const ffmpeg = plan.needs_ffmpeg && !plan.ffmpeg_installed
             ? ' These options need FFmpeg, which will be offered when you start.' : '';
+        const azure = plan.provider === 'azure'
+            ? ` Sends about ${plan.azure_characters.toLocaleString()} characters to Azure; about ` +
+              `${plan.azure_usage.characters.toLocaleString()} of ${plan.azure_usage.free_allowance.toLocaleString()} ` +
+              'used this month from this computer.'
+            : '';
         estimate.textContent =
             `About ${formatDuration(plan.estimated_seconds)} long, ${plan.pieces} sentences${cached}. ` +
             (plan.estimated_render_seconds < 60
                 ? 'Rendering takes under a minute.'
-                : `Rendering takes roughly ${formatDuration(plan.estimated_render_seconds)}.`) + ffmpeg;
+                : `Rendering takes roughly ${formatDuration(plan.estimated_render_seconds)}` +
+                  (plan.provider === 'azure' ? " at the free tier's pace." : '.')) + azure + ffmpeg;
     } catch (e) {
         if (token === sleepEstimateToken) estimate.textContent = 'Could not estimate: ' + e.message;
     }

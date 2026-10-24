@@ -54,6 +54,9 @@ class TimerRequest(BaseModel):
 
 class ExportRequest(BaseModel):
     doc_id: str
+    # "azure" voices the export through Azure (logic/azure_tts.py), and voice
+    # is then an Azure voice name such as en-US-AvaMultilingualNeural.
+    provider: Literal["kokoro", "azure"] = "kokoro"
     voice: str = "af_bella"
     speed: float = 1.0
     rules: List[PronunciationRule]

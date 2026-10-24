@@ -18,6 +18,7 @@ settings in `userdata/sleep_settings.json`
 - [Rules and Ignore](#rules-and-ignore)
 - [Normal export](#normal-export)
 - [Sleep mode](#sleep-mode)
+- [Azure voices](#azure-voices)
 - [Sleep Timer](#sleep-timer)
 - [Updates](#updates)
 
@@ -34,9 +35,14 @@ of them:
 | Header & Footer Mode | yes | no | no |
 | Rules | yes | yes | yes |
 | Ignore list | yes | yes | yes |
-| Built-in science pronunciations | yes | yes | yes |
-| Processing Mode (which voice model) | yes | yes | yes |
+| Built-in science pronunciations | yes | yes, local voice only | yes, local voice only |
+| Processing Mode (which voice model) | yes | yes, local voice only | yes, local voice only |
+| Azure voices | no | yes, when chosen | yes, when chosen |
 | Sleep mode options | no | no | yes |
+
+With an Azure voice chosen for an export, the Voice setting (Voice & Audio)
+and Processing Mode do not apply to it: the Azure voice is used instead. The
+Rules and Ignore list still apply.
 
 ## Voice & Audio
 
@@ -201,7 +207,8 @@ changes take effect immediately. Updates never touch it. The
 ## Normal export
 
 **Export Audio**, then **Normal**. It has no settings of its own; it uses the
-current Voice, Playback Speed, Rules and Ignore list.
+current Voice (or the Azure voice, if chosen in the dialog's **Voice** menu),
+Playback Speed, Rules and Ignore list.
 
 - Reads the whole document from the first page, each line or long sentence in
   one piece with 0.3 seconds of silence after it.
@@ -217,8 +224,9 @@ them (the dialog says "Settings are remembered"). **Reset to defaults** puts
 them all back, except your added background sounds. A blank or out-of-range
 number is corrected to the nearest allowed value when saved.
 
-Sleep mode uses the Voice, Rules and Ignore list. It ignores Playback Speed,
-Pause Settings and Header & Footer Mode.
+Sleep mode uses the Voice (or the Azure voice, if chosen in the dialog's
+**Voice** menu), Rules and Ignore list. It ignores Playback Speed, Pause
+Settings and Header & Footer Mode.
 
 ### Speed
 
@@ -314,6 +322,37 @@ Saved as `<document name>_<voice>_sleep.<format>` in the userdata folder.
   them again from scratch. It cannot be cleared while a recording is being
   made.
 
+## Azure voices
+
+A section of Settings, for using a Microsoft Azure voice in exports. Setting
+it up, the free allowance and pronunciation are in
+[Azure voices](azure-voices.md). Saved in `userdata/azure.json`, which only
+your user account can read.
+
+| Setting | Default | Effect |
+|---|---|---|
+| Key | none | Key 1 of your Azure Speech resource. Never shown again once saved; type a new one to replace it |
+| Region | none | The resource's region, such as `eastus`. Must be the one the resource was created in |
+| Voice | Ava Multilingual (`en-US-AvaMultilingualNeural`) | The Azure voice exports use. The list shows the English voices your region offers; the play button plays a sample, made once and kept |
+| Use this voice for exports | off | Exports (Normal and Sleep mode) use the Azure voice. The Export dialog's **Voice** menu shows it and changes it too. Needs a key and region |
+
+**Save and test** checks the key and region by fetching the voice list, which
+costs nothing. **Refresh the voice list** fetches it again. The line at the
+bottom counts the characters this computer has sent this month, against the
+free tier's 500,000; the Azure portal has the true total.
+
+In an export with an Azure voice:
+
+- Speed (Playback Speed for Normal, Sleep mode's own Speed) becomes Azure's
+  speaking rate: 0.9 is 10% slower.
+- The built-in science pronunciations and your personal list's main entries
+  are not used; the personal list's `azure` section and words written with
+  their sounds (`[live](/lˈɪv/)`) are.
+- The estimate line adds the characters the export will send and the month's
+  count. Sentences already made are reused and not sent again.
+- Sleep mode's render-time estimate assumes the free tier's pace, 20 sentences
+  a minute.
+
 ## Sleep Timer
 
 The lower round button on the right edge.
@@ -330,7 +369,7 @@ is closed.
 
 ## Updates
 
-The third section of Settings. **Check for Updates** in the menus opens it and
+The last section of Settings. **Check for Updates** in the menus opens it and
 checks.
 
 | Setting | Default | Effect |

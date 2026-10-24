@@ -2,7 +2,9 @@
 
 A desktop app that reads documents aloud with a voice running entirely on this
 computer (Kokoro, through kokoro_onnx and espeak-ng), and exports MP3s,
-including slow "sleep mode" recordings with background sound. A FastAPI server
+including slow "sleep mode" recordings with background sound. Exports can
+instead use a Microsoft Azure neural voice under the user's own Azure account
+([docs/azure-voices.md](docs/azure-voices.md)). A FastAPI server
 (`dist/app/`) serves a web UI (`dist/app/ui/`) inside a pywebview window
 (`dist/main.py`). The README covers installation;
 [docs/user-guide.md](docs/user-guide.md) covers every feature and
@@ -35,6 +37,7 @@ word 'renin' sounded wrong", "make the recording". So:
 | Library, settings, recordings | `%APPDATA%\LocalReader Pro\userdata` | `~/Library/Application Support/LocalReader Pro/userdata` |
 | Personal pronunciations | `<userdata>\pronunciations.json` | `<userdata>/pronunciations.json` |
 | Scripts and finished recordings | `Documents\Sleep scripts` (create it) | `~/Documents/Sleep scripts` (create it) |
+| Azure voice settings (key, voice, whether exports use it) | `<userdata>\azure.json` | `<userdata>/azure.json` |
 
 Inside the installed app, `dist/userdata` is a link to the userdata folder.
 On Windows, Claude Code's shell is usually Git Bash: write paths with forward
@@ -72,6 +75,14 @@ only the app's has the voice and its libraries.
    "Check how words are said"): run them all through
    `tools/lookup_pronunciation.py`, and fix every one the engine gets wrong in
    the personal list. Record the new fixes for the person to hear.
+   **If Azure voices are chosen for exports** (`"use_for_exports": true` in
+   `<userdata>/azure.json`), the recording is made in that voice, which reads
+   words its own way: step 6 is done in the Azure voice instead, as in
+   [For agents](docs/azure-voices.md#for-agents-recording-a-script-in-an-azure-voice)
+   in the Azure guide (`pronunciation_check.py --azure --script`, the person
+   listens, then `--approve`). The estimate in step 5 then also prints the
+   characters the recording uses: say so if it is more than the month has
+   left.
 7. **Check the words spelled the same but said two ways** ("cells live" and
    "a live vaccine", "lead poisoning" and "lead to", "muscles contract"):
    `python tools/check_heteronyms.py <script.txt>`. For each one it leaves to
@@ -80,7 +91,9 @@ only the app's has the voice and its libraries.
    prints, such as `[live](/lˈɪv/)`: the app says it with those sounds and
    shows just the word. Run it again until every reading fits its sentence.
    Never put these words in the personal list, which would say them one way
-   everywhere.
+   everywhere. For an Azure voice, write the markup for **every** word the
+   tool lists, even where the local voice's reading is right: you cannot hear
+   how Azure reads them.
 8. Save the script in the scripts folder, named for the topic
    (`cranial-nerves.txt`). Never in this repository: it is public.
 9. Tell them where it is and how long it runs, and offer to record it.
@@ -104,6 +117,12 @@ trying a new voice or setting.
   minutes to mix. Sentences already voiced for an earlier version are reused,
   so a re-recording after small edits is quick. The tool prints an estimate
   before it starts. Run it in the background and tell them.
+- **In an Azure voice** (when chosen for exports), it refuses a full
+  recording until the script's pronunciation check in that voice is approved
+  (step 6 of writing a script), and prints what is missing. Do that step;
+  never get around it. `--preview` works without it. The free tier makes
+  about 20 sentences a minute, so the time is about the same as the local
+  voice, and the tool prints the characters it will use.
 - **If it says the app is not running**, ask them to open LocalReader Pro and
   wait for the green dot.
 - **If it says FFmpeg is missing**, ask them to click Export Audio in the app
@@ -161,6 +180,13 @@ voice**, so a person listening is always the last step.
 
 ### "The word X sounded wrong" / fixing a pronunciation
 
+If the recording was in an Azure voice, the fix goes in the `azure` section of
+the personal list, in Azure's IPA style (stress mark at the start of the
+syllable, no length marks for American English), then a new check with
+`pronunciation_check.py --azure`: see
+[Pronunciation](docs/azure-voices.md#pronunciation) in the Azure guide. The
+steps below are for the local voice.
+
 If the word is one spelled the same but said two ways ("live" sounding like
 "a live concert" where it means "they live"), it is not a list fix: write its
 pronunciation into the script where it is wrong, as in step 7 of "Write me a
@@ -217,11 +243,25 @@ personal fixes reach it like this:
 3. After their next update, those entries are in the built-in list, and the
    personal copies can be cleared.
 
+### "Set up Azure voices" / "I want a better voice"
+
+Azure's neural voices sound more natural than the local one, for exports
+only. Follow [docs/azure-voices.md](docs/azure-voices.md): the person needs
+an Azure account; a Speech resource on the free F0 tier; its key and region
+go in Settings > Azure voices (or `POST /api/azure/settings` with
+`{"key": ..., "region": ..., "use_for_exports": true}` while the app is
+running, then `POST /api/azure/test`). Creating anything in their Azure
+account is their decision: ask first. Never put the key in a chat reply, a
+script, or this repository. Read the guide's Gotchas before starting: they
+are the problems real setups hit.
+
 ### "Change the voice" / "Make it slower" / other settings
 
 - **Voice, and reading speed:** Settings > Voice & Audio in the app (on a
   Mac, the LocalReader Pro menu > Settings... or Cmd+comma; on Windows,
-  File > Settings or Ctrl+comma). Sleep recordings use the voice chosen there.
+  File > Settings or Ctrl+comma). Sleep recordings use the voice chosen there,
+  unless an Azure voice is chosen for exports (Settings > Azure voices; see
+  the section above).
 - **Sleep recording options** (speed, pauses, background sound, fades, file
   format): the Export dialog's Sleep mode, where they are saved. You can also
   change them for the person: `GET /api/export/sleep/settings`, change the
@@ -280,7 +320,8 @@ and reach users as updates.
   `Origin: http://127.0.0.1:<port>`. The tools take `--port` for this.
 - The voice engine is not thread-safe: every call into it goes through
   `state.engine_lock`.
-- Tests: `tests/test_pronunciations.py`, and
+- Tests: `tests/test_pronunciations.py`, `tests/test_azure.py` (Azure
+  support, offline), and
   `installers/tests/check_install.py` for a whole installed copy. Pushing
   installer changes to `main` runs the installers on clean Windows and Mac
   machines (`.github/workflows/installers.yml`).
@@ -293,10 +334,16 @@ and reach users as updates.
   do.
 - Sleep mode is a separate mode of the Export dialog. Sleep features stay
   inside it, and normal reading and normal MP3 export keep working as they do.
-- Everything runs locally. The app goes online only to download the voice
-  model and FFmpeg, and to check for updates: when asked, or automatically if
-  the user turns that on (off by default). It never installs an update
-  without the user's click.
+- Everything runs locally unless the user chooses otherwise. The app goes
+  online only to download the voice model and FFmpeg, to check for updates
+  (when asked, or automatically if the user turns that on; off by default),
+  and, for exports, when the user has chosen an Azure voice: then the text
+  being exported goes to their own Azure Speech resource. Reading aloud never
+  goes online. It never installs an update without the user's click.
+- Azure costs the user's monthly allowance, so nothing spends it without
+  saying so first: exports show the characters they will use, voice samples
+  are made once and kept, sentences already made are reused, and the tools
+  refuse a full Azure recording before its pronunciation check is approved.
 - Scripts and recordings about real people, or for one person, are personal.
   This repository is public: keep them out of it.
 - espeak-ng cuts its data path at about 160 bytes, so the installers refuse
