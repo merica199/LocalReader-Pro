@@ -118,7 +118,7 @@ async function checkForUpdates() {
             const latest = status.latest || {};
             const current = status.current || {};
             result.textContent = (latest.version && latest.version !== current.version
-                ? `Version ${latest.version} is available (you have ${versionName(current).replace('version ', '')})`
+                ? `Version ${latest.version} is available (you have ${current.version || 'an earlier version'})`
                 : 'An update is available') +
                 (latest.date ? `, ${formatDate(latest.date)}` : '') + '. What\'s new:';
             for (const c of status.commits.slice(0, 8)) {
