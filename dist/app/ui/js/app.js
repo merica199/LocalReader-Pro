@@ -135,7 +135,7 @@ async function init() {
     }
   } catch (e) {
     console.error("Settings load error", e);
-    showToast("Settings failed to load: " + e.message);
+    showToast("Settings failed to load: " + e.message, 'error');
   }
 
   // 3. Load Data & UI
@@ -320,7 +320,7 @@ document.getElementById("pdfUpload").onchange = async (e) => {
         processPdfBlob(blob, file.name.replace(".epub", ".pdf"));
       } catch (err) {
         console.error(err);
-        showToast("EPUB conversion failed: " + err.message);
+        showToast("EPUB conversion failed: " + err.message, 'error');
       }
     } else {
       processPdfBlob(file, file.name);
@@ -431,7 +431,7 @@ document.getElementById("setupBtn").onclick = async () => {
     });
     showToast("Started downloading...");
   } catch (e) {
-    showToast(e.message);
+    showToast(e.message, 'error');
   }
 };
 
@@ -512,7 +512,7 @@ document.body.addEventListener("drop", async (e) => {
     return;
   }
   if (!name.endsWith(".pdf") && !name.endsWith(".epub")) {
-    showToast("Please drop a PDF, EPUB, Markdown or text file.");
+    showToast("Please drop a PDF, EPUB, Markdown or text file.", 'warning');
     return;
   }
   if (name.endsWith(".epub")) {
@@ -529,7 +529,7 @@ document.body.addEventListener("drop", async (e) => {
       processPdfBlob(blob, file.name.replace(".epub", ".pdf"));
     } catch (err) {
       console.error(err);
-      showToast("EPUB conversion failed: " + err.message);
+      showToast("EPUB conversion failed: " + err.message, 'error');
     }
   } else {
     processPdfBlob(file, file.name);
@@ -555,7 +555,7 @@ document.getElementById("languageToggle").onclick = async () => {
 // Search
 document.getElementById("searchBtn").onclick = () => {
   if (!state.currentDoc) {
-    showToast("No document loaded");
+    showToast("No document loaded", 'warning');
     return;
   }
   document.getElementById("searchModal").classList.remove("hidden");

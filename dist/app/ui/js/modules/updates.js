@@ -18,6 +18,12 @@ function formatDate(iso) {
     return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// "version 4.1.0", or the commit for versions from before VERSION existed.
+function versionName(c) {
+    if (!c) return '';
+    return c.version ? `version ${c.version}` : `version ${c.hash}`;
+}
+
 function show(id, visible) {
     document.getElementById(id).classList.toggle('hidden', !visible);
 }
@@ -26,7 +32,7 @@ async function showVersion() {
     try {
         const { commit } = await fetchJSON('/api/update/version');
         document.getElementById('updateVersion').textContent = commit
-            ? `This copy: ${commit.hash}, ${formatDate(commit.date)}`
+            ? `This copy: ${versionName(commit)}` + (commit.date ? `, ${formatDate(commit.date)}` : '')
             : '';
     } catch (e) {
         console.error(e);
@@ -41,8 +47,9 @@ function showAvailable(status, announce) {
     document.getElementById('sidebarExpandBtn')?.classList.toggle('has-update', available);
     const latest = status && status.latest && status.latest.hash;
     if (available && announce && latest && latest !== announced) {
-        const n = status.behind;
-        showToast(`An update is available (${n} change${n === 1 ? '' : 's'}). Click "Update available" at the top of the sidebar to see it.`);
+        const which = status.latest.version && status.latest.version !== (status.current || {}).version
+            ? `Version ${status.latest.version} is available` : 'An update is available';
+        showToast(`${which}. Click "Update available" at the top of the sidebar to see what's new.`);
     }
     if (latest) announced = latest;
 }
@@ -75,7 +82,7 @@ async function setAutomatic(on) {
             body: JSON.stringify({ auto_check: on }),
         });
     } catch (e) {
-        showToast('Could not save the update setting: ' + e.message);
+        showToast('Could not save the update setting: ' + e.message, 'error');
         document.getElementById('autoUpdateCheck').checked = !on;
         return;
     }
@@ -108,9 +115,12 @@ async function checkForUpdates() {
         showAvailable(status, false);
         list.replaceChildren();
         if (status.available) {
-            const n = status.behind;
-            result.textContent = `${n} update${n === 1 ? '' : 's'} available` +
-                (status.latest ? ` (${formatDate(status.latest.date)})` : '') + ':';
+            const latest = status.latest || {};
+            const current = status.current || {};
+            result.textContent = (latest.version && latest.version !== current.version
+                ? `Version ${latest.version} is available (you have ${versionName(current).replace('version ', '')})`
+                : 'An update is available') +
+                (latest.date ? `, ${formatDate(latest.date)}` : '') + '. What\'s new:';
             for (const c of status.commits.slice(0, 8)) {
                 const li = document.createElement('li');
                 li.textContent = c.subject;
@@ -131,7 +141,8 @@ async function checkForUpdates() {
                 list.appendChild(why);
             }
         } else {
-            result.textContent = status.reason || 'You have the latest version.';
+            result.textContent = status.reason ||
+                `You have the latest version${status.current && status.current.version ? ` (${status.current.version})` : ''}.`;
         }
         show('updateResult', true);
     } catch (e) {
@@ -155,7 +166,7 @@ async function applyUpdate() {
     } catch (e) {
         button.disabled = false;
         button.textContent = 'Update and restart';
-        showToast('Update failed: ' + e.message);
+        showToast('Update failed: ' + e.message, 'error');
     }
 }
 
@@ -172,9 +183,13 @@ async function reportLastUpdate() {
         const { result } = await fetchJSON('/api/update/last');
         if (!result) return;
         if (result.ok) {
-            if (result.to && result.to !== result.from) showToast(`Updated to ${result.to}`);
+            if (result.to && result.to !== result.from) {
+                // The updater records commits; this copy now knows its number.
+                const { commit } = await fetchJSON('/api/update/version');
+                showToast(`Updated to ${versionName(commit) || result.to}`, 'success');
+            }
         } else {
-            showToast('Update failed: ' + result.error);
+            showToast('Update failed: ' + result.error, 'error');
         }
     } catch (e) {
         console.error(e);

@@ -72,9 +72,13 @@ def _git(git: str, *args: str, timeout: int = 60) -> subprocess.CompletedProcess
 
 
 def _commit(git: str, ref: str) -> Dict:
+    """A version of the app: its number from the VERSION file, its commit and date."""
     out = _git(git, "log", "-1", "--format=%h%x09%cI", ref).stdout.strip()
     short, _, date = out.partition("\t")
-    return {"hash": short, "date": date}
+    # Versions released before VERSION existed have only their commit.
+    shown = _git(git, "show", f"{ref}:VERSION")
+    version = shown.stdout.strip() if shown.returncode == 0 else None
+    return {"version": version or None, "hash": short, "date": date}
 
 
 def update_status(fetch: bool) -> Dict:
@@ -240,4 +244,8 @@ def current_version():
     git = find_git()
     if git and (REPO / ".git").exists():
         return {"commit": _commit(git, "HEAD")}
-    return {"commit": None}
+    try:
+        # A copy installed without git still has its VERSION file.
+        return {"commit": {"version": (REPO / "VERSION").read_text().strip(), "hash": None, "date": None}}
+    except OSError:
+        return {"commit": None}

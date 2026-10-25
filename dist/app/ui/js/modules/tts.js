@@ -265,7 +265,7 @@ export async function playNext() {
     readAhead();
   } catch (e) {
     console.error("Synthesis error:", e);
-    showToast(e.message);
+    showToast(e.message, 'error');
     stopPlayback();
   }
 }

@@ -614,3 +614,14 @@
 .platform-mac .only-mac {
   display: revert !important;
 }
+
+/* Toast colours by kind (modules/ui.js, showToast). Red is kept for errors,
+   so a red message always means something went wrong. */
+.toast-info { background: rgba(39, 39, 42, 0.97); border-color: #52525b; }
+.toast-info .toast-icon { color: #a1a1aa; }
+.toast-success { background: rgba(6, 78, 59, 0.97); border-color: #047857; }
+.toast-success .toast-icon { color: #6ee7b7; }
+.toast-warning { background: rgba(120, 53, 15, 0.97); border-color: #b45309; }
+.toast-warning .toast-icon { color: #fcd34d; }
+.toast-error { background: rgba(127, 29, 29, 0.95); border-color: #b91c1c; }
+.toast-error .toast-icon { color: #fca5a5; }

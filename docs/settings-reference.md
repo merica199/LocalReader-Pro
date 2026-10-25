@@ -370,7 +370,8 @@ is closed.
 ## Updates
 
 The last section of Settings. **Check for Updates** in the menus opens it and
-checks.
+checks. The top of the section shows the version this copy is (from the
+`VERSION` file), and a check says which version is available.
 
 | Setting | Default | Effect |
 |---|---|---|

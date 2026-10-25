@@ -12,7 +12,8 @@ name: Installers
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    # staging too, so a release's installers are tested before it reaches main
+    branches: [main, staging]
     paths:
       - "Install on *"
       - "installers/**"

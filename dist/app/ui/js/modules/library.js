@@ -126,7 +126,7 @@ export async function selectDocument(item) {
     window.dispatchEvent(new CustomEvent("document-opened"));
   } catch (e) {
     console.error("Select document error:", e);
-    showToast("Failed to load document content");
+    showToast("Failed to load document content", 'error');
   }
 }
 
@@ -404,17 +404,17 @@ async function processPagedFile(file, endpoint, formatName) {
     });
 
     selectDocument(newDoc);
-    showToast(`Added "${data.title || file.name}"`);
+    showToast(`Added "${data.title || file.name}"`, 'success');
   } catch (err) {
     console.error(`${formatName} processing error:`, err);
-    showToast(`Failed to read ${formatName}: ` + err.message);
+    showToast(`Failed to read ${formatName}: ` + err.message, 'error');
   }
 }
 
 export async function processPdfBlob(blob, fileName) {
   // Requires pdfjsLib to be available globally (loaded via script tag)
   if (!window.pdfjsLib) {
-    showToast("PDF.js library not loaded");
+    showToast("PDF.js library not loaded", 'error');
     return;
   }
 
@@ -450,10 +450,10 @@ export async function processPdfBlob(blob, fileName) {
       });
 
       selectDocument(newDoc);
-      showToast("Book added to library");
+      showToast("Book added to library", 'success');
     } catch (err) {
       console.error("PDF processing error:", err);
-      showToast("Failed to process document: " + err.message);
+      showToast("Failed to process document: " + err.message, 'error');
     }
   };
   reader.readAsArrayBuffer(blob);

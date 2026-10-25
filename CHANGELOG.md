@@ -1,5 +1,24 @@
 # LocalReader Pro Changelog
 
+Versions from 4.0.0 on are this fork's ([merica199/LocalReader-Pro](https://github.com/merica199/LocalReader-Pro)).
+Its full list of changes from the original is in the README, under
+"Changes from the original". Earlier versions are the original app's.
+
+## v4.0.0 - October 2026
+
+The first numbered release of this fork. It includes everything listed in the
+README under "Changes from the original", most recently:
+
+- **Azure voices for exports.** Use one of Microsoft Azure's natural voices for
+  MP3 exports and sleep recordings, with your own Azure account
+  ([guide](docs/azure-voices.md)).
+- **Version numbers.** Settings > Updates shows the version you have and the one
+  available, instead of a code.
+- **Messages are coloured by what they mean.** Only errors are red; successes
+  are green, notices grey, and "can't do that right now" amber.
+
+---
+
 ## v3.6.1 - February 9, 2026 (The "Page Sync" Update)
 
 ### ⚠️ GPU Acceleration Reverted (Issue #5)

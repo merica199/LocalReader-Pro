@@ -27,14 +27,31 @@ export function displayText(text) {
 }
 
 // --- Toast ---
-export function showToast(msg) {
+// A message at the top right. Red means something went wrong, so only errors
+// are red: kind is "info" (grey, the default), "success" (green), "warning"
+// (amber: the action cannot be done right now) or "error" (red).
+const TOAST_ICONS = {
+    info: 'info',
+    success: 'check-circle',
+    warning: 'alert-triangle',
+    error: 'alert-circle',
+};
+let toastTimer = null;
+
+export function showToast(msg, kind = 'info') {
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toastMsg');
-    if (toast && toastMsg) {
-        toastMsg.textContent = msg;
-        toast.classList.remove('hidden');
-        setTimeout(() => toast.classList.add('hidden'), 5000);
-    }
+    if (!toast || !toastMsg) return;
+    if (!TOAST_ICONS[kind]) kind = 'info';
+    for (const k of Object.keys(TOAST_ICONS)) toast.classList.toggle(`toast-${k}`, k === kind);
+    document.getElementById('toastIcon').innerHTML =
+        `<i data-lucide="${TOAST_ICONS[kind]}" class="w-5 h-5"></i>`;
+    renderIcons();
+    toastMsg.textContent = msg;
+    toast.classList.remove('hidden');
+    // A new message gets its own five seconds.
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add('hidden'), 5000);
 }
 
 // --- Tabs ---

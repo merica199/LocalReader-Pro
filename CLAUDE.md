@@ -309,6 +309,18 @@ and reach users as updates.
 
 - **The installed app is a git clone that updates itself.** Editing its files
   makes the updater refuse to update. Running its tools is fine.
+- **Branches and releases.** Every installed copy follows `main`, so `main`
+  is production: whatever reaches it goes to everyone at their next Check for
+  Updates. Work happens on a branch named for the change (never containing
+  another branch's name), which is merged into `staging`, where finished work
+  waits and is tested together. A release is merging `staging` into `main`,
+  and only the repository's owner decides when that happens.
+- **Version numbers.** `VERSION` at the top of the repository holds the
+  version people see (Settings > Updates, the message after an update), as
+  major.minor.patch: a fix raises the last number (4.0.1), a new feature the
+  middle one (4.1.0), a change that breaks how people use it the first. Raise
+  it on `staging` in the release's last commit, and add the release to the top
+  of `CHANGELOG.md` in plain words: what people will notice, not how.
 - The library and settings live outside the app (the userdata folder), reached
   through the links `dist/userdata` and `dist/app/models`. Never delete through
   those links.
@@ -323,8 +335,9 @@ and reach users as updates.
 - Tests: `tests/test_pronunciations.py`, `tests/test_azure.py` (Azure
   support, offline), and
   `installers/tests/check_install.py` for a whole installed copy. Pushing
-  installer changes to `main` runs the installers on clean Windows and Mac
-  machines (`.github/workflows/installers.yml`).
+  installer changes to `staging` or `main` runs the installers on clean
+  Windows and Mac machines (`.github/workflows/installers.yml`), so a
+  release's installers are tested before it ships.
 
 ## Design rules
 

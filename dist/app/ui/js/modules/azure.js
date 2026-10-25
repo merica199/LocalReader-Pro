@@ -161,7 +161,7 @@ async function playSample() {
         refreshUsage();
     } catch (e) {
         resetSample();
-        showToast('Could not play the sample: ' + e.message);
+        showToast('Could not play the sample: ' + e.message, 'error');
     }
 }
 
@@ -176,9 +176,9 @@ export function initAzure() {
     document.getElementById('azureRefreshVoicesBtn').onclick = async () => {
         try {
             await loadVoices(true);
-            showToast(`${azureState.voices.length} English voices`);
+            showToast(`${azureState.voices.length} English voices`, 'success');
         } catch (e) {
-            showToast(e.message);
+            showToast(e.message, 'error');
         }
     };
     document.getElementById('azureVoiceSelect').onchange = async (e) => {
@@ -187,7 +187,7 @@ export function initAzure() {
         try {
             await postSettings({ voice: e.target.value });
         } catch (err) {
-            showToast(err.message);
+            showToast(err.message, 'error');
         }
     };
     document.getElementById('azureUseForExports').onchange = async (e) => {
@@ -195,7 +195,7 @@ export function initAzure() {
             await setAzureForExports(e.target.checked);
         } catch (err) {
             e.target.checked = false;
-            showToast(err.message);
+            showToast(err.message, 'error');
         }
     };
     // Loaded when the section is opened, so the app never goes online for it

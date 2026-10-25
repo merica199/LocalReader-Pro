@@ -407,7 +407,9 @@ finished sentences and can be resumed).
 The app checks for updates when you ask: **Check for Updates** in the menus
 (the **LocalReader Pro** menu on a Mac, **Help** on Windows), which opens
 Settings at **Updates** and checks, or **Check for updates** in that section.
-It lists what changed.
+It says which version is available and which you have (for example "Version
+4.1.0 is available (you have 4.0.0)"), and lists what changed. The top of the
+section always shows the version you have.
 
 **To be told about updates instead,** tick **Check automatically** in
 Settings > Updates. The app then checks shortly after it opens and once a day while

@@ -80,7 +80,7 @@ async function onProviderChange(event) {
     try {
         await setAzureForExports(event.target.value === 'azure');
     } catch (e) {
-        showToast(e.message);
+        showToast(e.message, 'error');
         renderProviderChoice();
     }
     updateNormalEstimate();
@@ -140,11 +140,11 @@ export function initExportDialog() {
 
 export async function startExport() {
     if (!state.currentDoc) {
-        showToast("No document selected");
+        showToast("No document selected", 'warning');
         return;
     }
     if (!window.isEngineReady) {
-        showToast("Voice engine not ready");
+        showToast("Voice engine not ready", 'warning');
         return;
     }
 
@@ -386,7 +386,7 @@ async function addSleepSound(event) {
         refreshSleepEstimate();
     } catch (e) {
         status.textContent = '';
-        showToast('Could not add that sound: ' + e.message);
+        showToast('Could not add that sound: ' + e.message, 'error');
     }
 }
 
@@ -398,7 +398,7 @@ async function removeSleepSound() {
     try {
         await fetchJSON(`/api/export/sleep/sounds/${encodeURIComponent(name)}`, { method: 'DELETE' });
     } catch (e) {
-        showToast('Could not remove it: ' + e.message);
+        showToast('Could not remove it: ' + e.message, 'error');
         return;
     }
     renderSoundList(await fetchJSON(`/api/export/sleep/sounds?t=${Date.now()}`));
@@ -454,9 +454,9 @@ async function clearSleepCache() {
     }
     try {
         const res = await fetchJSON('/api/export/sleep/cache/clear', { method: 'POST' });
-        showToast(`Cleared ${Math.round(res.bytes / 1e6)} MB`);
+        showToast(`Cleared ${Math.round(res.bytes / 1e6)} MB`, 'success');
     } catch (e) {
-        showToast("Could not clear the cache: " + e.message);
+        showToast("Could not clear the cache: " + e.message, 'error');
     }
     refreshSleepEstimate();
 }
@@ -581,7 +581,7 @@ async function beginExport() {
         startExportPolling();
     } catch (e) {
         console.error(e);
-        showToast("Export failed: " + e.message);
+        showToast("Export failed: " + e.message, 'error');
     }
 }
 
@@ -617,7 +617,7 @@ function startExportPolling() {
                 document.getElementById('exportStatus').textContent = 'Export failed';
                 document.getElementById('hideExportBtn').classList.add('hidden');
                 document.getElementById('playBtn').disabled = false;
-                if (exportHidden) showToast("Sleep recording failed: " + status.error);
+                if (exportHidden) showToast("Sleep recording failed: " + status.error, 'error');
                 return;
             }
 
@@ -646,7 +646,7 @@ function startExportPolling() {
                 document.getElementById('hideExportBtn').classList.add('hidden');
                 document.getElementById('playBtn').disabled = false;
                 renderIcons();
-                if (exportHidden) showToast(`Sleep recording saved: ${status.output_file}`);
+                if (exportHidden) showToast(`Sleep recording saved: ${status.output_file}`, 'success');
 
                 // Store output file in DOM for the "Open Folder" button
                 document.getElementById('exportModal').dataset.outputFile = status.output_file;
@@ -749,6 +749,6 @@ export function openExportLocation() {
                 showToast("Opening folder...");
                 setTimeout(() => document.getElementById('exportModal').classList.add('hidden'), 1000);
             })
-            .catch(e => showToast("Error: " + e.message));
+            .catch(e => showToast("Error: " + e.message, 'error'));
     }
 }
